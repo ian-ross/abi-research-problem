@@ -1,0 +1,4 @@
+export ML_AUTORESEARCH_PI_FORT=/home/iross/code/pi-fort
+export ML_AUTORESEARCH_DATALOADER_NUM_WORKERS=8
+export ML_AUTORESEARCH_DATALOADER_PREFETCH_FACTOR=4
+export GOES_REPROJECTION_LOOKUPS_DIR=$(pwd)/ancillary-data/reprojection-lookups
