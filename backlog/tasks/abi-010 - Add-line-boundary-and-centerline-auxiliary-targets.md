@@ -1,10 +1,11 @@
 ---
 id: ABI-010
 title: 'Add line, boundary, and centerline auxiliary targets'
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 17:07'
 labels:
   - auxiliary-targets
   - harness
