@@ -45,3 +45,19 @@ Create the package and workspace structure for the GOES ABI Contrail Segmentatio
 - Added README registration instructions and provider smoke tests.
 - Validated with uv run pytest tests -q and uv build.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Scaffolded the GOES ABI Contrail Segmentation Research Problem provider.
+
+Changes:
+- Added the abi_contrail package with a build_spec provider target and placeholder adapters/datasets modules.
+- Declared the v0 spec for abi_16ch inputs, mask_logits outputs, bce_dice loss, adamw optimizer, sequential/deterministic sampling, and temporary val/dice metric.
+- Updated package metadata for installation with ml-autoresearch and Hatch build support, excluding local planning artifacts from sdists.
+- Added README registration/loading instructions and smoke tests for direct and ml-autoresearch provider loading.
+
+Validation:
+- uv run pytest tests -q
+- uv build
+<!-- SECTION:FINAL_SUMMARY:END -->
