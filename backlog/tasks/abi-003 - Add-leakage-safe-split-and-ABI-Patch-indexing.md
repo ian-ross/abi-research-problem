@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 13:24'
+updated_date: '2026-07-12 13:30'
 labels:
   - data
   - splits
@@ -22,11 +22,11 @@ Create deterministic sample indexing for MIT and Google ABI Patches while enforc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Google train/validation provenance in scene names is respected
-- [ ] #2 MIT patches are split by whole scene, never random patch
-- [ ] #3 MIT full scenes are indexed as 256x256 windows without loading whole scenes per sample
-- [ ] #4 Split metadata records Dataset Source, scene/time provenance, patch coordinates, and positivity
-- [ ] #5 Tests prove no scene crosses train/validation for MIT
+- [x] #1 Google train/validation provenance in scene names is respected
+- [x] #2 MIT patches are split by whole scene, never random patch
+- [x] #3 MIT full scenes are indexed as 256x256 windows without loading whole scenes per sample
+- [x] #4 Split metadata records Dataset Source, scene/time provenance, patch coordinates, and positivity
+- [x] #5 Tests prove no scene crosses train/validation for MIT
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -39,3 +39,12 @@ Create deterministic sample indexing for MIT and Google ABI Patches while enforc
 5. Add tests proving MIT scenes do not cross train/validation and Google provenance is respected.
 6. Record split policy in adapter data_policy_metadata.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added ABIPatchIndexRecord/ABIPatchSplitIndex for provider-owned split metadata.
+- Added Google provenance-preserving index construction and MIT deterministic whole-scene split/window indexing.
+- Extended ABIPatchDataset to load indexed 256x256 MIT windows and emit sample metadata.
+- Added tests for Google split provenance, MIT no scene crossing, windowed sample loading, and split data policy metadata.
+<!-- SECTION:NOTES:END -->
