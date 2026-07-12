@@ -4,10 +4,14 @@ title: Wire minimal vertical-slice training smoke path
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - training
   - vertical-slice
-dependencies: []
+dependencies:
+  - ABI-001
+  - ABI-002
+  - ABI-003
 priority: high
 ---
 
