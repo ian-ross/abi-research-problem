@@ -21,10 +21,10 @@ Create the package and workspace structure for the GOES ABI Contrail Segmentatio
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Provider package exposes a build_spec entry point loadable by ml-autoresearch
-- [ ] #2 pyproject/package metadata supports installing the provider package
-- [ ] #3 Research problem spec declares v0 ids, abi_16ch input, mask_logits output, bce_dice loss, and val/dice temporary metric
-- [ ] #4 README or brief documents how to register/run the provider in the workspace
+- [x] #1 Provider package exposes a build_spec entry point loadable by ml-autoresearch
+- [x] #2 pyproject/package metadata supports installing the provider package
+- [x] #3 Research problem spec declares v0 ids, abi_16ch input, mask_logits output, bce_dice loss, and val/dice temporary metric
+- [x] #4 README or brief documents how to register/run the provider in the workspace
 <!-- AC:END -->
 
 ## Implementation Plan
