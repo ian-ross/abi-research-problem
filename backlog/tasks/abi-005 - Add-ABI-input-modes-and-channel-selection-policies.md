@@ -1,10 +1,11 @@
 ---
 id: ABI-005
 title: Add ABI input modes and channel selection policies
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 15:51'
 labels:
   - inputs
   - provider
