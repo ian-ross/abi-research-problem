@@ -1,11 +1,11 @@
 ---
 id: ABI-010
 title: 'Add line, boundary, and centerline auxiliary targets'
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 17:12'
+updated_date: '2026-07-12 17:13'
 labels:
   - auxiliary-targets
   - harness
@@ -51,3 +51,17 @@ Expose trusted auxiliary targets and optional auxiliary output heads for thin co
 - Validation: uv run ruff check abi_contrail/adapters.py tests/test_provider_spec.py tests/test_abi_training_adapter.py; uv run pytest -q.
 - Independent reviewer found no blockers.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented trusted ABI auxiliary targets for line, boundary, and centerline supervision. The provider spec now exposes optional manifest-declared line_logits, boundary_logits, and centerline_logits auxiliary outputs with mask_logits-matching shapes; the training adapter validates manifest names/losses/output mappings and computes trusted weighted_bce auxiliary losses against provider-derived targets. Updated the provider brief to document the allowed auxiliary heads and prohibit arbitrary auxiliary objectives.
+
+Tests:
+- uv run ruff check abi_contrail/adapters.py tests/test_provider_spec.py tests/test_abi_training_adapter.py
+- uv run pytest tests/test_provider_spec.py tests/test_abi_training_adapter.py -q
+- uv run pytest -q
+
+Review:
+- Independent reviewer reported no blockers.
+<!-- SECTION:FINAL_SUMMARY:END -->
