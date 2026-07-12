@@ -347,39 +347,40 @@ class ABITrainingAdapter:
         return losses
 
     def compute_validation_metrics(self, logits: Any, target_mask: Any) -> dict[str, float]:
+        return self.compute_validation_metrics_from_dataset(logits, target_mask, dataset=None)
+
+    def compute_validation_metrics_from_dataset(self, logits: Any, target_mask: Any, dataset: object | None) -> dict[str, float]:
         import torch
-        from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics, contrail_connectivity_metric
 
         probabilities = torch.sigmoid(logits.detach().cpu())
         raw_predictions = probabilities >= 0.5
         targets = (target_mask.detach().cpu() >= 0.5)
         filtered_predictions: list[torch.Tensor] = []
+        sources: list[str | None] = []
         for index in range(raw_predictions.shape[0]):
-            filtered = self.filter_pipeline.apply(raw_predictions[index].numpy(), probabilities[index].numpy(), context={})
+            context = dataset.filter_context(index) if dataset is not None and hasattr(dataset, "filter_context") else {}
+            filtered = self.filter_pipeline.apply(raw_predictions[index].numpy(), probabilities[index].numpy(), context=context)
             filtered_predictions.append(torch.from_numpy(filtered.filtered_mask.astype(bool)))
+            metadata = dataset.sample_metadata(index) if dataset is not None and hasattr(dataset, "sample_metadata") else {}
+            source = str(metadata.get("dataset_source", "")).lower() if isinstance(metadata, Mapping) else ""
+            sources.append(source or None)
         filtered_tensor = torch.stack(filtered_predictions)
-        raw_metrics = binary_segmentation_metrics(raw_predictions, targets)
-        filtered_metrics = binary_segmentation_metrics(filtered_tensor, targets)
-        raw_connectivity = contrail_connectivity_metric(raw_predictions, targets)
-        filtered_connectivity = contrail_connectivity_metric(filtered_tensor, targets)
-        return {
-            "val/dice": raw_metrics["dice"],
-            "val/iou": raw_metrics["iou"],
-            "val/precision": raw_metrics["precision"],
-            "val/recall": raw_metrics["recall"],
-            "val/raw_dice": raw_metrics["dice"],
-            "val/raw_iou": raw_metrics["iou"],
-            "val/raw_precision": raw_metrics["precision"],
-            "val/raw_recall": raw_metrics["recall"],
-            "val/raw_cldice": raw_connectivity,
-            "val/raw_contrail_connectivity": raw_connectivity,
-            "val/filtered_dice": filtered_metrics["dice"],
-            "val/filtered_iou": filtered_metrics["iou"],
-            "val/filtered_precision": filtered_metrics["precision"],
-            "val/filtered_recall": filtered_metrics["recall"],
-            "val/filtered_cldice": filtered_connectivity,
-            "val/filtered_contrail_connectivity": filtered_connectivity,
-        }
+        result = _validation_metric_payload(raw_predictions, filtered_tensor, targets, prefix="val/")
+        for source in ("mit", "google"):
+            indices = [index for index, row_source in enumerate(sources) if row_source == source]
+            if not indices:
+                continue
+            source_index = torch.as_tensor(indices, dtype=torch.long)
+            result.update(
+                _validation_metric_payload(
+                    raw_predictions.index_select(0, source_index),
+                    filtered_tensor.index_select(0, source_index),
+                    targets.index_select(0, source_index),
+                    prefix=f"val/source/{source}/",
+                    include_legacy=False,
+                )
+            )
+        return result
 
     def selection_policy(self) -> tuple[str, str]:
         return "val/filtered_dice", "max"
@@ -589,6 +590,39 @@ class _CombinedTorchABIPatchDataset:
             if index >= offset:
                 return self.datasets[dataset_index], index - offset
         raise IndexError(index)
+
+
+def _validation_metric_payload(raw_predictions: Any, filtered_predictions: Any, targets: Any, *, prefix: str, include_legacy: bool = True) -> dict[str, float]:
+    from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics, contrail_connectivity_metric
+
+    raw_metrics = binary_segmentation_metrics(raw_predictions, targets)
+    filtered_metrics = binary_segmentation_metrics(filtered_predictions, targets)
+    raw_connectivity = contrail_connectivity_metric(raw_predictions, targets)
+    filtered_connectivity = contrail_connectivity_metric(filtered_predictions, targets)
+    payload = {
+        f"{prefix}raw_dice": raw_metrics["dice"],
+        f"{prefix}raw_iou": raw_metrics["iou"],
+        f"{prefix}raw_precision": raw_metrics["precision"],
+        f"{prefix}raw_recall": raw_metrics["recall"],
+        f"{prefix}raw_cldice": raw_connectivity,
+        f"{prefix}raw_contrail_connectivity": raw_connectivity,
+        f"{prefix}filtered_dice": filtered_metrics["dice"],
+        f"{prefix}filtered_iou": filtered_metrics["iou"],
+        f"{prefix}filtered_precision": filtered_metrics["precision"],
+        f"{prefix}filtered_recall": filtered_metrics["recall"],
+        f"{prefix}filtered_cldice": filtered_connectivity,
+        f"{prefix}filtered_contrail_connectivity": filtered_connectivity,
+    }
+    if include_legacy:
+        payload.update(
+            {
+                f"{prefix}dice": raw_metrics["dice"],
+                f"{prefix}iou": raw_metrics["iou"],
+                f"{prefix}precision": raw_metrics["precision"],
+                f"{prefix}recall": raw_metrics["recall"],
+            }
+        )
+    return payload
 
 
 def _input_specs() -> dict[str, dict[str, object]]:

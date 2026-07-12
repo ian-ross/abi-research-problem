@@ -202,6 +202,32 @@ def test_abi_auxiliary_targets_have_mask_logit_shape_and_expected_values() -> No
     assert boundary[0, 0, 3, 3] == 1.0
 
 
+def test_validation_metrics_are_dataset_source_stratified() -> None:
+    class ValidationDataset:
+        metadata = (
+            {"dataset_source": "mit", "scene_name": "mit-scene", "scene_index": 0, "goes_time": "2020-01-01T00:00:00Z", "row": 0, "col": 0},
+            {"dataset_source": "google", "scene_name": "validation-google", "scene_index": 1, "goes_time": "2020-01-01T00:10:00Z", "row": 0, "col": 0},
+        )
+
+        def sample_metadata(self, index: int) -> dict[str, object]:
+            return dict(self.metadata[index])
+
+        def filter_context(self, index: int) -> dict[str, object]:
+            return {}
+
+    logits = torch.full((2, 1, 4, 4), -10.0)
+    target = torch.zeros((2, 1, 4, 4), dtype=torch.float32)
+    target[:, :, 1:3, 1:3] = 1.0
+    logits[0, :, 1:3, 1:3] = 10.0
+    metrics = ABITrainingAdapter().compute_validation_metrics_from_dataset(logits, target, ValidationDataset())
+
+    assert "val/source/mit/raw_dice" in metrics
+    assert "val/source/google/raw_dice" in metrics
+    assert "val/source/mit/filtered_dice" in metrics
+    assert "val/source/google/filtered_dice" in metrics
+    assert metrics["val/source/mit/raw_dice"] > metrics["val/source/google/raw_dice"]
+
+
 def test_training_adapter_computes_manifest_declared_auxiliary_losses() -> None:
     adapter = ABITrainingAdapter()
     target = torch.zeros((1, 1, 7, 7), dtype=torch.float32)
@@ -320,4 +346,9 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert "filtered/recall" in aggregate["metrics"]
     assert "raw/contrail_connectivity" in aggregate["metrics"]
     assert "filtered/contrail_connectivity" in aggregate["metrics"]
+    assert "source/google/raw/dice" in aggregate["metrics"]
+    assert "source/google/filtered/dice" in aggregate["metrics"]
     assert "artifact_filters/removed_pixel_count" in aggregate["metrics"]
+    per_sample_record = json.loads((evaluation.evaluation_dir / "per_sample_metrics.jsonl").read_text().splitlines()[0])
+    assert per_sample_record["Dataset Source"] == "google"
+    assert per_sample_record["scene_name"] == "validation-000/patch.zarr"

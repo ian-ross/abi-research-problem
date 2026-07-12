@@ -88,6 +88,7 @@ class ABIEvaluationAdapter:
         targets_all: list[torch.Tensor] = []
         probabilities_all: list[torch.Tensor] = []
         per_sample_records: list[dict[str, object]] = []
+        sample_sources: list[str | None] = []
         removed_pixels_total = 0
         removed_area_total = 0.0
         with torch.no_grad():
@@ -132,7 +133,9 @@ class ABIEvaluationAdapter:
                         "artifact_filters/removed_area_km2": removed_area,
                         "artifact_filters/diagnostics": diagnostics,
                     }
-                    record.update(_sample_metadata(dataset, index))
+                    metadata = _sample_metadata(dataset, index)
+                    record.update(metadata)
+                    sample_sources.append(_dataset_source_from_metadata(metadata))
                     per_sample_records.append(record)
                     raw_predictions.append(sample_prediction)
                     filtered_predictions.append(sample_filtered_prediction)
@@ -156,6 +159,28 @@ class ABIEvaluationAdapter:
             "artifact_filters/removed_pixel_count": float(removed_pixels_total),
             "artifact_filters/removed_area_km2": float(removed_area_total),
         }
+        for source in ("mit", "google"):
+            indices = [index for index, sample_source in enumerate(sample_sources) if sample_source == source]
+            if not indices:
+                continue
+            source_index = torch.as_tensor(indices, dtype=torch.long)
+            source_raw = raw_tensor.index_select(0, source_index)
+            source_filtered = filtered_tensor.index_select(0, source_index)
+            source_target = target_tensor.index_select(0, source_index)
+            source_raw_metrics = binary_segmentation_metrics(source_raw, source_target)
+            source_filtered_metrics = binary_segmentation_metrics(source_filtered, source_target)
+            source_raw_connectivity = contrail_connectivity_metric(source_raw, source_target)
+            source_filtered_connectivity = contrail_connectivity_metric(source_filtered, source_target)
+            aggregate.update(
+                {
+                    **{f"source/{source}/raw/{key}": value for key, value in source_raw_metrics.items()},
+                    f"source/{source}/raw/cldice": source_raw_connectivity,
+                    f"source/{source}/raw/contrail_connectivity": source_raw_connectivity,
+                    **{f"source/{source}/filtered/{key}": value for key, value in source_filtered_metrics.items()},
+                    f"source/{source}/filtered/cldice": source_filtered_connectivity,
+                    f"source/{source}/filtered/contrail_connectivity": source_filtered_connectivity,
+                }
+            )
         threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
         diagnostic_manifest = {"samples": [], "note": "ABI v0 filtered evaluation does not yet emit qualitative diagnostic images."}
         return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
@@ -205,9 +230,24 @@ def _filter_context(dataset: object, index: int) -> dict[str, object]:
 
 def _sample_metadata(dataset: object, index: int) -> dict[str, object]:
     getter = getattr(dataset, "sample_metadata", None)
-    if callable(getter):
-        return {f"sample/{key}": value for key, value in dict(getter(index)).items()}
-    return {}
+    if not callable(getter):
+        return {}
+    metadata = dict(getter(index))
+    record = {f"sample/{key}": value for key, value in metadata.items()}
+    if "dataset_source" in metadata:
+        record["Dataset Source"] = metadata["dataset_source"]
+    for key in ("scene_name", "scene_index", "goes_time", "row", "col"):
+        if key in metadata:
+            record[key] = metadata[key]
+    return record
+
+
+def _dataset_source_from_metadata(metadata: Mapping[str, object]) -> str | None:
+    value = metadata.get("sample/dataset_source", metadata.get("Dataset Source"))
+    if value is None:
+        return None
+    source = str(value).lower()
+    return source if source in {"mit", "google"} else None
 
 
 __all__ = ["ABIEvaluationAdapter", "EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS"]

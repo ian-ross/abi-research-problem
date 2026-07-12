@@ -23,9 +23,10 @@ This workspace provides the `goes_abi_contrail_segmentation` Research Problem fo
 - Loss allowlist: `bce_dice`, `focal_tversky`, `bce_dice_cldice`
 - Auxiliary loss allowlist: `weighted_bce`; auxiliary target weights must be declared in `manifest.yaml`.
 - Optimizer allowlist: `adamw`
-- Sampling policies: `sequential`, `deterministic_shuffle`
+- Sampling policies: `sequential`, `deterministic_shuffle`, `mit_only`, `google_only`, `combined_source_balanced`.
 - Primary checkpoint metric: `val/filtered_dice` (ADR-0003)
 - Validation reporting keeps raw overlap metrics (`val/raw_dice`, `val/raw_iou`, `val/raw_precision`, `val/raw_recall`) alongside filtered metrics (`val/filtered_dice`, `val/filtered_iou`, `val/filtered_precision`, `val/filtered_recall`).
+- Acceptance-gate reviews must inspect Dataset Source-stratified validation metrics, including `val/source/mit/raw_dice`, `val/source/mit/filtered_dice`, `val/source/google/raw_dice`, and `val/source/google/filtered_dice` when both sources are present. Whole-validation evaluation reports the same split as `source/{mit,google}/raw/*` and `source/{mit,google}/filtered/*`, and per-sample records include Dataset Source plus scene/time provenance.
 - Candidate-defined arbitrary losses or auxiliary objectives are not allowed. Future loss functions or auxiliary target types require a Capability Request, human approval, trusted implementation in `ml-autoresearch` harness/problem-support code, and a provider/agent-control-boundary allowlist update.
 
 Source-balanced sampling and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
