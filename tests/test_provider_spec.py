@@ -39,6 +39,13 @@ def test_build_spec_declares_abi_v0_contract() -> None:
         "centerline": [1, 256, 256],
     }
     assert spec.losses == ("bce_dice", "focal_tversky", "bce_dice_cldice")
+    assert spec.sampling_policies == (
+        "sequential",
+        "deterministic_shuffle",
+        "mit_only",
+        "google_only",
+        "combined_source_balanced",
+    )
     assert spec.auxiliary_losses == ("weighted_bce",)
     assert spec.primary_metric == "val/filtered_dice"
     assert spec.operation_capabilities.training is True
@@ -72,6 +79,8 @@ def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
 
     assert metadata["google_split_policy"] == "respect_google_scene_name_train_validation_provenance"
     assert metadata["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
+    assert metadata["sampling_policy_owner"] == "provider/harness"
+    assert "combined_source_balanced" in metadata["sampling_policies"]
     assert "positive" in metadata["records_include"]
 
 

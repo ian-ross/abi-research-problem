@@ -8,6 +8,7 @@ cannot own data loading, losses, metrics, or sampling policy boundaries.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,98 @@ AUXILIARY_OUTPUTS = {
     AUXILIARY_TARGET_CENTERLINE: AUXILIARY_OUTPUT_CENTERLINE_LOGITS,
 }
 AUXILIARY_OUTPUT_SHAPES = {target: [1, 256, 256] for target in AUXILIARY_TARGETS}
+SAMPLING_POLICY_SEED = 20260531
+SAMPLING_POLICY_SEQUENTIAL = "sequential"
+SAMPLING_POLICY_DETERMINISTIC_SHUFFLE = "deterministic_shuffle"
+SAMPLING_POLICY_MIT_ONLY = "mit_only"
+SAMPLING_POLICY_GOOGLE_ONLY = "google_only"
+SAMPLING_POLICY_COMBINED_SOURCE_BALANCED = "combined_source_balanced"
+ABI_SAMPLING_POLICIES = (
+    SAMPLING_POLICY_SEQUENTIAL,
+    SAMPLING_POLICY_DETERMINISTIC_SHUFFLE,
+    SAMPLING_POLICY_MIT_ONLY,
+    SAMPLING_POLICY_GOOGLE_ONLY,
+    SAMPLING_POLICY_COMBINED_SOURCE_BALANCED,
+)
+SOURCE_BALANCED_SAMPLING_POLICIES = {
+    SAMPLING_POLICY_MIT_ONLY,
+    SAMPLING_POLICY_GOOGLE_ONLY,
+    SAMPLING_POLICY_COMBINED_SOURCE_BALANCED,
+}
+DEFAULT_SOURCE_MIXTURE = {"mit": 0.5, "google": 0.5}
+
+
+@dataclass(frozen=True)
+class _ABISamplingConfig:
+    positive_patch_preference: float
+    source_mixture: dict[str, float]
+
+
+def _sampling_config(data_config: Mapping[str, object]) -> _ABISamplingConfig:
+    positive_patch_preference = float(data_config.get("positive_patch_preference", 1.0))
+    if positive_patch_preference <= 0.0:
+        raise ValueError("positive_patch_preference must be positive")
+    source_mixture = _source_mixture(data_config.get("source_mixture", DEFAULT_SOURCE_MIXTURE))
+    return _ABISamplingConfig(
+        positive_patch_preference=positive_patch_preference,
+        source_mixture=source_mixture,
+    )
+
+
+def _source_mixture(value: object) -> dict[str, float]:
+    if not isinstance(value, Mapping):
+        raise ValueError("source_mixture must map Dataset Source names to weights")
+    mixture = {str(source).lower(): float(weight) for source, weight in value.items()}
+    allowed = {"mit", "google"}
+    unknown = set(mixture) - allowed
+    if unknown:
+        raise ValueError(f"unsupported Dataset Source in source_mixture: {sorted(unknown)}")
+    if any(weight < 0.0 for weight in mixture.values()):
+        raise ValueError("source_mixture weights must be non-negative")
+    total = sum(mixture.values())
+    if total <= 0.0:
+        raise ValueError("source_mixture must contain at least one positive weight")
+    return {source: weight / total for source, weight in mixture.items() if weight > 0.0}
+
+
+def source_balanced_sampling_weights(
+    sample_metadata: Sequence[Mapping[str, object]],
+    *,
+    sampling_policy: str,
+    positive_patch_preference: float = 1.0,
+    source_mixture: Mapping[str, float] | None = None,
+) -> tuple[float, ...]:
+    """Return per-sample weights for ABI provider-owned source-aware policies.
+
+    Source weights are normalised within each Dataset Source so
+    ``combined_source_balanced`` follows an explicit mixture rather than raw
+    source counts. Positive-patch preference reweights positives within each
+    source without changing that source's total mixture mass.
+    """
+
+    if positive_patch_preference <= 0.0:
+        raise ValueError("positive_patch_preference must be positive")
+    if sampling_policy == SAMPLING_POLICY_MIT_ONLY:
+        mixture = {"mit": 1.0}
+    elif sampling_policy == SAMPLING_POLICY_GOOGLE_ONLY:
+        mixture = {"google": 1.0}
+    elif sampling_policy == SAMPLING_POLICY_COMBINED_SOURCE_BALANCED:
+        mixture = _source_mixture(source_mixture or DEFAULT_SOURCE_MIXTURE)
+    else:
+        raise ValueError(f"unsupported ABI source-aware sampling policy: {sampling_policy}")
+
+    sources = [str(row.get("dataset_source", "")).lower() for row in sample_metadata]
+    positives = [bool(row.get("positive", False)) for row in sample_metadata]
+    weights = [0.0 for _ in sample_metadata]
+    for source, source_mass in mixture.items():
+        indices = [index for index, row_source in enumerate(sources) if row_source == source]
+        if not indices:
+            raise ValueError(f"sampling policy {sampling_policy!r} requested Dataset Source {source!r}, but no samples are available")
+        raw = [positive_patch_preference if positives[index] else 1.0 for index in indices]
+        raw_total = sum(raw)
+        for index, raw_weight in zip(indices, raw, strict=True):
+            weights[index] = source_mass * raw_weight / raw_total
+    return tuple(weights)
 
 
 class ABITrainingAdapter:
@@ -53,6 +146,7 @@ class ABITrainingAdapter:
         from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
 
         self.filter_pipeline = build_default_artifact_filter_pipeline(data_config)
+        self._sampling_config = _sampling_config(data_config or {})
 
     def validate_data_root(self, data_config: Mapping[str, object]) -> Path:
         root = Path(str(data_config.get("dataset_root", "."))).expanduser().resolve()
@@ -60,13 +154,15 @@ class ABITrainingAdapter:
             from ml_autoresearch.errors import ResearchProblemDataError
 
             raise ResearchProblemDataError(f"ABI dataset_root does not exist or is not a directory: {root}")
-        self._resolve_required_path(root, data_config, "inputs_zarr")
-        self._resolve_required_path(root, data_config, "labels_zarr")
-        layout = data_config.get("layout")
-        if layout not in {"mit", "google"}:
-            from ml_autoresearch.errors import ResearchProblemDataError
+        source_configs = self._source_data_configs(root, data_config)
+        for source_config in source_configs:
+            self._resolve_required_path(root, source_config, "inputs_zarr")
+            self._resolve_required_path(root, source_config, "labels_zarr")
+            layout = source_config.get("layout")
+            if layout not in {"mit", "google"}:
+                from ml_autoresearch.errors import ResearchProblemDataError
 
-            raise ResearchProblemDataError("ABI data_config.layout must be 'mit' or 'google'")
+                raise ResearchProblemDataError("ABI data_config.layout must be 'mit' or 'google'")
         return root
 
     def dataset_metadata(self, data_config: Mapping[str, object]) -> dict[str, object]:
@@ -75,12 +171,15 @@ class ABITrainingAdapter:
             "id": RESEARCH_PROBLEM_ID,
             "dataset_root": str(root),
             "host_data_path": str(root),
-            "layout": str(data_config["layout"]),
-            "inputs_zarr": str(data_config["inputs_zarr"]),
-            "labels_zarr": str(data_config["labels_zarr"]),
             "input_mode": str(data_config.get("input_mode", INPUT_MODE_ABI_16CH)),
             "target": "contrail_mask",
         }
+        if "layout" in data_config:
+            metadata["layout"] = str(data_config["layout"])
+        if "inputs_zarr" in data_config:
+            metadata["inputs_zarr"] = str(data_config["inputs_zarr"])
+        if "labels_zarr" in data_config:
+            metadata["labels_zarr"] = str(data_config["labels_zarr"])
         for optional_key in (
             "metadata_rows",
             "scene_names",
@@ -95,6 +194,9 @@ class ABITrainingAdapter:
             "scanline_min_length_pixels",
             "scanline_max_probability_std",
             "pixel_area_km2",
+            "positive_patch_preference",
+            "source_mixture",
+            "sources",
         ):
             if optional_key in data_config:
                 metadata[optional_key] = data_config[optional_key]
@@ -110,23 +212,43 @@ class ABITrainingAdapter:
         from ml_autoresearch.training_adapters import ResearchProblemDatasets
 
         root = self.validate_data_root(data_config)
-        layout = str(data_config["layout"])
-        inputs_path = self._resolve_required_path(root, data_config, "inputs_zarr")
-        labels_path = self._resolve_required_path(root, data_config, "labels_zarr")
         input_mode = self._input_mode_from_manifest(resolved_manifest_path)
-        arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
-        split_index = self._build_split_index(arrays.labels, layout=layout, data_config=data_config)
-        train_records = self._limit_records(split_index.train, max_samples)
-        validation_records = self._limit_records(split_index.validation, max_samples)
-        train_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, train_records, input_mode=input_mode))
-        validation_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_records, input_mode=input_mode))
+        source_datasets: list[tuple[_TorchABIPatchDataset, _TorchABIPatchDataset, dict[str, object]]] = []
+        for source_config in self._source_data_configs(root, data_config):
+            layout = str(source_config["layout"])
+            inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
+            labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
+            arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
+            split_index = self._build_split_index(arrays.labels, layout=layout, data_config=source_config)
+            train_records = self._limit_records(split_index.train, max_samples)
+            validation_records = self._limit_records(split_index.validation, max_samples)
+            source_datasets.append(
+                (
+                    _TorchABIPatchDataset(ABIPatchDataset(arrays, train_records, input_mode=input_mode)),
+                    _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_records, input_mode=input_mode)),
+                    split_index.data_policy_metadata,
+                )
+            )
+        if len(source_datasets) == 1:
+            train_dataset, validation_dataset, split_metadata = source_datasets[0]
+        else:
+            train_dataset = _CombinedTorchABIPatchDataset(tuple(item[0] for item in source_datasets))
+            validation_dataset = _CombinedTorchABIPatchDataset(tuple(item[1] for item in source_datasets))
+            split_metadata = {"dataset_source": "combined", "source_split_policies": [item[2] for item in source_datasets]}
+        data_policy_metadata = {
+            **split_metadata,
+            "sampling_policy_owner": "provider/harness",
+            "available_sampling_policies": list(ABI_SAMPLING_POLICIES),
+            "positive_patch_preference": self._sampling_config.positive_patch_preference,
+            "source_mixture": dict(self._sampling_config.source_mixture),
+        }
         return ResearchProblemDatasets(
             train_dataset=train_dataset,
             validation_dataset=validation_dataset,
             start_line="Starting ABI Contrail fixture training.",
             success_line="ABI Contrail fixture training completed.",
             failure_prefix="ABI Contrail fixture training failed",
-            data_policy_metadata=split_index.data_policy_metadata,
+            data_policy_metadata=data_policy_metadata,
         )
 
     def apply_augmentation_policy(self, dataset: object, augmentation_policy: str) -> object:
@@ -135,6 +257,41 @@ class ABITrainingAdapter:
 
             raise TrainingError(f"unsupported ABI augmentation policy: {augmentation_policy}")
         return dataset
+
+    def data_loader_for_sampling(
+        self,
+        dataset: object,
+        *,
+        batch_size: int,
+        sampling_policy: str,
+        loader_kwargs: Mapping[str, object] | None = None,
+    ) -> object | None:
+        """Build ABI provider-owned samplers for source-aware training policies."""
+
+        if sampling_policy not in SOURCE_BALANCED_SAMPLING_POLICIES:
+            return None
+        import torch
+        from torch.utils.data import DataLoader, WeightedRandomSampler
+        from ml_autoresearch.errors import TrainingError
+
+        if not hasattr(dataset, "sample_metadata"):
+            raise TrainingError(f"ABI sampling policy {sampling_policy!r} requires sample metadata")
+        metadata = [dataset.sample_metadata(index) for index in range(len(dataset))]  # type: ignore[arg-type]
+        weights = source_balanced_sampling_weights(
+            metadata,
+            sampling_policy=sampling_policy,
+            positive_patch_preference=self._sampling_config.positive_patch_preference,
+            source_mixture=self._sampling_config.source_mixture,
+        )
+        generator = torch.Generator()
+        generator.manual_seed(SAMPLING_POLICY_SEED)
+        sampler = WeightedRandomSampler(
+            weights=torch.as_tensor(weights, dtype=torch.double),
+            num_samples=len(weights),
+            replacement=True,
+            generator=generator,
+        )
+        return DataLoader(dataset, batch_size=batch_size, sampler=sampler, **dict(loader_kwargs or {}))
 
     def primary_output_name(self, output_spec: Mapping[str, object]) -> str:
         return str(output_spec.get("form", OUTPUT_FORM_MASK_LOGITS))
@@ -255,6 +412,30 @@ class ABITrainingAdapter:
         scale = torch.clamp(flat_max - flat_min, min=1e-6)
         return torch.clamp((rgb - flat_min) / scale, 0.0, 1.0)
 
+    @staticmethod
+    def _source_data_configs(root: Path, data_config: Mapping[str, object]) -> tuple[Mapping[str, object], ...]:
+        sources = data_config.get("sources")
+        if sources is None:
+            return (data_config,)
+        if not isinstance(sources, Sequence) or isinstance(sources, (str, bytes)):
+            from ml_autoresearch.errors import ResearchProblemDataError
+
+            raise ResearchProblemDataError("ABI data_config.sources must be a sequence of source configs")
+        source_configs: list[Mapping[str, object]] = []
+        for source in sources:
+            if not isinstance(source, Mapping):
+                from ml_autoresearch.errors import ResearchProblemDataError
+
+                raise ResearchProblemDataError("each ABI data_config.sources item must be a mapping")
+            merged = {key: value for key, value in data_config.items() if key != "sources"}
+            merged.update(source)
+            source_configs.append(merged)
+        if not source_configs:
+            from ml_autoresearch.errors import ResearchProblemDataError
+
+            raise ResearchProblemDataError("ABI data_config.sources must not be empty")
+        return tuple(source_configs)
+
     def _build_split_index(self, labels: Any, *, layout: str, data_config: Mapping[str, object]):
         if layout == "google":
             metadata_rows = data_config.get("metadata_rows")
@@ -335,6 +516,18 @@ class _TorchABIPatchDataset:
         return torch.from_numpy(sample["inputs"]), torch.from_numpy(sample["target"])
 
     def sample_metadata(self, index: int) -> dict[str, object]:
+        if self.dataset.index_records:
+            record = self.dataset.index_records[index]
+            return {
+                "dataset_source": record.dataset_source,
+                "split": record.split,
+                "scene_name": record.scene_name,
+                "scene_index": record.scene_index,
+                "goes_time": record.goes_time,
+                "row": record.row,
+                "col": record.col,
+                "positive": record.positive,
+            }
         sample = self.dataset[index]
         metadata = sample.get("metadata", {})
         return dict(metadata) if isinstance(metadata, Mapping) else {}
@@ -355,6 +548,47 @@ class _TorchABIPatchDataset:
             context["longitude"] = np.asarray(source[..., 16], dtype=np.float64)
             context["latitude"] = np.asarray(source[..., 17], dtype=np.float64)
         return context
+
+
+class _CombinedTorchABIPatchDataset:
+    """Concatenate provider ABI datasets while preserving per-source metadata."""
+
+    def __init__(self, datasets: Sequence[_TorchABIPatchDataset]) -> None:
+        if not datasets:
+            raise ValueError("combined ABI dataset requires at least one source dataset")
+        self.datasets = tuple(datasets)
+        self._offsets: list[int] = []
+        offset = 0
+        for dataset in self.datasets:
+            self._offsets.append(offset)
+            offset += len(dataset)
+        self._length = offset
+
+    def __len__(self) -> int:
+        return self._length
+
+    def __getitem__(self, index: int):
+        dataset, local_index = self._resolve(index)
+        return dataset[local_index]
+
+    def sample_metadata(self, index: int) -> dict[str, object]:
+        dataset, local_index = self._resolve(index)
+        return dataset.sample_metadata(local_index)
+
+    def filter_context(self, index: int) -> dict[str, object]:
+        dataset, local_index = self._resolve(index)
+        return dataset.filter_context(local_index)
+
+    def _resolve(self, index: int) -> tuple[_TorchABIPatchDataset, int]:
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        for dataset_index in range(len(self.datasets) - 1, -1, -1):
+            offset = self._offsets[dataset_index]
+            if index >= offset:
+                return self.datasets[dataset_index], index - offset
+        raise IndexError(index)
 
 
 def _input_specs() -> dict[str, dict[str, object]]:
@@ -416,6 +650,10 @@ def split_data_policy_metadata() -> dict[str, object]:
         "google_split_policy": "respect_google_scene_name_train_validation_provenance",
         "mit_split_policy": "deterministic_whole_scene_train_validation_split_before_windowing",
         "mit_window_shape": [256, 256],
+        "sampling_policy_owner": "provider/harness",
+        "sampling_policies": list(ABI_SAMPLING_POLICIES),
+        "positive_patch_preference_metadata_key": "positive_patch_preference",
+        "source_mixture_metadata_key": "source_mixture",
         "records_include": [
             "dataset_source",
             "scene_name",
@@ -470,7 +708,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         auxiliary_output_shapes=AUXILIARY_OUTPUT_SHAPES,
         auxiliary_losses=(AUXILIARY_LOSS_WEIGHTED_BCE,),
         optimizers=("adamw",),
-        sampling_policies=("sequential", "deterministic_shuffle"),
+        sampling_policies=ABI_SAMPLING_POLICIES,
         frame_selection_policies=("all_target_frames",),
         input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
         augmentation_policies=("none",),

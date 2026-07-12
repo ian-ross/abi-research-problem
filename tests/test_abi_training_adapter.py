@@ -9,7 +9,7 @@ import yaml
 import torch
 import zarr
 
-from abi_contrail.adapters import ABITrainingAdapter, build_spec, derive_auxiliary_target
+from abi_contrail.adapters import ABITrainingAdapter, build_spec, derive_auxiliary_target, source_balanced_sampling_weights
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
@@ -92,6 +92,74 @@ def test_abi_training_adapter_validates_data_root_and_builds_split_datasets(tmp_
     assert len(datasets.train_dataset) == 1
     assert len(datasets.validation_dataset) == 1
     assert datasets.data_policy_metadata["split_policy"] == "respect_google_scene_name_train_validation_provenance"
+
+
+def test_training_adapter_logs_sampling_policy_metadata(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    data_config["positive_patch_preference"] = 3.0
+    data_config["source_mixture"] = {"mit": 1, "google": 2}
+    adapter = ABITrainingAdapter(data_config)
+
+    datasets = adapter.build_datasets(data_config=data_config, resolved_manifest_path=tmp_path / "resolved.yaml")
+
+    assert datasets.data_policy_metadata["sampling_policy_owner"] == "provider/harness"
+    assert datasets.data_policy_metadata["positive_patch_preference"] == 3.0
+    assert datasets.data_policy_metadata["source_mixture"] == {"mit": 1 / 3, "google": 2 / 3}
+    assert "combined_source_balanced" in datasets.data_policy_metadata["available_sampling_policies"]
+
+
+def test_source_aware_sampling_weights_filter_and_balance_sources() -> None:
+    metadata = [
+        {"dataset_source": "mit", "positive": False},
+        {"dataset_source": "mit", "positive": True},
+        {"dataset_source": "google", "positive": False},
+        {"dataset_source": "google", "positive": False},
+        {"dataset_source": "google", "positive": True},
+    ]
+
+    mit_only = source_balanced_sampling_weights(metadata, sampling_policy="mit_only")
+    google_only = source_balanced_sampling_weights(metadata, sampling_policy="google_only")
+    combined = source_balanced_sampling_weights(
+        metadata,
+        sampling_policy="combined_source_balanced",
+        positive_patch_preference=4.0,
+        source_mixture={"mit": 0.25, "google": 0.75},
+    )
+
+    assert mit_only[0] > 0
+    assert mit_only[1] > 0
+    assert mit_only[2:] == (0.0, 0.0, 0.0)
+    assert google_only[:2] == (0.0, 0.0)
+    assert sum(google_only[2:]) == pytest.approx(1.0)
+    assert sum(combined[:2]) == pytest.approx(0.25)
+    assert sum(combined[2:]) == pytest.approx(0.75)
+    assert combined[1] > combined[0]
+    assert combined[4] > combined[2]
+
+
+def test_training_adapter_builds_provider_owned_source_sampler() -> None:
+    class IndexDataset:
+        metadata = [
+            {"dataset_source": "mit", "positive": False},
+            {"dataset_source": "mit", "positive": True},
+            {"dataset_source": "google", "positive": True},
+        ]
+
+        def __len__(self) -> int:
+            return len(self.metadata)
+
+        def __getitem__(self, index: int):
+            return torch.tensor([index]), torch.tensor([0.0])
+
+        def sample_metadata(self, index: int) -> dict[str, object]:
+            return dict(self.metadata[index])
+
+    adapter = ABITrainingAdapter({"positive_patch_preference": 2.0})
+    loader = adapter.data_loader_for_sampling(IndexDataset(), batch_size=1, sampling_policy="mit_only", loader_kwargs={})
+
+    sampled_indices = [int(inputs.item()) for inputs, _target in loader]
+    assert sampled_indices
+    assert set(sampled_indices) <= {0, 1}
 
 
 def test_training_adapter_uses_resolved_manifest_input_mode_for_channel_selection(tmp_path: Path) -> None:
