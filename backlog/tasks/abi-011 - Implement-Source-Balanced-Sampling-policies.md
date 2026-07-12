@@ -49,3 +49,13 @@ Add provider/harness sampling support for MIT-only, Google-only, and combined So
 - Added tests for source-only filtering, explicit source mixture balancing, positive bias, provider-owned sampler, and candidate rejection of sampling-parameter overrides.
 - Validation: uv run pytest -q (36 passed); uv run ruff check targeted files.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented provider/harness-owned Source-Balanced Sampling policies for ABI training. The ABI spec now declares mit_only, google_only, and combined_source_balanced; the ABI adapter computes source-normalized sampling weights with configurable positive_patch_preference and explicit source_mixture metadata; and ml-autoresearch delegates supported sampling policies to trusted Research Problem adapters before falling back to generic samplers. Candidate manifests can select allowlisted policies but cannot set sampling parameters such as source_mixture or positive_patch_preference.
+
+Tests:
+- uv run pytest -q
+- uv run ruff check abi_contrail/adapters.py tests/test_abi_training_adapter.py tests/test_provider_spec.py tests/test_candidate_filter_boundary.py ../ml-autoresearch/src/ml_autoresearch/training.py
+<!-- SECTION:FINAL_SUMMARY:END -->
