@@ -4,10 +4,12 @@ title: Create ABI research brief and dataset profile
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - docs
   - profile
-dependencies: []
+dependencies:
+  - ABI-001
 priority: high
 ---
 
