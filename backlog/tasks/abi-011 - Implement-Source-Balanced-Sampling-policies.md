@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 20:39'
+updated_date: '2026-07-12 20:45'
 labels:
   - sampling
   - data
@@ -39,3 +39,13 @@ Add provider/harness sampling support for MIT-only, Google-only, and combined So
 4. Add deterministic fixture-based tests covering source filtering/balancing, positive-bias behavior, metadata logging, and candidate isolation.
 5. Run targeted uv pytest checks and update task notes/acceptance criteria with results.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added ABI source-aware sampling policies: mit_only, google_only, combined_source_balanced.
+- Added provider/harness-owned DataLoader hook in ml-autoresearch so ABI adapter can install weighted samplers.
+- Added configurable positive_patch_preference and explicit source_mixture data policy metadata.
+- Added tests for source-only filtering, explicit source mixture balancing, positive bias, provider-owned sampler, and candidate rejection of sampling-parameter overrides.
+- Validation: uv run pytest -q (36 passed); uv run ruff check targeted files.
+<!-- SECTION:NOTES:END -->
