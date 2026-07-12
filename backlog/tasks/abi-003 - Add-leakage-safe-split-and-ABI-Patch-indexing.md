@@ -1,10 +1,11 @@
 ---
 id: ABI-003
 title: Add leakage-safe split and ABI Patch indexing
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 13:24'
 labels:
   - data
   - splits
