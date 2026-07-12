@@ -4,10 +4,12 @@ title: Add filtered Dice as v0 primary metric
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - evaluation
   - harness
-dependencies: []
+dependencies:
+  - ABI-007
 priority: high
 ---
 
