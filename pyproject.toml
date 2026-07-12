@@ -42,6 +42,9 @@ packages = ["abi_contrail"]
 dev = [
     "pytest>=9.1.1",
 ]
+torch = [
+    "torch>=2.13.0",
+]
 
 [tool.uv.sources]
 ml-autoresearch = { path = "../ml-autoresearch", editable = true }
