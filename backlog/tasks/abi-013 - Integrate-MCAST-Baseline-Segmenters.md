@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 20:54'
+updated_date: '2026-07-12 20:57'
 labels:
   - baselines
   - evaluation
@@ -33,16 +33,17 @@ Evaluate MCAST detection model versions 1.1 and 2.1 as provider-owned Baseline S
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Implement a provider-owned Baseline Segmenter loader for MCAST detection-1.1.pt and detection-2.1 directories.
-2. Avoid invoking full MCAST operational run_detection; extract class-1 probabilities and thresholded masks from model output before MCAST postprocessing.
-3. Recreate required MCAST input features only inside the baseline adapter: C11, C14, and C13-C15.
-4. Ensure offline loading works without network downloads, especially for SMP encoder initialization.
-5. Evaluate baselines through the same raw/filtered metric path as candidates.
-6. Store baseline metrics/artifacts so acceptance reports can compare candidates to the best available Baseline Segmenter.
+1. Inspect current provider/evaluation extension points and MCAST loading semantics.
+2. Add provider-owned MCAST baseline segmenter loaders for v1.1 file and v2.1 directory without invoking MCAST operational postprocessing.
+3. Route baseline predictions through the existing raw/filtered evaluation metric path and persist baseline metrics artifacts for later comparison.
+4. Add lightweight unit tests with fake models/assets; do not run real MCAST evaluations or training.
+5. Create a follow-up backlog issue to run baseline evaluations on the GPU server if needed.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 - MCAST source code path: /home/iross/work/mit/code/mcast. The planning-inputs/mcast symlink was removed because it interfered with editor/tooling traversal; use the absolute path when implementing this task.
+
+- Started implementation; will not run real MCAST baseline evaluations on this machine.
 <!-- SECTION:NOTES:END -->
