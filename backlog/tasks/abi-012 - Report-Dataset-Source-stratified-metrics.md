@@ -1,7 +1,7 @@
 ---
 id: ABI-012
 title: Report Dataset Source-stratified metrics
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
