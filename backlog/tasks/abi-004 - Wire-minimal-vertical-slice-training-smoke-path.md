@@ -48,3 +48,13 @@ Connect the ABI provider adapter to ml-autoresearch training on tiny fixtures so
 - Added torch tuple wrapper and ABI RGB diagnostic renderer for prediction sample artifacts.
 - Added vertical-slice tests for adapter dataset construction, provider training capability, candidate smoke, and tiny fixture training artifacts.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented ABI vertical-slice training through ml-autoresearch. The provider now declares training capability with ABITrainingAdapter, validates fixture zarr roots, builds train/validation datasets, keeps bce_dice and val/dice in trusted adapter code, and supports prediction sample artifact rendering for 16-channel ABI inputs. Added tests covering adapter construction, provider loading, minimal abi_16ch -> mask_logits candidate smoke, and tiny fixture training artifacts.
+
+Tests:
+- uv run pytest -q (14 passed, 1 skipped: torch-dependent integration skipped in this project venv)
+- PYTHONPATH=.:../ml-autoresearch/src:/home/iross/work/mit/projects/abi-research-problem/.venv/lib/python3.12/site-packages ../ml-autoresearch/.venv/bin/python -m pytest tests/test_abi_training_adapter.py::test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts -q (1 passed; exercised torch-backed smoke/training via ml-autoresearch dev venv)
+<!-- SECTION:FINAL_SUMMARY:END -->
