@@ -30,4 +30,12 @@ print(spec.id, spec.version, spec.input_modes, spec.output_forms, spec.primary_m
 PY
 ```
 
-The ABI-001 scaffold exposes the v0 declarative spec only. Dataset loading, leakage-safe splits, filtered metrics, artifact filters, baseline segmenters, and training smoke paths are added by follow-up backlog tasks.
+Candidate models may import optional ABI front-end helpers from `abi_contrail.model_support`:
+
+```python
+from abi_contrail.model_support import Conv1x1ChannelMixer, RawPlusLearnedChannelMixer
+```
+
+These helpers mix only the harness-approved input tensor; provider-owned channel selection still excludes longitude and latitude. `RawPlusLearnedChannelMixer` can preserve explicit brightness-temperature-difference features via `difference_channel_pairs=((a, b), ...)`, emitted as `input[a] - input[b]` before the learned projection channels.
+
+The ABI provider exposes the v0 declarative spec plus the staged vertical-slice dataset/training support tracked in the backlog. Filtered metrics, artifact filters, baseline segmenters, and additional sampling policies are added by follow-up tasks.

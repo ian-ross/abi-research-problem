@@ -12,10 +12,19 @@ This workspace provides the `goes_abi_contrail_segmentation` Research Problem fo
   - `abi_16ch_plus_sza`: `[17, 256, 256]`, GOES ABI channels 1-16 plus Solar Geometry Input.
   - `abi_thermal_10ch`: `[10, 256, 256]`, GOES ABI channels 7-16.
 - Candidate inputs always exclude longitude and latitude.
+- Reusable candidate front ends are available from `abi_contrail.model_support`:
+  - `Conv1x1ChannelMixer` learns per-pixel linear mixtures across the harness-approved input channels.
+  - `RawPlusLearnedChannelMixer` concatenates explicit raw-channel and/or brightness-temperature-difference features with learned 1x1 projections.
 - Output form: `mask_logits`, a `[1, 256, 256]` Contrail Mask logit tensor.
 - Loss allowlist: `bce_dice`
 - Optimizer allowlist: `adamw`
 - Sampling policies: `sequential`, `deterministic_shuffle`
 - Temporary primary metric: `val/dice`
 
-Dataset loading, leakage-safe splits, artifact filtering, filtered metrics, learned channel mixers, source-balanced sampling, and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
+Dataset loading, leakage-safe splits, artifact filtering, filtered metrics, source-balanced sampling, and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
+
+## Learned channel-mixer guidance
+
+GOES ABI contrail work often benefits from relationships between thermal infrared brightness temperatures, including window and water-vapor band differences that can make thin ice clouds and line-shaped contrails more separable from surrounding cloud or surface backgrounds. Candidate architectures may use `RawPlusLearnedChannelMixer(..., difference_channel_pairs=((a, b), ...))` to preserve explicit brightness-temperature-difference planes computed as `input[a] - input[b]` while also giving the learned projection access to all provider-approved input channels.
+
+Do not treat any short list of brightness-temperature differences as the fixed search space. The provider supplies safe input tensors and lightweight front-end utilities; candidates remain free to learn other ABI channel combinations, preserve raw bands, add BTD features, or ignore these mixers entirely.
