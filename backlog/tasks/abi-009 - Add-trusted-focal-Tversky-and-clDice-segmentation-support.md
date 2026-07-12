@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 16:46'
+updated_date: '2026-07-12 17:06'
 labels:
   - loss
   - harness
@@ -48,6 +48,8 @@ Extend trusted segmentation support with losses and metrics needed for rare thin
 - Updated ABI provider to allowlist and dispatch bce_dice, focal_tversky, and bce_dice_cldice; added raw/filtered connectivity metrics to training/evaluation outputs.
 - Documented future loss additions via Capability Request in ../ml-autoresearch/docs/candidate-experiment-contract.md and abi_contrail/brief/goes-abi-contrail-segmentation.md.
 - Validation: uv run pytest tests/test_problem_support_library.py tests/test_research_problem_training_dispatch.py -q in ../ml-autoresearch; uv run pytest -q in abi-research-problem; ruff checks passed for touched files.
+
+- Re-ran full ../ml-autoresearch suite with ML_AUTORESEARCH_GVCCS_PROBLEM_ROOT=/home/iross/work/mit/projects/gvccs-research-problem. Initial run also needed ML_AUTORESEARCH_TEST_PROBLEM_ROOT; with both external roots set, result was 493 passed, 2 skipped, 2 failed. Remaining failures appear unrelated to ABI-009 touched code: autonomy-step campaign-report prompt assertion and synthetic CUDA monkeypatch training status.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
