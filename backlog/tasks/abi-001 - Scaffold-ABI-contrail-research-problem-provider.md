@@ -30,10 +30,9 @@ Create the package and workspace structure for the GOES ABI Contrail Segmentatio
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Compare the current repository with ../gvccs-research-problem provider structure and ../ml-autoresearch ResearchProblemSpec requirements.
-2. Choose the provider package name and build_spec target for GOES ABI Contrail Segmentation.
-3. Add package scaffold: research_problem.py, adapters.py, datasets.py placeholders, profile/brief directories, and package metadata.
-4. Declare a minimal v0 spec for the vertical slice: abi_16ch input, mask_logits output, bce_dice loss, adamw optimizer, sequential/deterministic sampling, and temporary val/dice primary metric.
-5. Add minimal docs showing how the provider is registered/loaded from this workspace.
-6. Validate by importing build_spec and checking ml-autoresearch provider validation if available.
+1. Inspect current repo structure and compare with ../gvccs-research-problem and ../ml-autoresearch provider interfaces.
+2. Identify the package/build_spec entry point and metadata needed for installation.
+3. Add the minimal provider scaffold and v0 ResearchProblemSpec fields required by the ACs.
+4. Add README/brief registration instructions.
+5. Validate with uv-based import/smoke checks and any available ml-autoresearch validation.
 <!-- SECTION:PLAN:END -->
