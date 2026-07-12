@@ -49,3 +49,16 @@ Extend trusted segmentation support with losses and metrics needed for rare thin
 - Documented future loss additions via Capability Request in ../ml-autoresearch/docs/candidate-experiment-contract.md and abi_contrail/brief/goes-abi-contrail-segmentation.md.
 - Validation: uv run pytest tests/test_problem_support_library.py tests/test_research_problem_training_dispatch.py -q in ../ml-autoresearch; uv run pytest -q in abi-research-problem; ruff checks passed for touched files.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented ABI-009 across the trusted harness and ABI provider. In ../ml-autoresearch, added focal_tversky_loss, clDice/Contrail Connectivity Metric, cldice_loss, and bce_dice_cldice_loss with tests for thin positive masks, connected/broken lines, and empty masks. In abi-research-problem, allowlisted and dispatched bce_dice, focal_tversky, and bce_dice_cldice, added raw/filtered connectivity metrics, and documented the Capability Request path for future losses.
+
+Tests:
+- cd ../ml-autoresearch && uv run pytest tests/test_problem_support_library.py tests/test_research_problem_training_dispatch.py -q
+- cd ../ml-autoresearch && uv run ruff check src/ml_autoresearch/problem_support/segmentation.py tests/test_problem_support_library.py
+- cd ../ml-autoresearch && uv run pytest -q (blocked during collection: ML_AUTORESEARCH_GVCCS_PROBLEM_ROOT unset for external GVCCS tests)
+- uv run pytest -q
+- uv run ruff check abi_contrail/adapters.py abi_contrail/evaluation.py tests/test_provider_spec.py tests/test_abi_training_adapter.py
+<!-- SECTION:FINAL_SUMMARY:END -->
