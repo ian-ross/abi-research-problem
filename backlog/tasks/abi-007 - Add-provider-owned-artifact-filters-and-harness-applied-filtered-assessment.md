@@ -4,7 +4,7 @@ title: Add provider-owned artifact filters and harness-applied filtered assessme
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:05'
+updated_date: '2026-07-12 12:07'
 labels:
   - evaluation
   - harness
@@ -29,3 +29,14 @@ Implement the ADR decision that Geographic Feature Filter and Scanline Artifact 
 - [ ] #5 Evaluation records number and area of predicted-positive pixels removed by filters
 - [ ] #6 Candidate code cannot define or override Artifact Filters
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Define the provider-side Artifact Filter API for predictions/probabilities and removed-pixel diagnostics.
+2. Implement an initial Geographic Feature Filter using approved coastline/river ancillary data or a documented placeholder that fails loudly if data are unavailable.
+3. Implement a Scanline Artifact Filter that identifies long approximately constant ABI-y positive structures.
+4. Extend harness/provider evaluation integration so filters are applied uniformly to candidate and baseline predictions.
+5. Report raw metrics, filtered metrics, and removed predicted-positive counts/area.
+6. Add tests proving candidate code cannot provide or override filters.
+<!-- SECTION:PLAN:END -->
