@@ -33,10 +33,9 @@ Extend trusted segmentation support with losses and metrics needed for rare thin
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inspect existing ml_autoresearch.problem_support.segmentation helpers and choose where new trusted losses/metrics belong.
-2. Implement focal_tversky loss with bounded, documented alpha/beta/gamma defaults appropriate for rare thin positives.
-3. Implement trusted clDice/Contrail Connectivity Metric with tests on simple line masks, broken lines, and empty masks.
-4. Implement bce_dice_cldice as a trusted composed loss.
-5. Update the ABI provider loss allowlist to include bce_dice, focal_tversky, and bce_dice_cldice.
-6. Document that future losses require capability requests and agent-control-boundary updates.
+1. Inspect existing ml_autoresearch.problem_support.segmentation helpers in ../ml-autoresearch and current ABI provider integration points.
+2. Implement focal_tversky, clDice/Contrail Connectivity Metric, and bce_dice_cldice in trusted harness/problem-support code in ../ml-autoresearch, not candidate code.
+3. Add/adjust tests in ../ml-autoresearch for focal Tversky, clDice connectivity behavior, composed loss, and empty-mask edge cases.
+4. Update this repository only where the ABI provider spec/allowlist or documentation must reference the trusted losses exposed by ml-autoresearch.
+5. Run targeted uv-managed tests and update ABI-009 acceptance criteria/final notes.
 <!-- SECTION:PLAN:END -->
