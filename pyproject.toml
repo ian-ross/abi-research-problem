@@ -1,10 +1,11 @@
 [project]
 name = "abi-research-problem"
 version = "0.1.0"
-description = "Add your description here"
+description = "GOES ABI Contrail Segmentation research problem provider for ml-autoresearch"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ml-autoresearch",
     "httpx>=0.28.1",
     "matplotlib>=3.11.0",
     "netcdf4>=1.7.4",
@@ -20,7 +21,27 @@ dependencies = [
     "zarr>=3.2.1",
 ]
 
+[project.entry-points."ml_autoresearch.research_problems"]
+goes_abi_contrail_segmentation = "abi_contrail.research_problem:build_spec"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+exclude = [
+    "/.pi-subagents",
+    "/notebooks",
+    "/planning-inputs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["abi_contrail"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.uv.sources]
+ml-autoresearch = { path = "../ml-autoresearch", editable = true }
