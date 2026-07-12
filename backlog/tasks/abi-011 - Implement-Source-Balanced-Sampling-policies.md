@@ -4,7 +4,7 @@ title: Implement Source-Balanced Sampling policies
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:05'
+updated_date: '2026-07-12 12:07'
 labels:
   - sampling
   - data
@@ -28,3 +28,14 @@ Add provider/harness sampling support for MIT-only, Google-only, and combined So
 - [ ] #4 Positive-patch bias is configurable and logged in data policy metadata
 - [ ] #5 Sampling policy is harness/provider-owned, not candidate-owned
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Define provider-owned training data policies: mit_only, google_only, and combined_source_balanced.
+2. Implement source-aware sample pools using Dataset Source metadata from ABI-003.
+3. Add configurable positive-patch preference without allowing candidate-owned samplers.
+4. Ensure combined_source_balanced uses explicit source mixture weights rather than raw sample counts.
+5. Record sampling policy, source mixture, and positive bias in data_policy_metadata and run artifacts.
+6. Add deterministic tests for source proportions and positive-bias behavior on fixture sample indexes.
+<!-- SECTION:PLAN:END -->
