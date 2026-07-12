@@ -1,0 +1,27 @@
+---
+id: ABI-014
+title: Create ABI research brief and dataset profile
+status: To Do
+assignee: []
+created_date: '2026-07-12 12:04'
+labels:
+  - docs
+  - profile
+dependencies: []
+priority: high
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Write the agent-facing research brief and dataset profile for GOES ABI Contrail Segmentation, capturing the decisions made during planning without putting implementation details in CONTEXT.md.
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Brief defines the task as binary GOES ABI Contrail Segmentation on ABI Patches
+- [ ] #2 Brief explains input modes, no-lon-lat rule, Learned Channel Mixer guidance, and BTD motivation
+- [ ] #3 Brief documents loss/auxiliary-target allowlists and capability-request rules
+- [ ] #4 Dataset profile summarizes MIT and Google counts, split policy, positivity, and projection caveats
+- [ ] #5 Profile generation can tolerate missing full data when explicitly requested
+<!-- AC:END -->
