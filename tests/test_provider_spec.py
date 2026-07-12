@@ -29,6 +29,9 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
     assert spec.losses == ("bce_dice",)
     assert spec.primary_metric == "val/dice"
+    assert spec.operation_capabilities.training is True
+    assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
+    assert spec.evaluation_adapter is not None
 
 
 def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:

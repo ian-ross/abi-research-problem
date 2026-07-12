@@ -52,13 +52,34 @@ class ABITrainingAdapter:
 
     def dataset_metadata(self, data_config: Mapping[str, object]) -> dict[str, object]:
         root = self.validate_data_root(data_config)
-        return {
+        metadata: dict[str, object] = {
             "id": RESEARCH_PROBLEM_ID,
             "dataset_root": str(root),
+            "host_data_path": str(root),
             "layout": str(data_config["layout"]),
+            "inputs_zarr": str(data_config["inputs_zarr"]),
+            "labels_zarr": str(data_config["labels_zarr"]),
             "input_mode": str(data_config.get("input_mode", INPUT_MODE_ABI_16CH)),
             "target": "contrail_mask",
         }
+        for optional_key in (
+            "metadata_rows",
+            "scene_names",
+            "goes_times",
+            "val_fraction",
+            "split_seed",
+            "patch_size",
+            "stride",
+            "coastline_geojson",
+            "rivers_geojson",
+            "geographic_filter_pixel_buffer",
+            "scanline_min_length_pixels",
+            "scanline_max_probability_std",
+            "pixel_area_km2",
+        ):
+            if optional_key in data_config:
+                metadata[optional_key] = data_config[optional_key]
+        return metadata
 
     def build_datasets(
         self,
@@ -236,6 +257,28 @@ class _TorchABIPatchDataset:
         sample = self.dataset[index]
         return torch.from_numpy(sample["inputs"]), torch.from_numpy(sample["target"])
 
+    def sample_metadata(self, index: int) -> dict[str, object]:
+        sample = self.dataset[index]
+        metadata = sample.get("metadata", {})
+        return dict(metadata) if isinstance(metadata, Mapping) else {}
+
+    def filter_context(self, index: int) -> dict[str, object]:
+        """Return trusted provider-only context for Artifact Filters.
+
+        Longitude and latitude are read from source channels 16/17 when present,
+        but they are never returned by ``__getitem__`` and therefore are not
+        exposed as candidate model inputs.
+        """
+
+        import numpy as np
+
+        source = self.dataset.raw_inputs(index)
+        context: dict[str, object] = {}
+        if source.shape[-1] > 17:
+            context["longitude"] = np.asarray(source[..., 16], dtype=np.float64)
+            context["latitude"] = np.asarray(source[..., 17], dtype=np.float64)
+        return context
+
 
 def _input_specs() -> dict[str, dict[str, object]]:
     forbidden_names = ["longitude", "latitude"]
@@ -305,10 +348,17 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         are validated by :class:`ABITrainingAdapter` before training.
     """
 
-    del data_config
+    filter_config = dict(data_config or {})
 
     from ml_autoresearch.research_problems import ResearchProblemSpec
+    from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
+    from abi_contrail.evaluation import ABIEvaluationAdapter, EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS
 
+    training_adapter = ABITrainingAdapter()
+    evaluation_adapter = ABIEvaluationAdapter(
+        training_adapter=training_adapter,
+        filter_pipeline=build_default_artifact_filter_pipeline(filter_config),
+    )
     return ResearchProblemSpec(
         id=RESEARCH_PROBLEM_ID,
         version=RESEARCH_PROBLEM_VERSION,
@@ -330,8 +380,9 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
         augmentation_policies=("none",),
         primary_metric="val/dice",
-        operation_capabilities={"training": True},
-        training_adapter=ABITrainingAdapter(),
+        operation_capabilities={"training": True, "evaluation_modes": (EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS,)},
+        training_adapter=training_adapter,
+        evaluation_adapter=evaluation_adapter,
         brief_documents=(
             {
                 "name": "goes_abi_contrail_segmentation",

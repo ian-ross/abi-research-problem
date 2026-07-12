@@ -9,6 +9,7 @@ import yaml
 import zarr
 
 from abi_contrail.adapters import ABITrainingAdapter, build_spec
+from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
 
@@ -109,6 +110,8 @@ def test_build_spec_declares_training_capability_with_temporary_val_dice_metric(
 
     assert spec.operation_capabilities.training is True
     assert spec.training_adapter is not None
+    assert spec.evaluation_adapter is not None
+    assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
     assert spec.primary_metric == "val/dice"
     assert spec.training_adapter.selection_policy() == ("val/dice", "max")
 
@@ -124,7 +127,9 @@ def test_provider_loads_with_training_adapter() -> None:
     )
 
     assert loaded.spec.operation_capabilities.training is True
+    assert loaded.spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
     assert loaded.spec.training_adapter is not None
+    assert loaded.spec.evaluation_adapter is not None
 
 
 def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp_path: Path) -> None:
@@ -158,3 +163,10 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     best_metrics = json.loads((outputs / "best_metrics.json").read_text())
     assert "val/dice" in final_metrics
     assert best_metrics["selection_metric"] == "val/dice"
+
+    evaluation = evaluate_run(run.run_dir, max_artifact_samples=1)
+    assert evaluation.status == "completed"
+    aggregate = json.loads((evaluation.evaluation_dir / "aggregate_metrics.json").read_text())
+    assert "raw/dice" in aggregate["metrics"]
+    assert "filtered/dice" in aggregate["metrics"]
+    assert "artifact_filters/removed_pixel_count" in aggregate["metrics"]

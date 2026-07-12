@@ -405,28 +405,41 @@ class ABIPatchDataset:
             return 1
         return int(self.arrays.inputs.shape[0])
 
-    def __getitem__(self, index: int) -> dict[str, np.ndarray]:
-        if index < 0:
-            index += len(self)
-        if index < 0 or index >= len(self):
-            raise IndexError(index)
+    def raw_inputs(self, index: int) -> np.ndarray:
+        """Return provider-only raw source inputs for diagnostics/filtering."""
 
+        index = self._normalize_index(index)
         record = self.index_records[index] if self.index_records else None
         if record is not None:
             if record.sample_index is not None:
-                inputs = self.arrays.inputs[record.sample_index, :, :, :]
-                labels = self.arrays.labels[record.sample_index, :, :]
-            else:
-                row_end = record.row + ABI_PATCH_SHAPE[1]
-                col_end = record.col + ABI_PATCH_SHAPE[2]
-                inputs = self.arrays.inputs[record.scene_index, record.row : row_end, record.col : col_end, :]
-                labels = self.arrays.labels[record.scene_index, record.row : row_end, record.col : col_end]
-        elif len(self.arrays.inputs.shape) == 3:
-            inputs = self.arrays.inputs[:]
-            labels = self.arrays.labels[:]
-        else:
-            inputs = self.arrays.inputs[index, :, :, :]
-            labels = self.arrays.labels[index, :, :]
+                return np.asarray(self.arrays.inputs[record.sample_index, :, :, :])
+            row_end = record.row + ABI_PATCH_SHAPE[1]
+            col_end = record.col + ABI_PATCH_SHAPE[2]
+            return np.asarray(self.arrays.inputs[record.scene_index, record.row : row_end, record.col : col_end, :])
+        if len(self.arrays.inputs.shape) == 3:
+            return np.asarray(self.arrays.inputs[:])
+        return np.asarray(self.arrays.inputs[index, :, :, :])
+
+    def raw_labels(self, index: int) -> np.ndarray:
+        """Return provider-only raw source labels for diagnostics/filtering."""
+
+        index = self._normalize_index(index)
+        record = self.index_records[index] if self.index_records else None
+        if record is not None:
+            if record.sample_index is not None:
+                return np.asarray(self.arrays.labels[record.sample_index, :, :])
+            row_end = record.row + ABI_PATCH_SHAPE[1]
+            col_end = record.col + ABI_PATCH_SHAPE[2]
+            return np.asarray(self.arrays.labels[record.scene_index, record.row : row_end, record.col : col_end])
+        if len(self.arrays.labels.shape) == 2:
+            return np.asarray(self.arrays.labels[:])
+        return np.asarray(self.arrays.labels[index, :, :])
+
+    def __getitem__(self, index: int) -> dict[str, np.ndarray]:
+        index = self._normalize_index(index)
+        record = self.index_records[index] if self.index_records else None
+        inputs = self.raw_inputs(index)
+        labels = self.raw_labels(index)
 
         sample = {
             "inputs": abi_input_channel_first(inputs, self.input_mode),
@@ -446,6 +459,13 @@ class ABIPatchDataset:
                 "positive": record.positive,
             }
         return sample
+
+    def _normalize_index(self, index: int) -> int:
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        return index
 
 
 def build_abi_patch_dataset(
