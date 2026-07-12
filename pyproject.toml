@@ -45,6 +45,10 @@ dev = [
 torch = [
     "torch>=2.13.0",
 ]
+baselines = [
+    "segmentation-models-pytorch>=0.5.0",
+    "torch>=2.13.0",
+]
 
 [tool.uv.sources]
 ml-autoresearch = { path = "../ml-autoresearch", editable = true }

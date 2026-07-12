@@ -533,6 +533,11 @@ class _TorchABIPatchDataset:
         metadata = sample.get("metadata", {})
         return dict(metadata) if isinstance(metadata, Mapping) else {}
 
+    def raw_inputs(self, index: int):
+        """Return provider-only source ABI channels for trusted baselines."""
+
+        return self.dataset.raw_inputs(index)
+
     def filter_context(self, index: int) -> dict[str, object]:
         """Return trusted provider-only context for Artifact Filters.
 
@@ -543,7 +548,7 @@ class _TorchABIPatchDataset:
 
         import numpy as np
 
-        source = self.dataset.raw_inputs(index)
+        source = self.raw_inputs(index)
         context: dict[str, object] = {}
         if source.shape[-1] > 17:
             context["longitude"] = np.asarray(source[..., 16], dtype=np.float64)
@@ -575,6 +580,10 @@ class _CombinedTorchABIPatchDataset:
     def sample_metadata(self, index: int) -> dict[str, object]:
         dataset, local_index = self._resolve(index)
         return dataset.sample_metadata(local_index)
+
+    def raw_inputs(self, index: int):
+        dataset, local_index = self._resolve(index)
+        return dataset.raw_inputs(local_index)
 
     def filter_context(self, index: int) -> dict[str, object]:
         dataset, local_index = self._resolve(index)

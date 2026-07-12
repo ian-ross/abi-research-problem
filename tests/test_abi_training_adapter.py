@@ -261,6 +261,9 @@ def test_build_spec_declares_training_capability_with_filtered_dice_metric() -> 
     assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
     assert spec.primary_metric == "val/filtered_dice"
     assert spec.training_adapter.selection_policy() == ("val/filtered_dice", "max")
+    baselines = spec.evaluation_adapter.baseline_segmenters()
+    assert {baseline["name"] for baseline in baselines} == {"mcast_detection_1_1", "mcast_detection_2_1"}
+    assert all(baseline["artifact_filters"] == "provider_owned_same_pipeline_as_candidates" for baseline in baselines)
 
 
 def test_best_epoch_selection_follows_filtered_dice_not_raw_dice() -> None:

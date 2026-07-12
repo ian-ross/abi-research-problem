@@ -9,6 +9,7 @@ from typing import Any
 
 from abi_contrail.adapters import ABITrainingAdapter
 from abi_contrail.artifact_filters import ABIArtifactFilterPipeline, build_default_artifact_filter_pipeline
+from abi_contrail.baseline_segmenters import MCAST_BASELINE_METADATA, MCASTBaselineSegmenter, configured_mcast_baseline_assets
 
 EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS = "whole_validation_failure_analysis"
 
@@ -42,6 +43,96 @@ class ABIEvaluationAdapter:
             max_artifact_samples=max_artifact_samples,
         )
 
+    def baseline_segmenters(self, data_config: Mapping[str, object] | None = None) -> tuple[dict[str, object], ...]:
+        """Return provider-owned Baseline Segmenter declarations.
+
+        Asset paths are intentionally runtime configuration, not candidate-owned
+        code.  Configure ``mcast_detection_1_1_path`` and/or
+        ``mcast_detection_2_1_path`` in the provider data config on the machine
+        that will run the baseline evaluations.
+        """
+
+        configured_assets = configured_mcast_baseline_assets(data_config or {})
+        declarations: list[dict[str, object]] = []
+        for name, metadata in MCAST_BASELINE_METADATA.items():
+            declaration = {
+                "name": metadata.name,
+                "version": metadata.version,
+                "asset_config_key": metadata.asset_config_key,
+                "expected_asset": metadata.expected_asset,
+                "output": metadata.output,
+                "artifact_filters": "provider_owned_same_pipeline_as_candidates",
+                "configured": name in configured_assets,
+            }
+            if name in configured_assets:
+                declaration["asset_path"] = str(configured_assets[name])
+            declarations.append(declaration)
+        return tuple(declarations)
+
+    def run_baseline_validation_evaluation(
+        self,
+        *,
+        baseline_name: str,
+        data_config: Mapping[str, object],
+        data_root: Path | None = None,
+        threshold: float | None = None,
+        device: str | Any = "cpu",
+        model_factory: Any | None = None,
+        evaluation_dir: Path | None = None,
+    ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
+        """Evaluate one configured baseline through the same raw/filtered path.
+
+        This method is the provider-owned execution hook for the GPU server.
+        It does not run candidate code and does not invoke MCAST operational
+        postprocessing.
+        """
+
+        import torch
+
+        merged_config = dict(data_config)
+        if data_root is not None:
+            merged_config["dataset_root"] = str(data_root)
+        assets = configured_mcast_baseline_assets(merged_config)
+        try:
+            asset_path = assets[baseline_name]
+        except KeyError as exc:
+            metadata = MCAST_BASELINE_METADATA.get(baseline_name)
+            key = metadata.asset_config_key if metadata is not None else "<unknown>"
+            raise ValueError(f"missing asset path for baseline {baseline_name!r}; set data_config.{key}") from exc
+        data_config_for_dataset = {key: value for key, value in merged_config.items() if key not in {m.asset_config_key for m in MCAST_BASELINE_METADATA.values()}}
+        dataset = self.training_adapter.build_evaluation_dataset(data_config=data_config_for_dataset, resolved_manifest_path=Path("__abi_baseline_default_manifest__.yaml"))
+        baseline = MCASTBaselineSegmenter.load(baseline_name, asset_path, device=device, model_factory=model_factory)
+        probabilities_all: list[torch.Tensor] = []
+        targets_all: list[torch.Tensor] = []
+        with torch.no_grad():
+            for index in range(len(dataset)):
+                inputs, target = dataset[index]
+                source = _baseline_source(dataset, index, inputs)
+                result = baseline.predict_patch(source, threshold=threshold, device=device)
+                probabilities_all.append(result.probabilities.detach().cpu())
+                targets_all.append(target.detach().cpu())
+        probabilities = torch.stack(probabilities_all)
+        targets = torch.stack(targets_all)
+        cutoff = float(threshold if threshold is not None else baseline.threshold)
+        result = _evaluate_probability_tensor(
+            dataset=dataset,
+            probabilities=probabilities,
+            targets=targets,
+            threshold=cutoff,
+            filter_pipeline=build_default_artifact_filter_pipeline(data_config_for_dataset),
+            model_record={"baseline/name": baseline.name, "baseline/version": baseline.version},
+        )
+        if evaluation_dir is not None:
+            _write_baseline_evaluation_artifacts(
+                evaluation_dir=evaluation_dir,
+                baseline_name=baseline.name,
+                baseline_version=baseline.version,
+                asset_path=asset_path,
+                threshold=cutoff,
+                result=result,
+            )
+        return result
+
     def display_prediction_sample_input(self, inputs: Any) -> Any:
         return self.training_adapter.display_prediction_sample_input(inputs)
 
@@ -58,7 +149,6 @@ class ABIEvaluationAdapter:
         del evaluation_dir, max_artifact_samples
         import torch
         import yaml
-        from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
         from ml_autoresearch.smoke import _extract_mask_logits, _import_candidate_model, input_spec_from_resolved_manifest, output_spec_from_resolved_manifest
 
         manifest_path = run_dir / "resolved_manifest.yaml"
@@ -83,107 +173,180 @@ class ABIEvaluationAdapter:
         model = model.to(device)
         model.eval()
 
-        raw_predictions: list[torch.Tensor] = []
-        filtered_predictions: list[torch.Tensor] = []
-        targets_all: list[torch.Tensor] = []
         probabilities_all: list[torch.Tensor] = []
-        per_sample_records: list[dict[str, object]] = []
-        sample_sources: list[str | None] = []
-        removed_pixels_total = 0
-        removed_area_total = 0.0
+        targets_all: list[torch.Tensor] = []
         with torch.no_grad():
             for start in range(0, len(dataset), batch_size):
                 batch_indices = list(range(start, min(start + batch_size, len(dataset))))
                 inputs = torch.stack([dataset[index][0] for index in batch_indices]).to(device)
                 targets = torch.stack([dataset[index][1] for index in batch_indices]).to(device)
                 logits = _extract_mask_logits(model(inputs), output_spec)[0]
-                probabilities = torch.sigmoid(logits).detach().cpu()
-                predictions = probabilities >= threshold
-                target_masks = (targets >= 0.5).detach().cpu()
-                for offset, index in enumerate(batch_indices):
-                    probability = probabilities[offset].numpy()
-                    prediction = predictions[offset].numpy()
-                    context = _filter_context(dataset, index)
-                    filtered = filter_pipeline.apply(prediction, probability, context=context)
-                    filtered_prediction = torch.from_numpy(filtered.filtered_mask.astype(bool))
-                    sample_prediction = predictions[offset : offset + 1]
-                    sample_filtered_prediction = filtered_prediction.unsqueeze(0)
-                    sample_target = target_masks[offset : offset + 1]
-                    raw_metrics = binary_segmentation_metrics(sample_prediction, sample_target)
-                    filtered_metrics = binary_segmentation_metrics(sample_filtered_prediction, sample_target)
-                    raw_connectivity = contrail_connectivity_metric(sample_prediction, sample_target)
-                    filtered_connectivity = contrail_connectivity_metric(sample_filtered_prediction, sample_target)
-                    diagnostics = filtered.diagnostics
-                    removed_count = int(diagnostics["removed_pixel_count"])
-                    removed_area = float(diagnostics["removed_area_km2"])
-                    removed_pixels_total += removed_count
-                    removed_area_total += removed_area
-                    record = {
-                        "sample_id": f"val/{index:06d}",
-                        "dataset_index": int(index),
-                        **{f"raw/{key}": value for key, value in raw_metrics.items()},
-                        "raw/cldice": raw_connectivity,
-                        "raw/contrail_connectivity": raw_connectivity,
-                        **{f"filtered/{key}": value for key, value in filtered_metrics.items()},
-                        "filtered/cldice": filtered_connectivity,
-                        "filtered/contrail_connectivity": filtered_connectivity,
-                        **{f"raw/{key}": value for key, value in binary_confusion_counts(sample_prediction, sample_target).items()},
-                        **{f"filtered/{key}": value for key, value in binary_confusion_counts(sample_filtered_prediction, sample_target).items()},
-                        "artifact_filters/removed_pixel_count": removed_count,
-                        "artifact_filters/removed_area_km2": removed_area,
-                        "artifact_filters/diagnostics": diagnostics,
-                    }
-                    metadata = _sample_metadata(dataset, index)
-                    record.update(metadata)
-                    sample_sources.append(_dataset_source_from_metadata(metadata))
-                    per_sample_records.append(record)
-                    raw_predictions.append(sample_prediction)
-                    filtered_predictions.append(sample_filtered_prediction)
-                    probabilities_all.append(probabilities[offset : offset + 1])
-                    targets_all.append(sample_target)
+                probabilities_all.extend(probability.detach().cpu() for probability in torch.sigmoid(logits))
+                targets_all.extend(target.detach().cpu() for target in targets)
 
-        raw_tensor = torch.cat(raw_predictions)
-        filtered_tensor = torch.cat(filtered_predictions)
-        target_tensor = torch.cat(targets_all)
-        raw_aggregate = binary_segmentation_metrics(raw_tensor, target_tensor)
-        filtered_aggregate = binary_segmentation_metrics(filtered_tensor, target_tensor)
-        raw_connectivity = contrail_connectivity_metric(raw_tensor, target_tensor)
-        filtered_connectivity = contrail_connectivity_metric(filtered_tensor, target_tensor)
-        aggregate = {
-            **{f"raw/{key}": value for key, value in raw_aggregate.items()},
+        return _evaluate_probability_tensor(
+            dataset=dataset,
+            probabilities=torch.stack(probabilities_all),
+            targets=torch.stack(targets_all),
+            threshold=threshold,
+            filter_pipeline=filter_pipeline,
+        )
+
+
+def _evaluate_probability_tensor(
+    *,
+    dataset: object,
+    probabilities: Any,
+    targets: Any,
+    threshold: float,
+    filter_pipeline: ABIArtifactFilterPipeline,
+    model_record: Mapping[str, object] | None = None,
+) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
+    import torch
+    from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
+
+    probabilities = probabilities.detach().cpu()
+    targets = targets.detach().cpu()
+    predictions = probabilities >= threshold
+    target_masks = targets >= 0.5
+    raw_predictions: list[torch.Tensor] = []
+    filtered_predictions: list[torch.Tensor] = []
+    targets_all: list[torch.Tensor] = []
+    probabilities_all: list[torch.Tensor] = []
+    per_sample_records: list[dict[str, object]] = []
+    sample_sources: list[str | None] = []
+    removed_pixels_total = 0
+    removed_area_total = 0.0
+    for index in range(predictions.shape[0]):
+        probability = probabilities[index].numpy()
+        prediction = predictions[index].numpy()
+        context = _filter_context(dataset, index)
+        filtered = filter_pipeline.apply(prediction, probability, context=context)
+        filtered_prediction = torch.from_numpy(filtered.filtered_mask.astype(bool))
+        sample_prediction = predictions[index : index + 1]
+        sample_filtered_prediction = filtered_prediction.unsqueeze(0)
+        sample_target = target_masks[index : index + 1]
+        raw_metrics = binary_segmentation_metrics(sample_prediction, sample_target)
+        filtered_metrics = binary_segmentation_metrics(sample_filtered_prediction, sample_target)
+        raw_connectivity = contrail_connectivity_metric(sample_prediction, sample_target)
+        filtered_connectivity = contrail_connectivity_metric(sample_filtered_prediction, sample_target)
+        diagnostics = filtered.diagnostics
+        removed_count = int(diagnostics["removed_pixel_count"])
+        removed_area = float(diagnostics["removed_area_km2"])
+        removed_pixels_total += removed_count
+        removed_area_total += removed_area
+        record = {
+            "sample_id": f"val/{index:06d}",
+            "dataset_index": int(index),
+            **{f"raw/{key}": value for key, value in raw_metrics.items()},
             "raw/cldice": raw_connectivity,
             "raw/contrail_connectivity": raw_connectivity,
-            **{f"filtered/{key}": value for key, value in filtered_aggregate.items()},
+            **{f"filtered/{key}": value for key, value in filtered_metrics.items()},
             "filtered/cldice": filtered_connectivity,
             "filtered/contrail_connectivity": filtered_connectivity,
-            "artifact_filters/removed_pixel_count": float(removed_pixels_total),
-            "artifact_filters/removed_area_km2": float(removed_area_total),
+            **{f"raw/{key}": value for key, value in binary_confusion_counts(sample_prediction, sample_target).items()},
+            **{f"filtered/{key}": value for key, value in binary_confusion_counts(sample_filtered_prediction, sample_target).items()},
+            "artifact_filters/removed_pixel_count": removed_count,
+            "artifact_filters/removed_area_km2": removed_area,
+            "artifact_filters/diagnostics": diagnostics,
         }
-        for source in ("mit", "google"):
-            indices = [index for index, sample_source in enumerate(sample_sources) if sample_source == source]
-            if not indices:
-                continue
-            source_index = torch.as_tensor(indices, dtype=torch.long)
-            source_raw = raw_tensor.index_select(0, source_index)
-            source_filtered = filtered_tensor.index_select(0, source_index)
-            source_target = target_tensor.index_select(0, source_index)
-            source_raw_metrics = binary_segmentation_metrics(source_raw, source_target)
-            source_filtered_metrics = binary_segmentation_metrics(source_filtered, source_target)
-            source_raw_connectivity = contrail_connectivity_metric(source_raw, source_target)
-            source_filtered_connectivity = contrail_connectivity_metric(source_filtered, source_target)
-            aggregate.update(
-                {
-                    **{f"source/{source}/raw/{key}": value for key, value in source_raw_metrics.items()},
-                    f"source/{source}/raw/cldice": source_raw_connectivity,
-                    f"source/{source}/raw/contrail_connectivity": source_raw_connectivity,
-                    **{f"source/{source}/filtered/{key}": value for key, value in source_filtered_metrics.items()},
-                    f"source/{source}/filtered/cldice": source_filtered_connectivity,
-                    f"source/{source}/filtered/contrail_connectivity": source_filtered_connectivity,
-                }
-            )
-        threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
-        diagnostic_manifest = {"samples": [], "note": "ABI v0 filtered evaluation does not yet emit qualitative diagnostic images."}
-        return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
+        if model_record:
+            record.update(model_record)
+        metadata = _sample_metadata(dataset, index)
+        record.update(metadata)
+        sample_sources.append(_dataset_source_from_metadata(metadata))
+        per_sample_records.append(record)
+        raw_predictions.append(sample_prediction)
+        filtered_predictions.append(sample_filtered_prediction)
+        probabilities_all.append(probabilities[index : index + 1])
+        targets_all.append(sample_target)
+
+    raw_tensor = torch.cat(raw_predictions)
+    filtered_tensor = torch.cat(filtered_predictions)
+    target_tensor = torch.cat(targets_all)
+    raw_aggregate = binary_segmentation_metrics(raw_tensor, target_tensor)
+    filtered_aggregate = binary_segmentation_metrics(filtered_tensor, target_tensor)
+    raw_connectivity = contrail_connectivity_metric(raw_tensor, target_tensor)
+    filtered_connectivity = contrail_connectivity_metric(filtered_tensor, target_tensor)
+    aggregate = {
+        **{f"raw/{key}": value for key, value in raw_aggregate.items()},
+        "raw/cldice": raw_connectivity,
+        "raw/contrail_connectivity": raw_connectivity,
+        **{f"filtered/{key}": value for key, value in filtered_aggregate.items()},
+        "filtered/cldice": filtered_connectivity,
+        "filtered/contrail_connectivity": filtered_connectivity,
+        "artifact_filters/removed_pixel_count": float(removed_pixels_total),
+        "artifact_filters/removed_area_km2": float(removed_area_total),
+    }
+    for source in ("mit", "google"):
+        indices = [index for index, sample_source in enumerate(sample_sources) if sample_source == source]
+        if not indices:
+            continue
+        source_index = torch.as_tensor(indices, dtype=torch.long)
+        source_raw = raw_tensor.index_select(0, source_index)
+        source_filtered = filtered_tensor.index_select(0, source_index)
+        source_target = target_tensor.index_select(0, source_index)
+        source_raw_metrics = binary_segmentation_metrics(source_raw, source_target)
+        source_filtered_metrics = binary_segmentation_metrics(source_filtered, source_target)
+        source_raw_connectivity = contrail_connectivity_metric(source_raw, source_target)
+        source_filtered_connectivity = contrail_connectivity_metric(source_filtered, source_target)
+        aggregate.update(
+            {
+                **{f"source/{source}/raw/{key}": value for key, value in source_raw_metrics.items()},
+                f"source/{source}/raw/cldice": source_raw_connectivity,
+                f"source/{source}/raw/contrail_connectivity": source_raw_connectivity,
+                **{f"source/{source}/filtered/{key}": value for key, value in source_filtered_metrics.items()},
+                f"source/{source}/filtered/cldice": source_filtered_connectivity,
+                f"source/{source}/filtered/contrail_connectivity": source_filtered_connectivity,
+            }
+        )
+    threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
+    diagnostic_manifest = {"samples": [], "note": "ABI v0 filtered evaluation does not yet emit qualitative diagnostic images."}
+    return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
+
+
+def _write_baseline_evaluation_artifacts(
+    *,
+    evaluation_dir: Path,
+    baseline_name: str,
+    baseline_version: str,
+    asset_path: Path,
+    threshold: float,
+    result: tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]],
+) -> None:
+    aggregate, per_sample_records, threshold_sweep, diagnostic_manifest = result
+    evaluation_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "baseline": {"name": baseline_name, "version": baseline_version, "asset_path": str(asset_path)},
+        "threshold": float(threshold),
+        "sample_count": len(per_sample_records),
+        "metrics": aggregate,
+    }
+    (evaluation_dir / "aggregate_metrics.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    with (evaluation_dir / "per_sample_metrics.jsonl").open("w") as handle:
+        for record in per_sample_records:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+    (evaluation_dir / "threshold_sweep.json").write_text(json.dumps(threshold_sweep, indent=2, sort_keys=True) + "\n")
+    diagnostics_dir = evaluation_dir / "diagnostic_samples"
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    (diagnostics_dir / "samples.json").write_text(json.dumps(diagnostic_manifest, indent=2, sort_keys=True) + "\n")
+    (evaluation_dir / "baseline_evaluation_metadata.json").write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "baseline": {"name": baseline_name, "version": baseline_version, "asset_path": str(asset_path)},
+                "artifacts": {
+                    "aggregate_metrics": "aggregate_metrics.json",
+                    "per_sample_metrics": "per_sample_metrics.jsonl",
+                    "threshold_sweep": "threshold_sweep.json",
+                    "diagnostic_samples": "diagnostic_samples/samples.json",
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 def _evaluation_data_config(run_dir: Path, data_root: Path) -> dict[str, object]:
@@ -219,6 +382,13 @@ def _evaluation_data_config(run_dir: Path, data_root: Path) -> dict[str, object]
     }
     config["dataset_root"] = str(data_root)
     return config
+
+
+def _baseline_source(dataset: object, index: int, fallback_inputs: Any) -> Any:
+    getter = getattr(dataset, "raw_inputs", None)
+    if callable(getter):
+        return getter(index)
+    return fallback_inputs
 
 
 def _filter_context(dataset: object, index: int) -> dict[str, object]:
