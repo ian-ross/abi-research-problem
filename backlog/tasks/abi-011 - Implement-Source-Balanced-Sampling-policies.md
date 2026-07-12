@@ -1,10 +1,11 @@
 ---
 id: ABI-011
 title: Implement Source-Balanced Sampling policies
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 20:39'
 labels:
   - sampling
   - data
