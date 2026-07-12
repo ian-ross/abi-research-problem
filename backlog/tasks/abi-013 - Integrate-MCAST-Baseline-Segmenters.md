@@ -1,10 +1,11 @@
 ---
 id: ABI-013
 title: Integrate MCAST Baseline Segmenters
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:44'
+updated_date: '2026-07-12 20:54'
 labels:
   - baselines
   - evaluation
