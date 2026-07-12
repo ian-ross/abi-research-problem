@@ -1,7 +1,7 @@
 ---
 id: ABI-007
 title: Add provider-owned artifact filters and harness-applied filtered assessment
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
@@ -55,3 +55,12 @@ Implement the ADR decision that Geographic Feature Filter and Scanline Artifact 
 - Validation: uv run pytest -q (27 passed).
 - River ancillary decision: v0 keeps Natural Earth North America rivers because observed false positives are large rivers such as Mississippi, so more detailed hydrography is unnecessary now.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented provider-owned ABI Artifact Filters and harness-applied filtered assessment. Added deterministic Geographic Feature and Scanline filters, Natural Earth coastline/North America large-river source metadata, provider-only lon/lat filter context, removed-pixel/area diagnostics, ABI evaluation adapter registration for whole_validation_failure_analysis, and raw/* plus filtered/* evaluation metrics. Candidate manifests remain unable to define artifact_filters and attempted overrides are rejected by the existing extra-forbid contract.
+
+Tests:
+- uv run pytest -q (27 passed)
+<!-- SECTION:FINAL_SUMMARY:END -->
