@@ -4,11 +4,13 @@ title: Add provider-owned artifact filters and harness-applied filtered assessme
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - evaluation
   - harness
   - filters
-dependencies: []
+dependencies:
+  - ABI-004
 priority: high
 ---
 
