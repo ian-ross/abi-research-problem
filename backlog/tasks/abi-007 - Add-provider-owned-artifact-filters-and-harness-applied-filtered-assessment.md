@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 16:14'
+updated_date: '2026-07-12 16:15'
 labels:
   - evaluation
   - harness
@@ -41,3 +41,10 @@ Implement the ADR decision that Geographic Feature Filter and Scanline Artifact 
 5. Report raw metrics, filtered metrics, and removed predicted-positive counts/area.
 6. Add tests proving candidate code cannot provide or override filters.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Started task: assigned to @agent and moved to In Progress.
+- Awaiting approval on implementation plan and ancillary data choice before coding.
+<!-- SECTION:NOTES:END -->
