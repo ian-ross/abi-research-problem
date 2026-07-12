@@ -4,10 +4,13 @@ title: Report Dataset Source-stratified metrics
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - evaluation
   - metrics
-dependencies: []
+dependencies:
+  - ABI-007
+  - ABI-011
 priority: medium
 ---
 
