@@ -1,10 +1,11 @@
 ---
 id: ABI-001
 title: Scaffold ABI contrail research problem provider
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 12:29'
 labels:
   - provider
   - vertical-slice
