@@ -1,7 +1,7 @@
 ---
 id: ABI-003
 title: Add leakage-safe split and ABI Patch indexing
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
@@ -48,3 +48,19 @@ Create deterministic sample indexing for MIT and Google ABI Patches while enforc
 - Extended ABIPatchDataset to load indexed 256x256 MIT windows and emit sample metadata.
 - Added tests for Google split provenance, MIT no scene crossing, windowed sample loading, and split data policy metadata.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented leakage-safe ABI Patch indexing.
+
+Changes:
+- Added provider-owned ABIPatchIndexRecord and ABIPatchSplitIndex metadata.
+- Added Google index construction that respects train/validation provenance encoded in scene names.
+- Added deterministic MIT whole-scene train/validation splitting before 256x256 window indexing, with per-window positivity.
+- Extended ABIPatchDataset to consume index records and slice MIT full-scene windows by scene,row,col.
+- Added split policy metadata helper in adapters.
+
+Tests:
+- uv run pytest
+<!-- SECTION:FINAL_SUMMARY:END -->
