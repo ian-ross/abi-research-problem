@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 20:46'
+updated_date: '2026-07-12 20:51'
 labels:
   - evaluation
   - metrics
@@ -23,10 +23,10 @@ Extend validation and evaluation reports so aggregate metrics cannot hide MIT-vs
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Validation reports aggregate metrics plus MIT-specific metrics
-- [ ] #2 Validation reports Google-specific metrics
-- [ ] #3 Filtered and raw metrics are both source-stratified
-- [ ] #4 Per-sample records include Dataset Source and scene/time provenance
+- [x] #1 Validation reports aggregate metrics plus MIT-specific metrics
+- [x] #2 Validation reports Google-specific metrics
+- [x] #3 Filtered and raw metrics are both source-stratified
+- [x] #4 Per-sample records include Dataset Source and scene/time provenance
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -39,3 +39,13 @@ Extend validation and evaluation reports so aggregate metrics cannot hide MIT-vs
 5. Add tests where aggregate performance hides one-source failure and verify source metrics reveal it.
 6. Document source-stratified metrics as acceptance-gate inputs.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added validation metrics computed from validation dataset metadata so MIT/Google source-specific raw and filtered metrics are reported when present.
+- Extended whole-validation evaluation aggregate metrics with source/{mit,google}/raw/* and source/{mit,google}/filtered/* metrics.
+- Added per-sample Dataset Source plus scene/time provenance aliases to evaluation records.
+- Updated provider brief to call out Dataset Source-stratified metrics as acceptance-gate inputs.
+- Validation: uv run ruff check abi_contrail/adapters.py abi_contrail/evaluation.py tests/test_abi_training_adapter.py ../ml-autoresearch/src/ml_autoresearch/training.py; uv run pytest -q
+<!-- SECTION:NOTES:END -->
