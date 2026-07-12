@@ -4,8 +4,10 @@ import numpy as np
 import zarr
 
 from abi_contrail.datasets import (
+    ABI_INPUT_MODE_SOURCE_INDICES,
     ABIPatchDataset,
     abi_16ch_channel_first,
+    abi_input_channel_first,
     build_abi_patch_dataset,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
@@ -86,6 +88,38 @@ def test_inputs_are_float32_channel_first_abi_16ch_without_extra_channels() -> N
     assert channel_first.dtype == np.float32
     np.testing.assert_array_equal(channel_first[0], channel_last[:, :, 0].astype(np.float32))
     np.testing.assert_array_equal(channel_first[15], channel_last[:, :, 15].astype(np.float32))
+
+
+def test_input_modes_select_exact_channel_mappings_and_never_lon_lat() -> None:
+    channel_last = np.arange(2 * 3 * 19, dtype=np.float32).reshape(2, 3, 19)
+
+    expected_shapes = {
+        "abi_16ch": (16, 2, 3),
+        "abi_16ch_plus_sza": (17, 2, 3),
+        "abi_thermal_10ch": (10, 2, 3),
+    }
+    for input_mode, source_indices in ABI_INPUT_MODE_SOURCE_INDICES.items():
+        channel_first = abi_input_channel_first(channel_last, input_mode)
+
+        assert channel_first.shape == expected_shapes[input_mode]
+        assert 16 not in source_indices
+        assert 17 not in source_indices
+        for output_index, source_index in enumerate(source_indices):
+            np.testing.assert_array_equal(channel_first[output_index], channel_last[:, :, source_index])
+
+
+def test_input_mode_dataset_selection_is_provider_owned() -> None:
+    channel_last = np.arange(2 * 3 * 19, dtype=np.float32).reshape(2, 3, 19)
+    labels = np.zeros((2, 3), dtype=np.uint8)
+    arrays = type("Arrays", (), {"inputs": channel_last, "labels": labels, "layout": "google"})()
+
+    dataset = ABIPatchDataset(arrays, input_mode="abi_thermal_10ch")
+    sample = dataset[0]
+
+    assert sample["input_mode"] == "abi_thermal_10ch"
+    assert sample["inputs"].shape == (10, 2, 3)
+    np.testing.assert_array_equal(sample["inputs"][0], channel_last[:, :, 6])
+    np.testing.assert_array_equal(sample["inputs"][-1], channel_last[:, :, 15])
 
 
 def test_build_dataset_runs_against_tiny_local_fixtures_without_data_symlink(tmp_path) -> None:

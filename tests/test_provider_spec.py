@@ -16,8 +16,15 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.id == "goes_abi_contrail_segmentation"
     assert spec.version == "v0"
     assert spec.contract_version == "v0"
-    assert spec.input_modes == ("abi_16ch",)
+    assert spec.input_modes == ("abi_16ch", "abi_16ch_plus_sza", "abi_thermal_10ch")
     assert spec.input_specs["abi_16ch"]["shape"] == [16, 256, 256]
+    assert spec.input_specs["abi_16ch"]["source_channel_indices"] == list(range(16))
+    assert spec.input_specs["abi_16ch_plus_sza"]["shape"] == [17, 256, 256]
+    assert spec.input_specs["abi_16ch_plus_sza"]["source_channel_indices"] == list(range(16)) + [18]
+    assert spec.input_specs["abi_thermal_10ch"]["shape"] == [10, 256, 256]
+    assert spec.input_specs["abi_thermal_10ch"]["source_channel_indices"] == list(range(6, 16))
+    assert all(16 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
+    assert all(17 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
     assert spec.output_forms == ("mask_logits",)
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
     assert spec.losses == ("bce_dice",)

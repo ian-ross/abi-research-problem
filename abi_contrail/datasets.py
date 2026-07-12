@@ -6,9 +6,9 @@ initial vertical slice supports two zarr layouts seen in planning data:
 * MIT-style top-level zarr arrays opened directly with :func:`zarr.open_array`.
 * Google-style zarr groups where arrays live under ``inputs`` and ``labels``.
 
-Only GOES ABI channels 1-16 are exposed.  Longitude, latitude, and any other
-extra channels in 19-channel training arrays are intentionally not returned to
-candidate code.
+Only provider-declared ABI input modes are exposed.  Longitude, latitude, and
+any other undeclared channels in 19-channel training arrays are intentionally
+not returned to candidate code.
 """
 
 from __future__ import annotations
@@ -25,6 +25,17 @@ import zarr
 ABI_PATCH_SHAPE = (16, 256, 256)
 CONTRAIL_MASK_SHAPE = (1, 256, 256)
 ABI_16CH_CHANNEL_COUNT = 16
+ABI_16CH_PLUS_SZA_CHANNEL_COUNT = 17
+ABI_THERMAL_10CH_CHANNEL_COUNT = 10
+INPUT_MODE_ABI_16CH = "abi_16ch"
+INPUT_MODE_ABI_16CH_PLUS_SZA = "abi_16ch_plus_sza"
+INPUT_MODE_ABI_THERMAL_10CH = "abi_thermal_10ch"
+ABI_INPUT_MODE_SOURCE_INDICES: dict[str, tuple[int, ...]] = {
+    INPUT_MODE_ABI_16CH: tuple(range(16)),
+    INPUT_MODE_ABI_16CH_PLUS_SZA: tuple(range(16)) + (18,),
+    INPUT_MODE_ABI_THERMAL_10CH: tuple(range(6, 16)),
+}
+ABI_FORBIDDEN_SOURCE_INDICES = (16, 17)
 
 ArrayLayout = Literal["mit", "google"]
 ABIDatasetSource = Literal["mit", "google"]
@@ -129,18 +140,36 @@ def collapse_contrail_mask(labels: np.ndarray) -> np.ndarray:
     return (label_array != 0).astype(np.float32, copy=False)[np.newaxis, :, :]
 
 
-def abi_16ch_channel_first(inputs: np.ndarray) -> np.ndarray:
-    """Return float32 channel-first GOES ABI channels 1-16 from ``[H, W, C]`` input."""
+def abi_input_channel_first(inputs: np.ndarray, input_mode: str = INPUT_MODE_ABI_16CH) -> np.ndarray:
+    """Return float32 channel-first provider-selected inputs from ``[H, W, C]``.
+
+    Source arrays use zero-based channels 0-15 for GOES ABI channels 1-16,
+    channel 16 for longitude, channel 17 for latitude, and channel 18 for Solar
+    Geometry Input (solar zenith angle).  This function is the trusted boundary
+    that prevents candidates from receiving longitude or latitude.
+    """
 
     input_array = np.asarray(inputs)
     if input_array.ndim != 3:
         raise ValueError(f"ABI inputs must be a 3D [H, W, C] array, got shape {input_array.shape}")
-    if input_array.shape[-1] < ABI_16CH_CHANNEL_COUNT:
-        raise ValueError(
-            f"ABI inputs need at least {ABI_16CH_CHANNEL_COUNT} channels, got {input_array.shape[-1]}"
-        )
-    abi_16ch = input_array[..., :ABI_16CH_CHANNEL_COUNT]
-    return np.moveaxis(abi_16ch, -1, 0).astype(np.float32, copy=False)
+    try:
+        source_indices = ABI_INPUT_MODE_SOURCE_INDICES[input_mode]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported ABI input mode: {input_mode!r}") from exc
+    forbidden = set(source_indices).intersection(ABI_FORBIDDEN_SOURCE_INDICES)
+    if forbidden:
+        raise ValueError(f"ABI input mode {input_mode!r} would expose forbidden source indices {sorted(forbidden)}")
+    required_channels = max(source_indices) + 1
+    if input_array.shape[-1] < required_channels:
+        raise ValueError(f"ABI input mode {input_mode!r} needs at least {required_channels} source channels, got {input_array.shape[-1]}")
+    selected = input_array[..., source_indices]
+    return np.moveaxis(selected, -1, 0).astype(np.float32, copy=False)
+
+
+def abi_16ch_channel_first(inputs: np.ndarray) -> np.ndarray:
+    """Return float32 channel-first GOES ABI channels 1-16 from ``[H, W, C]`` input."""
+
+    return abi_input_channel_first(inputs, INPUT_MODE_ABI_16CH)
 
 
 def build_google_abi_patch_index(metadata_rows: Iterable[Mapping[str, object]]) -> ABIPatchSplitIndex:
@@ -344,8 +373,12 @@ class ABIPatchDataset:
         index_records: Sequence[ABIPatchIndexRecord] | None = None,
         *,
         split: ABISplitName | None = None,
+        input_mode: str = INPUT_MODE_ABI_16CH,
     ) -> None:
+        if input_mode not in ABI_INPUT_MODE_SOURCE_INDICES:
+            raise ValueError(f"Unsupported ABI input mode: {input_mode!r}")
         self.arrays = arrays
+        self.input_mode = input_mode
         records = tuple(index_records or ())
         if split is not None:
             records = tuple(record for record in records if record.split == split)
@@ -396,9 +429,10 @@ class ABIPatchDataset:
             labels = self.arrays.labels[index, :, :]
 
         sample = {
-            "inputs": abi_16ch_channel_first(inputs),
+            "inputs": abi_input_channel_first(inputs, self.input_mode),
             "target": collapse_contrail_mask(labels),
             "source_layout": self.arrays.layout,
+            "input_mode": self.input_mode,
         }
         if record is not None:
             sample["metadata"] = {
@@ -421,23 +455,37 @@ def build_abi_patch_dataset(
     layout: ArrayLayout,
     index_records: Sequence[ABIPatchIndexRecord] | None = None,
     split: ABISplitName | None = None,
+    input_mode: str = INPUT_MODE_ABI_16CH,
 ) -> ABIPatchDataset:
     """Open zarr inputs/labels and return the ABI Patch dataset."""
 
-    return ABIPatchDataset(open_abi_patch_arrays(inputs_zarr, labels_zarr, layout=layout), index_records, split=split)
+    return ABIPatchDataset(
+        open_abi_patch_arrays(inputs_zarr, labels_zarr, layout=layout),
+        index_records,
+        split=split,
+        input_mode=input_mode,
+    )
 
 
 __all__ = [
     "ABI_PATCH_SHAPE",
     "CONTRAIL_MASK_SHAPE",
     "ABI_16CH_CHANNEL_COUNT",
+    "ABI_16CH_PLUS_SZA_CHANNEL_COUNT",
+    "ABI_FORBIDDEN_SOURCE_INDICES",
+    "ABI_INPUT_MODE_SOURCE_INDICES",
+    "ABI_THERMAL_10CH_CHANNEL_COUNT",
     "ABIDatasetSource",
     "ABIPatchArrays",
     "ABIPatchDataset",
     "ABIPatchIndexRecord",
     "ABIPatchSplitIndex",
     "ABISplitName",
+    "INPUT_MODE_ABI_16CH",
+    "INPUT_MODE_ABI_16CH_PLUS_SZA",
+    "INPUT_MODE_ABI_THERMAL_10CH",
     "abi_16ch_channel_first",
+    "abi_input_channel_first",
     "build_abi_patch_dataset",
     "build_google_abi_patch_index",
     "build_mit_abi_patch_index",

@@ -12,8 +12,13 @@ from pathlib import Path
 from typing import Any
 
 from abi_contrail.datasets import (
+    ABI_FORBIDDEN_SOURCE_INDICES,
+    ABI_INPUT_MODE_SOURCE_INDICES,
     ABIPatchDataset,
     ABIPatchIndexRecord,
+    INPUT_MODE_ABI_16CH,
+    INPUT_MODE_ABI_16CH_PLUS_SZA,
+    INPUT_MODE_ABI_THERMAL_10CH,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
     open_abi_patch_arrays,
@@ -23,8 +28,8 @@ from abi_contrail.datasets import (
 RESEARCH_PROBLEM_ID = "goes_abi_contrail_segmentation"
 RESEARCH_PROBLEM_VERSION = "v0"
 CONTRACT_VERSION = "v0"
-INPUT_MODE_ABI_16CH = "abi_16ch"
 OUTPUT_FORM_MASK_LOGITS = "mask_logits"
+INPUT_MODE_ABI_INPUTS = (INPUT_MODE_ABI_16CH, INPUT_MODE_ABI_16CH_PLUS_SZA, INPUT_MODE_ABI_THERMAL_10CH)
 
 
 class ABITrainingAdapter:
@@ -51,7 +56,7 @@ class ABITrainingAdapter:
             "id": RESEARCH_PROBLEM_ID,
             "dataset_root": str(root),
             "layout": str(data_config["layout"]),
-            "input_mode": INPUT_MODE_ABI_16CH,
+            "input_mode": str(data_config.get("input_mode", INPUT_MODE_ABI_16CH)),
             "target": "contrail_mask",
         }
 
@@ -62,20 +67,19 @@ class ABITrainingAdapter:
         resolved_manifest_path: str | Path,
         max_samples: int | None = None,
     ):
-        del resolved_manifest_path
-
         from ml_autoresearch.training_adapters import ResearchProblemDatasets
 
         root = self.validate_data_root(data_config)
         layout = str(data_config["layout"])
         inputs_path = self._resolve_required_path(root, data_config, "inputs_zarr")
         labels_path = self._resolve_required_path(root, data_config, "labels_zarr")
+        input_mode = self._input_mode_from_manifest(resolved_manifest_path)
         arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
         split_index = self._build_split_index(arrays.labels, layout=layout, data_config=data_config)
         train_records = self._limit_records(split_index.train, max_samples)
         validation_records = self._limit_records(split_index.validation, max_samples)
-        train_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, train_records))
-        validation_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_records))
+        train_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, train_records, input_mode=input_mode))
+        validation_dataset = _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_records, input_mode=input_mode))
         return ResearchProblemDatasets(
             train_dataset=train_dataset,
             validation_dataset=validation_dataset,
@@ -172,6 +176,21 @@ class ABITrainingAdapter:
         )
 
     @staticmethod
+    def _input_mode_from_manifest(resolved_manifest_path: str | Path) -> str:
+        path = Path(resolved_manifest_path)
+        if not path.is_file():
+            return INPUT_MODE_ABI_16CH
+        import yaml
+
+        manifest = yaml.safe_load(path.read_text()) or {}
+        input_mode = str(manifest.get("input_mode", INPUT_MODE_ABI_16CH))
+        if input_mode not in ABI_INPUT_MODE_SOURCE_INDICES:
+            from ml_autoresearch.errors import TrainingError
+
+            raise TrainingError(f"unsupported ABI input mode: {input_mode}")
+        return input_mode
+
+    @staticmethod
     def _optional_string_sequence(value: object) -> tuple[str, ...] | None:
         if value is None:
             return None
@@ -218,6 +237,44 @@ class _TorchABIPatchDataset:
         return torch.from_numpy(sample["inputs"]), torch.from_numpy(sample["target"])
 
 
+def _input_specs() -> dict[str, dict[str, object]]:
+    forbidden_names = ["longitude", "latitude"]
+    forbidden_indices = list(ABI_FORBIDDEN_SOURCE_INDICES)
+    return {
+        INPUT_MODE_ABI_16CH: {
+            "mode": INPUT_MODE_ABI_16CH,
+            "shape": [16, 256, 256],
+            "layout": "channel_first",
+            "channel_set": "goes_abi_channels_1_16",
+            "source_channel_indices": list(ABI_INPUT_MODE_SOURCE_INDICES[INPUT_MODE_ABI_16CH]),
+            "goes_abi_channel_numbers": list(range(1, 17)),
+            "forbidden_channels": forbidden_names,
+            "forbidden_source_channel_indices": forbidden_indices,
+        },
+        INPUT_MODE_ABI_16CH_PLUS_SZA: {
+            "mode": INPUT_MODE_ABI_16CH_PLUS_SZA,
+            "shape": [17, 256, 256],
+            "layout": "channel_first",
+            "channel_set": "goes_abi_channels_1_16_plus_solar_geometry_input",
+            "source_channel_indices": list(ABI_INPUT_MODE_SOURCE_INDICES[INPUT_MODE_ABI_16CH_PLUS_SZA]),
+            "goes_abi_channel_numbers": list(range(1, 17)),
+            "extra_inputs": [{"name": "solar_zenith_angle", "source_channel_index": 18}],
+            "forbidden_channels": forbidden_names,
+            "forbidden_source_channel_indices": forbidden_indices,
+        },
+        INPUT_MODE_ABI_THERMAL_10CH: {
+            "mode": INPUT_MODE_ABI_THERMAL_10CH,
+            "shape": [10, 256, 256],
+            "layout": "channel_first",
+            "channel_set": "goes_abi_channels_7_16",
+            "source_channel_indices": list(ABI_INPUT_MODE_SOURCE_INDICES[INPUT_MODE_ABI_THERMAL_10CH]),
+            "goes_abi_channel_numbers": list(range(7, 17)),
+            "forbidden_channels": forbidden_names,
+            "forbidden_source_channel_indices": forbidden_indices,
+        },
+    }
+
+
 def split_data_policy_metadata() -> dict[str, object]:
     """Provider-owned split/index policy metadata for ABI Patch data adapters."""
 
@@ -256,16 +313,8 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         id=RESEARCH_PROBLEM_ID,
         version=RESEARCH_PROBLEM_VERSION,
         contract_version=CONTRACT_VERSION,
-        input_modes=(INPUT_MODE_ABI_16CH,),
-        input_specs={
-            INPUT_MODE_ABI_16CH: {
-                "mode": INPUT_MODE_ABI_16CH,
-                "shape": [16, 256, 256],
-                "layout": "channel_first",
-                "channel_set": "goes_abi_channels_1_16",
-                "forbidden_channels": ["longitude", "latitude"],
-            },
-        },
+        input_modes=INPUT_MODE_ABI_INPUTS,
+        input_specs=_input_specs(),
         output_forms=(OUTPUT_FORM_MASK_LOGITS,),
         output_specs={
             OUTPUT_FORM_MASK_LOGITS: {
@@ -278,7 +327,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         optimizers=("adamw",),
         sampling_policies=("sequential", "deterministic_shuffle"),
         frame_selection_policies=("all_target_frames",),
-        input_mode_frame_selection_defaults={INPUT_MODE_ABI_16CH: "all_target_frames"},
+        input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
         augmentation_policies=("none",),
         primary_metric="val/dice",
         operation_capabilities={"training": True},

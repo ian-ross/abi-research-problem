@@ -91,6 +91,19 @@ def test_abi_training_adapter_validates_data_root_and_builds_split_datasets(tmp_
     assert datasets.data_policy_metadata["split_policy"] == "respect_google_scene_name_train_validation_provenance"
 
 
+def test_training_adapter_uses_resolved_manifest_input_mode_for_channel_selection(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    resolved_manifest = tmp_path / "resolved.yaml"
+    resolved_manifest.write_text("input_mode: abi_thermal_10ch\n")
+    adapter = ABITrainingAdapter()
+
+    datasets = adapter.build_datasets(data_config=data_config, resolved_manifest_path=resolved_manifest)
+    inputs, target = datasets.train_dataset[0]
+
+    assert tuple(inputs.shape) == (10, 256, 256)
+    assert tuple(target.shape) == (1, 256, 256)
+
+
 def test_build_spec_declares_training_capability_with_temporary_val_dice_metric() -> None:
     spec = build_spec()
 
