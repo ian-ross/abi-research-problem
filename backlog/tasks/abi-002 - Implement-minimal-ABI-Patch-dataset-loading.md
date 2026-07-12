@@ -48,3 +48,12 @@ Implement trusted dataset code for ABI Patch samples from zarr/parquet inputs, e
 - Added tiny local zarr fixture tests independent of the data symlink.
 - Validation: uv run pytest -q
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented minimal trusted ABI Patch dataset loading in abi_contrail/datasets.py. Added explicit MIT zarr top-level array and Google grouped-array openers, provider-owned abi_16ch channel selection, channel-first float32 inputs, and binary float32 [1,H,W] Contrail Mask collapse with labels != 0. Added unit tests with tiny generated zarr fixtures for both layouts and label values 0,1,2,4,255.
+
+Tests:
+- uv run pytest -q
+<!-- SECTION:FINAL_SUMMARY:END -->
