@@ -1,10 +1,11 @@
 ---
 id: ABI-006
 title: Provide reusable Learned Channel Mixer front ends
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 15:58'
 labels:
   - model-support
   - docs
