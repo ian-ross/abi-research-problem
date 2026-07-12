@@ -1,10 +1,11 @@
 ---
 id: ABI-008
 title: Add filtered Dice as v0 primary metric
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 16:36'
 labels:
   - evaluation
   - harness
