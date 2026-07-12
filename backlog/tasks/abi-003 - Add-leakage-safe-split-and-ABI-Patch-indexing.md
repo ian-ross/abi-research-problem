@@ -4,10 +4,12 @@ title: Add leakage-safe split and ABI Patch indexing
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - data
   - splits
-dependencies: []
+dependencies:
+  - ABI-002
 priority: high
 ---
 
