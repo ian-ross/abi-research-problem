@@ -4,10 +4,12 @@ title: Provide reusable Learned Channel Mixer front ends
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
+updated_date: '2026-07-12 12:05'
 labels:
   - model-support
   - docs
-dependencies: []
+dependencies:
+  - ABI-005
 priority: medium
 ---
 
