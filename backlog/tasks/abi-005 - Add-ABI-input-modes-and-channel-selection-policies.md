@@ -1,11 +1,11 @@
 ---
 id: ABI-005
 title: Add ABI input modes and channel selection policies
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 15:51'
+updated_date: '2026-07-12 15:56'
 labels:
   - inputs
   - provider
@@ -22,11 +22,11 @@ Expose the agreed candidate input modes through provider-owned channel selection
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 abi_16ch returns GOES ABI channels 1-16 only
-- [ ] #2 abi_16ch_plus_sza returns GOES ABI channels 1-16 plus Solar Geometry Input
-- [ ] #3 abi_thermal_10ch returns GOES ABI channels 7-16
-- [ ] #4 Longitude and latitude are never exposed as candidate inputs
-- [ ] #5 Tests verify channel counts and channel-index mappings
+- [x] #1 abi_16ch returns GOES ABI channels 1-16 only
+- [x] #2 abi_16ch_plus_sza returns GOES ABI channels 1-16 plus Solar Geometry Input
+- [x] #3 abi_thermal_10ch returns GOES ABI channels 7-16
+- [x] #4 Longitude and latitude are never exposed as candidate inputs
+- [x] #5 Tests verify channel counts and channel-index mappings
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -39,3 +39,21 @@ Expose the agreed candidate input modes through provider-owned channel selection
 5. Ensure longitude and latitude are impossible to expose through declared input modes.
 6. Add tests for input shapes and exact zero-based channel mappings.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added provider-owned ABI input mode source-index map: abi_16ch, abi_16ch_plus_sza, abi_thermal_10ch.
+- Dataset adapter now selects channels by resolved manifest input_mode and rejects longitude/latitude exposure.
+- Updated provider spec and brief with mode shapes and source-index mappings.
+- Added tests for exact mappings, dataset channel counts, and training adapter manifest-driven channel selection.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented provider-owned ABI input modes and channel selection policies. The dataset boundary now maps declared modes to exact source indices, keeps longitude/latitude out of every mode, and the training adapter uses the resolved manifest input_mode when building datasets. The provider spec and brief now advertise abi_16ch, abi_16ch_plus_sza, and abi_thermal_10ch with shapes and source mappings.
+
+Tests:
+- uv run pytest -q (18 passed)
+<!-- SECTION:FINAL_SUMMARY:END -->
