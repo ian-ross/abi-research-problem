@@ -1,7 +1,7 @@
 ---
 id: ABI-009
 title: Add trusted focal-Tversky and clDice segmentation support
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
