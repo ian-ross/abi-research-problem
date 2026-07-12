@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:48'
+updated_date: '2026-07-12 12:50'
 labels:
   - data
   - vertical-slice
@@ -22,11 +22,11 @@ Implement trusted dataset code for ABI Patch samples from zarr/parquet inputs, e
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 MIT zarr arrays and Google zarr groups are opened through the correct layouts
-- [ ] #2 Labels are collapsed to Contrail Mask with label != 0
-- [ ] #3 Returned tensors are float32 channel-first inputs and [1,H,W] targets
-- [ ] #4 Unit tests cover label values 0, 1, 2, 4, and 255 collapsing to binary masks
-- [ ] #5 Dataset code can run against tiny local fixtures without full training data
+- [x] #1 MIT zarr arrays and Google zarr groups are opened through the correct layouts
+- [x] #2 Labels are collapsed to Contrail Mask with label != 0
+- [x] #3 Returned tensors are float32 channel-first inputs and [1,H,W] targets
+- [x] #4 Unit tests cover label values 0, 1, 2, 4, and 255 collapsing to binary masks
+- [x] #5 Dataset code can run against tiny local fixtures without full training data
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -39,3 +39,12 @@ Implement trusted dataset code for ABI Patch samples from zarr/parquet inputs, e
 5. Add unit tests for shape, dtype, and bit-plane collapse values 0,1,2,4,255.
 6. Keep fixture tests independent of the large linked data directory.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Implemented trusted ABI Patch dataset loading with explicit MIT top-level array and Google grouped-array zarr openers.
+- Added binary Contrail Mask collapse via labels != 0 and float32 channel-first abi_16ch conversion.
+- Added tiny local zarr fixture tests independent of the data symlink.
+- Validation: uv run pytest -q
+<!-- SECTION:NOTES:END -->
