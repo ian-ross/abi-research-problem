@@ -1,7 +1,7 @@
 ---
 id: ABI-002
 title: Implement minimal ABI Patch dataset loading
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
