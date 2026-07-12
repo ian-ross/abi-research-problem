@@ -49,3 +49,13 @@ Extend validation and evaluation reports so aggregate metrics cannot hide MIT-vs
 - Updated provider brief to call out Dataset Source-stratified metrics as acceptance-gate inputs.
 - Validation: uv run ruff check abi_contrail/adapters.py abi_contrail/evaluation.py tests/test_abi_training_adapter.py ../ml-autoresearch/src/ml_autoresearch/training.py; uv run pytest -q
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented Dataset Source-stratified validation and evaluation reporting. Validation now receives dataset metadata and emits MIT/Google raw and filtered metric groups when sources are present. Whole-validation evaluation aggregate metrics now include source/{mit,google}/raw/* and source/{mit,google}/filtered/*, and per-sample metrics include Dataset Source plus scene/time provenance aliases. Updated the provider brief to make source-stratified metrics explicit acceptance-gate inputs.
+
+Tests:
+- uv run ruff check abi_contrail/adapters.py abi_contrail/evaluation.py tests/test_abi_training_adapter.py ../ml-autoresearch/src/ml_autoresearch/training.py
+- uv run pytest -q
+<!-- SECTION:FINAL_SUMMARY:END -->
