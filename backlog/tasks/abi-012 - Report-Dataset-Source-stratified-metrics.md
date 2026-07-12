@@ -1,10 +1,11 @@
 ---
 id: ABI-012
 title: Report Dataset Source-stratified metrics
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 20:46'
 labels:
   - evaluation
   - metrics
