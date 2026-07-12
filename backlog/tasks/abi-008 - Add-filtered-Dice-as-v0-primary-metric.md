@@ -1,7 +1,7 @@
 ---
 id: ABI-008
 title: Add filtered Dice as v0 primary metric
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
@@ -46,3 +46,12 @@ Promote val/filtered_dice to the ABI v0 primary checkpoint metric once filtered 
 - Added filtered-Dice best-epoch selection coverage and smoke assertions for filtered/raw metric visibility.
 - Validation: uv run pytest -q (28 passed).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Promoted ABI v0 checkpoint selection to val/filtered_dice. Training validation now reports raw and filtered Dice/IoU/precision/recall, with raw val/dice aliases kept visible for compatibility, and the provider brief reflects ADR-0003. Added tests proving best-epoch selection follows filtered Dice and smoke training/evaluation artifacts expose raw and filtered metrics.
+
+Tests:
+- uv run pytest -q (28 passed)
+<!-- SECTION:FINAL_SUMMARY:END -->
