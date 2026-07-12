@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 16:15'
+updated_date: '2026-07-12 16:28'
 labels:
   - evaluation
   - harness
@@ -23,12 +23,12 @@ Implement the ADR decision that Geographic Feature Filter and Scanline Artifact 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ABI provider exposes deterministic Artifact Filters for predicted masks/probabilities
-- [ ] #2 Geographic Feature Filter removes coastline/river-like static features using approved ancillary data
-- [ ] #3 Scanline Artifact Filter removes long approximately constant ABI-y artifacts
-- [ ] #4 Harness evaluation reports raw and filtered metrics for all models
-- [ ] #5 Evaluation records number and area of predicted-positive pixels removed by filters
-- [ ] #6 Candidate code cannot define or override Artifact Filters
+- [x] #1 ABI provider exposes deterministic Artifact Filters for predicted masks/probabilities
+- [x] #2 Geographic Feature Filter removes coastline/river-like static features using approved ancillary data
+- [x] #3 Scanline Artifact Filter removes long approximately constant ABI-y artifacts
+- [x] #4 Harness evaluation reports raw and filtered metrics for all models
+- [x] #5 Evaluation records number and area of predicted-positive pixels removed by filters
+- [x] #6 Candidate code cannot define or override Artifact Filters
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -47,4 +47,11 @@ Implement the ADR decision that Geographic Feature Filter and Scanline Artifact 
 <!-- SECTION:NOTES:BEGIN -->
 - Started task: assigned to @agent and moved to In Progress.
 - Awaiting approval on implementation plan and ancillary data choice before coding.
+
+- Implemented provider-owned Artifact Filter module with Geographic Feature Filter, Scanline Artifact Filter, composable pipeline, Natural Earth coastline/large-river source metadata, and removed-pixel/area diagnostics.
+- Added ABI Post-Run Evaluation adapter and declared whole_validation_failure_analysis so harness evaluate_run emits raw/* and filtered/* metrics plus artifact filter diagnostics.
+- Kept longitude/latitude provider-only for geographic filtering context; candidate __getitem__ inputs still exclude them.
+- Added candidate manifest boundary test proving artifact_filters override attempts are rejected.
+- Validation: uv run pytest -q (27 passed).
+- River ancillary decision: v0 keeps Natural Earth North America rivers because observed false positives are large rivers such as Mississippi, so more detailed hydrography is unnecessary now.
 <!-- SECTION:NOTES:END -->
