@@ -1,0 +1,3 @@
+# Use filtered Dice as the v0 primary checkpoint metric
+
+GOES ABI contrail segmentation uses `val/filtered_dice` as the v0 primary metric for checkpoint selection and simple leaderboard ordering. Training losses may include `bce_dice`, `focal_tversky`, and `bce_dice_cldice`, but loss values are not used as acceptance metrics. Candidate acceptance additionally considers filtered recall, Contrail Connectivity Metric, Dataset Source-stratified performance, and dependence on Artifact Filters. Filtered Dice is used first because it is interpretable, robust to severe background imbalance compared with raw accuracy/BCE, and simpler to debug than a composite metric.

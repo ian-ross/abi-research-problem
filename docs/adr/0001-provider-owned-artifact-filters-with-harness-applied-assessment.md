@@ -1,0 +1,3 @@
+# Provider-owned artifact filters with harness-applied assessment
+
+GOES ABI contrail segmentation assessment applies deterministic artifact filters for known geographic and scanline false positives. The filters themselves are owned by the ABI research problem package because they are domain-specific, but the autoresearch harness applies them during model assessment so all Baseline Segmenters and candidate models are evaluated consistently. Candidate models do not own artifact filtering, because that would make comparisons unfair and allow postprocessing changes to masquerade as model improvements.
