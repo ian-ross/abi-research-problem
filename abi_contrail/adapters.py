@@ -17,6 +17,26 @@ INPUT_MODE_ABI_16CH = "abi_16ch"
 OUTPUT_FORM_MASK_LOGITS = "mask_logits"
 
 
+def split_data_policy_metadata() -> dict[str, object]:
+    """Provider-owned split/index policy metadata for ABI Patch data adapters."""
+
+    return {
+        "google_split_policy": "respect_google_scene_name_train_validation_provenance",
+        "mit_split_policy": "deterministic_whole_scene_train_validation_split_before_windowing",
+        "mit_window_shape": [256, 256],
+        "records_include": [
+            "dataset_source",
+            "scene_name",
+            "scene_index",
+            "goes_time",
+            "row",
+            "col",
+            "split",
+            "positive",
+        ],
+    }
+
+
 def build_spec(data_config: Mapping[str, object] | None = None):
     """Build the GOES ABI Contrail Segmentation Research Problem Spec.
 

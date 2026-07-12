@@ -6,6 +6,7 @@ from ml_autoresearch.research_problems import (
     load_research_problem_provider,
 )
 
+from abi_contrail.adapters import split_data_policy_metadata
 from abi_contrail.research_problem import build_spec
 
 
@@ -21,6 +22,14 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
     assert spec.losses == ("bce_dice",)
     assert spec.primary_metric == "val/dice"
+
+
+def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
+    metadata = split_data_policy_metadata()
+
+    assert metadata["google_split_policy"] == "respect_google_scene_name_train_validation_provenance"
+    assert metadata["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
+    assert "positive" in metadata["records_include"]
 
 
 def test_provider_is_loadable_by_ml_autoresearch() -> None:
