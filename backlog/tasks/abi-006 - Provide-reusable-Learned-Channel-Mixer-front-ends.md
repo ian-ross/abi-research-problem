@@ -1,11 +1,11 @@
 ---
 id: ABI-006
 title: Provide reusable Learned Channel Mixer front ends
-status: Done
+status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 16:01'
+updated_date: '2026-07-12 16:05'
 labels:
   - model-support
   - docs
@@ -46,6 +46,8 @@ Add reusable model-support utilities and brief guidance for Learned Channel Mixe
 - Added tests for shape behavior, validation, and candidate model.py import/use.
 - Updated README and provider brief with channel-mixer import guidance and BTD motivation without fixing the search space.
 - Validation: uv run pytest -q (23 passed).
+
+- Reopened to refine RawPlusLearnedChannelMixer so the preserved raw side can include brightness-temperature difference features, not only individual channels.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
