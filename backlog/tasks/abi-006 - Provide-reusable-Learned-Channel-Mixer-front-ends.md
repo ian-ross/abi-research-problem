@@ -1,11 +1,11 @@
 ---
 id: ABI-006
 title: Provide reusable Learned Channel Mixer front ends
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 16:05'
+updated_date: '2026-07-12 16:07'
 labels:
   - model-support
   - docs
@@ -48,12 +48,16 @@ Add reusable model-support utilities and brief guidance for Learned Channel Mixe
 - Validation: uv run pytest -q (23 passed).
 
 - Reopened to refine RawPlusLearnedChannelMixer so the preserved raw side can include brightness-temperature difference features, not only individual channels.
+
+- Refined RawPlusLearnedChannelMixer to support explicit brightness-temperature-difference features through difference_channel_pairs, emitted before learned channels.
+- Updated tests and docs for BTD feature preservation.
+- Validation: uv run pytest -q (23 passed).
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implemented reusable ABI learned channel mixer front ends for candidate models. Added Conv1x1ChannelMixer and RawPlusLearnedChannelMixer in abi_contrail.model_support, with clear shape validation for [C,H,W] and [N,C,H,W] tensors. Added tests that cover mixer behavior and demonstrate importing the utilities from a candidate model.py. Updated README and provider brief with light BTD/channel-combination motivation while keeping candidate exploration open and preserving provider-owned input selection.
+Implemented reusable ABI learned channel mixer front ends for candidate models. Added Conv1x1ChannelMixer and RawPlusLearnedChannelMixer in abi_contrail.model_support, with clear shape validation for [C,H,W] and [N,C,H,W] tensors. RawPlusLearnedChannelMixer now supports explicit brightness-temperature-difference features via difference_channel_pairs in addition to optional raw channel preservation, then concatenates learned 1x1 projection channels. Added tests that cover mixer behavior, BTD feature computation, validation, and importing the utilities from a candidate model.py. Updated README and provider brief with light BTD/channel-combination motivation while keeping candidate exploration open and preserving provider-owned input selection.
 
 Tests:
 - uv run pytest -q (23 passed)
