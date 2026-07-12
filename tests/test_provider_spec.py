@@ -27,11 +27,44 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert all(17 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
     assert spec.output_forms == ("mask_logits",)
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
+    assert spec.auxiliary_targets == ("line", "boundary", "centerline")
+    assert spec.auxiliary_outputs == {
+        "line": "line_logits",
+        "boundary": "boundary_logits",
+        "centerline": "centerline_logits",
+    }
+    assert spec.auxiliary_output_shapes == {
+        "line": [1, 256, 256],
+        "boundary": [1, 256, 256],
+        "centerline": [1, 256, 256],
+    }
     assert spec.losses == ("bce_dice", "focal_tversky", "bce_dice_cldice")
+    assert spec.auxiliary_losses == ("weighted_bce",)
     assert spec.primary_metric == "val/filtered_dice"
     assert spec.operation_capabilities.training is True
     assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
     assert spec.evaluation_adapter is not None
+
+
+def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:
+    spec = build_spec()
+
+    output_spec = spec.build_output_spec(
+        {
+            "output_form": "mask_logits",
+            "auxiliary_targets": [
+                {"name": "line", "output": "line_logits", "loss": "weighted_bce", "weight": 0.1},
+                {"name": "boundary", "output": "boundary_logits", "loss": "weighted_bce", "weight": 0.1},
+                {"name": "centerline", "output": "centerline_logits", "loss": "weighted_bce", "weight": 0.1},
+            ],
+        }
+    )
+
+    assert output_spec["auxiliary_outputs"] == [
+        {"target": "line", "name": "line_logits", "shape": [1, 256, 256]},
+        {"target": "boundary", "name": "boundary_logits", "shape": [1, 256, 256]},
+        {"target": "centerline", "name": "centerline_logits", "shape": [1, 256, 256]},
+    ]
 
 
 def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:

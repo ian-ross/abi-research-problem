@@ -16,12 +16,17 @@ This workspace provides the `goes_abi_contrail_segmentation` Research Problem fo
   - `Conv1x1ChannelMixer` learns per-pixel linear mixtures across the harness-approved input channels.
   - `RawPlusLearnedChannelMixer` concatenates explicit raw-channel and/or brightness-temperature-difference features with learned 1x1 projections.
 - Output form: `mask_logits`, a `[1, 256, 256]` Contrail Mask logit tensor.
+- Optional manifest-declared auxiliary targets are provider-derived and shape-matched to `mask_logits`:
+  - `line` uses output `line_logits`.
+  - `boundary` uses output `boundary_logits`.
+  - `centerline` uses output `centerline_logits`, derived consistently with the trusted clDice centerline/skeleton support.
 - Loss allowlist: `bce_dice`, `focal_tversky`, `bce_dice_cldice`
+- Auxiliary loss allowlist: `weighted_bce`; auxiliary target weights must be declared in `manifest.yaml`.
 - Optimizer allowlist: `adamw`
 - Sampling policies: `sequential`, `deterministic_shuffle`
 - Primary checkpoint metric: `val/filtered_dice` (ADR-0003)
 - Validation reporting keeps raw overlap metrics (`val/raw_dice`, `val/raw_iou`, `val/raw_precision`, `val/raw_recall`) alongside filtered metrics (`val/filtered_dice`, `val/filtered_iou`, `val/filtered_precision`, `val/filtered_recall`).
-- Candidate-defined arbitrary losses are not allowed. Future loss functions require a Capability Request, human approval, trusted implementation in `ml-autoresearch` harness/problem-support code, and a provider/agent-control-boundary allowlist update.
+- Candidate-defined arbitrary losses or auxiliary objectives are not allowed. Future loss functions or auxiliary target types require a Capability Request, human approval, trusted implementation in `ml-autoresearch` harness/problem-support code, and a provider/agent-control-boundary allowlist update.
 
 Source-balanced sampling and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
 

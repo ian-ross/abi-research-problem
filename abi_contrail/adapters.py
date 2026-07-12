@@ -29,7 +29,21 @@ RESEARCH_PROBLEM_ID = "goes_abi_contrail_segmentation"
 RESEARCH_PROBLEM_VERSION = "v0"
 CONTRACT_VERSION = "v0"
 OUTPUT_FORM_MASK_LOGITS = "mask_logits"
+AUXILIARY_TARGET_LINE = "line"
+AUXILIARY_TARGET_BOUNDARY = "boundary"
+AUXILIARY_TARGET_CENTERLINE = "centerline"
+AUXILIARY_OUTPUT_LINE_LOGITS = "line_logits"
+AUXILIARY_OUTPUT_BOUNDARY_LOGITS = "boundary_logits"
+AUXILIARY_OUTPUT_CENTERLINE_LOGITS = "centerline_logits"
+AUXILIARY_LOSS_WEIGHTED_BCE = "weighted_bce"
 INPUT_MODE_ABI_INPUTS = (INPUT_MODE_ABI_16CH, INPUT_MODE_ABI_16CH_PLUS_SZA, INPUT_MODE_ABI_THERMAL_10CH)
+AUXILIARY_TARGETS = (AUXILIARY_TARGET_LINE, AUXILIARY_TARGET_BOUNDARY, AUXILIARY_TARGET_CENTERLINE)
+AUXILIARY_OUTPUTS = {
+    AUXILIARY_TARGET_LINE: AUXILIARY_OUTPUT_LINE_LOGITS,
+    AUXILIARY_TARGET_BOUNDARY: AUXILIARY_OUTPUT_BOUNDARY_LOGITS,
+    AUXILIARY_TARGET_CENTERLINE: AUXILIARY_OUTPUT_CENTERLINE_LOGITS,
+}
+AUXILIARY_OUTPUT_SHAPES = {target: [1, 256, 256] for target in AUXILIARY_TARGETS}
 
 
 class ABITrainingAdapter:
@@ -147,12 +161,33 @@ class ABITrainingAdapter:
         target_mask: Any,
         auxiliary_targets: list[dict[str, object]],
     ) -> dict[str, Any]:
-        del outputs, target_mask
-        if auxiliary_targets:
-            from ml_autoresearch.errors import TrainingError
+        from ml_autoresearch.errors import TrainingError
+        from ml_autoresearch.problem_support.segmentation import weighted_bce_loss
 
-            raise TrainingError("ABI v0 vertical slice does not support auxiliary targets")
-        return {}
+        losses: dict[str, Any] = {}
+        for target in auxiliary_targets:
+            target_name = str(target.get("name", ""))
+            output_name = str(target.get("output", ""))
+            loss_name = str(target.get("loss", ""))
+            if target_name not in AUXILIARY_TARGETS:
+                raise TrainingError(f"unsupported ABI auxiliary target: {target_name}")
+            expected_output = AUXILIARY_OUTPUTS[target_name]
+            if output_name != expected_output:
+                raise TrainingError(f"ABI auxiliary target {target_name!r} must use output {expected_output!r}")
+            if loss_name != AUXILIARY_LOSS_WEIGHTED_BCE:
+                raise TrainingError(f"unsupported ABI auxiliary loss: {loss_name}")
+            try:
+                logits = outputs[output_name]
+            except KeyError as exc:
+                raise TrainingError(f"missing ABI auxiliary output: {output_name}") from exc
+            auxiliary_target = derive_auxiliary_target(target_name, target_mask)
+            if logits.shape != auxiliary_target.shape:
+                raise TrainingError(
+                    f"ABI auxiliary output {output_name!r} shape {tuple(logits.shape)} does not match target shape "
+                    f"{tuple(auxiliary_target.shape)}"
+                )
+            losses[target_name] = float(target.get("weight", 1.0)) * weighted_bce_loss(logits, auxiliary_target)
+        return losses
 
     def compute_validation_metrics(self, logits: Any, target_mask: Any) -> dict[str, float]:
         import torch
@@ -360,6 +395,20 @@ def _input_specs() -> dict[str, dict[str, object]]:
     }
 
 
+def derive_auxiliary_target(target_name: str, target_mask: Any) -> Any:
+    """Derive a trusted ABI auxiliary target from the Contrail Mask target."""
+
+    from ml_autoresearch.problem_support.segmentation import derive_boundary_target_v1, derive_line_target_v1, _soft_skeletonize
+
+    if target_name == AUXILIARY_TARGET_LINE:
+        return derive_line_target_v1(target_mask)
+    if target_name == AUXILIARY_TARGET_BOUNDARY:
+        return derive_boundary_target_v1(target_mask)
+    if target_name == AUXILIARY_TARGET_CENTERLINE:
+        return _soft_skeletonize(target_mask.float().clamp(0.0, 1.0), iterations=32)
+    raise ValueError(f"unsupported ABI auxiliary target: {target_name}")
+
+
 def split_data_policy_metadata() -> dict[str, object]:
     """Provider-owned split/index policy metadata for ABI Patch data adapters."""
 
@@ -416,6 +465,10 @@ def build_spec(data_config: Mapping[str, object] | None = None):
             },
         },
         losses=("bce_dice", "focal_tversky", "bce_dice_cldice"),
+        auxiliary_targets=AUXILIARY_TARGETS,
+        auxiliary_outputs=AUXILIARY_OUTPUTS,
+        auxiliary_output_shapes=AUXILIARY_OUTPUT_SHAPES,
+        auxiliary_losses=(AUXILIARY_LOSS_WEIGHTED_BCE,),
         optimizers=("adamw",),
         sampling_policies=("sequential", "deterministic_shuffle"),
         frame_selection_policies=("all_target_frames",),

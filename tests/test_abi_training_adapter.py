@@ -9,7 +9,7 @@ import yaml
 import torch
 import zarr
 
-from abi_contrail.adapters import ABITrainingAdapter, build_spec
+from abi_contrail.adapters import ABITrainingAdapter, build_spec, derive_auxiliary_target
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
@@ -116,6 +116,46 @@ def test_training_adapter_dispatches_trusted_allowlisted_primary_losses() -> Non
     for loss_name in ("bce_dice", "focal_tversky", "bce_dice_cldice"):
         loss = adapter.compute_primary_loss(loss_name, logits, target)
         assert torch.isfinite(loss)
+
+
+def test_abi_auxiliary_targets_have_mask_logit_shape_and_expected_values() -> None:
+    target = torch.zeros((1, 1, 7, 7), dtype=torch.float32)
+    target[:, :, 1:6, 3] = 1.0
+
+    line = derive_auxiliary_target("line", target)
+    boundary = derive_auxiliary_target("boundary", target)
+    centerline = derive_auxiliary_target("centerline", target)
+
+    assert line.shape == target.shape
+    assert boundary.shape == target.shape
+    assert centerline.shape == target.shape
+    assert torch.equal(centerline, target)
+    assert line[0, 0, 3, 2] == 1.0
+    assert boundary[0, 0, 3, 3] == 1.0
+
+
+def test_training_adapter_computes_manifest_declared_auxiliary_losses() -> None:
+    adapter = ABITrainingAdapter()
+    target = torch.zeros((1, 1, 7, 7), dtype=torch.float32)
+    target[:, :, 2:5, 2:5] = 1.0
+    outputs = {
+        "line_logits": torch.zeros_like(target),
+        "boundary_logits": torch.zeros_like(target),
+        "centerline_logits": torch.zeros_like(target),
+    }
+
+    losses = adapter.compute_auxiliary_losses(
+        outputs,
+        target,
+        [
+            {"name": "line", "output": "line_logits", "loss": "weighted_bce", "weight": 0.2},
+            {"name": "boundary", "output": "boundary_logits", "loss": "weighted_bce", "weight": 0.3},
+            {"name": "centerline", "output": "centerline_logits", "loss": "weighted_bce", "weight": 0.4},
+        ],
+    )
+
+    assert set(losses) == {"line", "boundary", "centerline"}
+    assert all(torch.isfinite(loss) for loss in losses.values())
 
 
 def test_build_spec_declares_training_capability_with_filtered_dice_metric() -> None:
