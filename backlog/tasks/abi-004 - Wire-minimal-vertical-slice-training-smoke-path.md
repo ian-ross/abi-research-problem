@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 15:35'
+updated_date: '2026-07-12 15:50'
 labels:
   - training
   - vertical-slice
@@ -47,6 +47,8 @@ Connect the ABI provider adapter to ml-autoresearch training on tiny fixtures so
 - Added ABITrainingAdapter with data root/zarr validation, Google/MIT split-index dataset construction, trusted bce_dice loss and val/dice selection policy.
 - Added torch tuple wrapper and ABI RGB diagnostic renderer for prediction sample artifacts.
 - Added vertical-slice tests for adapter dataset construction, provider training capability, candidate smoke, and tiny fixture training artifacts.
+
+- Re-ran full suite with project torch dependency group: uv run --group torch pytest -q (15 passed). Torch version reported as 2.13.0+cu130.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
