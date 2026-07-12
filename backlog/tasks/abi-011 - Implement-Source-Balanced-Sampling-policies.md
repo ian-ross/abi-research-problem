@@ -23,11 +23,11 @@ Add provider/harness sampling support for MIT-only, Google-only, and combined So
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 mit_only training policy samples only MIT ABI Patches
-- [ ] #2 google_only training policy samples only Google ABI Patches
-- [ ] #3 combined_source_balanced policy uses explicit Dataset Source mixture rather than raw counts
-- [ ] #4 Positive-patch bias is configurable and logged in data policy metadata
-- [ ] #5 Sampling policy is harness/provider-owned, not candidate-owned
+- [x] #1 mit_only training policy samples only MIT ABI Patches
+- [x] #2 google_only training policy samples only Google ABI Patches
+- [x] #3 combined_source_balanced policy uses explicit Dataset Source mixture rather than raw counts
+- [x] #4 Positive-patch bias is configurable and logged in data policy metadata
+- [x] #5 Sampling policy is harness/provider-owned, not candidate-owned
 <!-- AC:END -->
 
 ## Implementation Plan
