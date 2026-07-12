@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 17:07'
+updated_date: '2026-07-12 17:12'
 labels:
   - auxiliary-targets
   - harness
@@ -23,11 +23,11 @@ Expose trusted auxiliary targets and optional auxiliary output heads for thin co
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 line auxiliary target is available in the ABI spec
-- [ ] #2 boundary auxiliary target is available in the ABI spec
-- [ ] #3 centerline auxiliary target and centerline_logits output are available in the ABI spec
-- [ ] #4 Auxiliary target losses are trusted and manifest-declared
-- [ ] #5 Tests verify auxiliary target shapes match mask_logits shape
+- [x] #1 line auxiliary target is available in the ABI spec
+- [x] #2 boundary auxiliary target is available in the ABI spec
+- [x] #3 centerline auxiliary target and centerline_logits output are available in the ABI spec
+- [x] #4 Auxiliary target losses are trusted and manifest-declared
+- [x] #5 Tests verify auxiliary target shapes match mask_logits shape
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -40,3 +40,14 @@ Expose trusted auxiliary targets and optional auxiliary output heads for thin co
 5. Add tests for derived target shapes, values on simple masks, and output/target name validation.
 6. Update agent-facing docs with allowed auxiliary heads and discourage arbitrary auxiliary objectives.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Implemented ABI auxiliary targets line, boundary, and centerline with line_logits/boundary_logits/centerline_logits output mappings and [1, 256, 256] shapes.
+- Added trusted auxiliary target derivation: line/boundary use ml-autoresearch segmentation helpers; centerline uses the same trusted skeletonization support used by clDice.
+- Added compute_auxiliary_losses validation for target name, output name, loss name, output presence, shape matching, and trusted weighted_bce loss with manifest-declared weights.
+- Updated provider brief with optional auxiliary head contract and no arbitrary auxiliary objectives guidance.
+- Validation: uv run ruff check abi_contrail/adapters.py tests/test_provider_spec.py tests/test_abi_training_adapter.py; uv run pytest -q.
+- Independent reviewer found no blockers.
+<!-- SECTION:NOTES:END -->
