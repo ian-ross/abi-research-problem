@@ -33,10 +33,9 @@ Add provider/harness sampling support for MIT-only, Google-only, and combined So
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Define provider-owned training data policies: mit_only, google_only, and combined_source_balanced.
-2. Implement source-aware sample pools using Dataset Source metadata from ABI-003.
-3. Add configurable positive-patch preference without allowing candidate-owned samplers.
-4. Ensure combined_source_balanced uses explicit source mixture weights rather than raw sample counts.
-5. Record sampling policy, source mixture, and positive bias in data_policy_metadata and run artifacts.
-6. Add deterministic tests for source proportions and positive-bias behavior on fixture sample indexes.
+1. Inspect existing provider/harness data modules, task dependencies ABI-003/ABI-004 outputs, and tests/fixtures for sampling hooks.
+2. Identify the provider-owned interface where training sampling policies and data policy metadata should live.
+3. Implement mit_only, google_only, and combined_source_balanced policies with configurable positive-patch bias and explicit source mixture weights.
+4. Add deterministic fixture-based tests covering source filtering/balancing, positive-bias behavior, metadata logging, and candidate isolation.
+5. Run targeted uv pytest checks and update task notes/acceptance criteria with results.
 <!-- SECTION:PLAN:END -->
