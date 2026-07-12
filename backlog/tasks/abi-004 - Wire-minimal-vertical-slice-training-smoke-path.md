@@ -1,7 +1,7 @@
 ---
 id: ABI-004
 title: Wire minimal vertical-slice training smoke path
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
