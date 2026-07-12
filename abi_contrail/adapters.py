@@ -35,6 +35,11 @@ INPUT_MODE_ABI_INPUTS = (INPUT_MODE_ABI_16CH, INPUT_MODE_ABI_16CH_PLUS_SZA, INPU
 class ABITrainingAdapter:
     """Trusted ml-autoresearch training adapter for the ABI vertical slice."""
 
+    def __init__(self, data_config: Mapping[str, object] | None = None) -> None:
+        from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
+
+        self.filter_pipeline = build_default_artifact_filter_pipeline(data_config)
+
     def validate_data_root(self, data_config: Mapping[str, object]) -> Path:
         root = Path(str(data_config.get("dataset_root", "."))).expanduser().resolve()
         if not root.is_dir():
@@ -143,12 +148,36 @@ class ABITrainingAdapter:
         return {}
 
     def compute_validation_metrics(self, logits: Any, target_mask: Any) -> dict[str, float]:
-        from ml_autoresearch.problem_support.segmentation import binary_segmentation_validation_metrics
+        import torch
+        from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics
 
-        return binary_segmentation_validation_metrics(logits, target_mask)
+        probabilities = torch.sigmoid(logits.detach().cpu())
+        raw_predictions = probabilities >= 0.5
+        targets = (target_mask.detach().cpu() >= 0.5)
+        filtered_predictions: list[torch.Tensor] = []
+        for index in range(raw_predictions.shape[0]):
+            filtered = self.filter_pipeline.apply(raw_predictions[index].numpy(), probabilities[index].numpy(), context={})
+            filtered_predictions.append(torch.from_numpy(filtered.filtered_mask.astype(bool)))
+        filtered_tensor = torch.stack(filtered_predictions)
+        raw_metrics = binary_segmentation_metrics(raw_predictions, targets)
+        filtered_metrics = binary_segmentation_metrics(filtered_tensor, targets)
+        return {
+            "val/dice": raw_metrics["dice"],
+            "val/iou": raw_metrics["iou"],
+            "val/precision": raw_metrics["precision"],
+            "val/recall": raw_metrics["recall"],
+            "val/raw_dice": raw_metrics["dice"],
+            "val/raw_iou": raw_metrics["iou"],
+            "val/raw_precision": raw_metrics["precision"],
+            "val/raw_recall": raw_metrics["recall"],
+            "val/filtered_dice": filtered_metrics["dice"],
+            "val/filtered_iou": filtered_metrics["iou"],
+            "val/filtered_precision": filtered_metrics["precision"],
+            "val/filtered_recall": filtered_metrics["recall"],
+        }
 
     def selection_policy(self) -> tuple[str, str]:
-        return "val/dice", "max"
+        return "val/filtered_dice", "max"
 
     def build_evaluation_dataset(
         self,
@@ -354,7 +383,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
     from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
     from abi_contrail.evaluation import ABIEvaluationAdapter, EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS
 
-    training_adapter = ABITrainingAdapter()
+    training_adapter = ABITrainingAdapter(filter_config)
     evaluation_adapter = ABIEvaluationAdapter(
         training_adapter=training_adapter,
         filter_pipeline=build_default_artifact_filter_pipeline(filter_config),
@@ -379,7 +408,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         frame_selection_policies=("all_target_frames",),
         input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
         augmentation_policies=("none",),
-        primary_metric="val/dice",
+        primary_metric="val/filtered_dice",
         operation_capabilities={"training": True, "evaluation_modes": (EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS,)},
         training_adapter=training_adapter,
         evaluation_adapter=evaluation_adapter,

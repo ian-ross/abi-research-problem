@@ -12,6 +12,7 @@ from abi_contrail.adapters import ABITrainingAdapter, build_spec
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
+from ml_autoresearch.training import _best_validation_metrics
 
 
 def _write_google_fixture(root: Path) -> dict[str, object]:
@@ -105,15 +106,31 @@ def test_training_adapter_uses_resolved_manifest_input_mode_for_channel_selectio
     assert tuple(target.shape) == (1, 256, 256)
 
 
-def test_build_spec_declares_training_capability_with_temporary_val_dice_metric() -> None:
+def test_build_spec_declares_training_capability_with_filtered_dice_metric() -> None:
     spec = build_spec()
 
     assert spec.operation_capabilities.training is True
     assert spec.training_adapter is not None
     assert spec.evaluation_adapter is not None
     assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
-    assert spec.primary_metric == "val/dice"
-    assert spec.training_adapter.selection_policy() == ("val/dice", "max")
+    assert spec.primary_metric == "val/filtered_dice"
+    assert spec.training_adapter.selection_policy() == ("val/filtered_dice", "max")
+
+
+def test_best_epoch_selection_follows_filtered_dice_not_raw_dice() -> None:
+    best = _best_validation_metrics(
+        [
+            {"split": "val", "epoch": 1, "val/dice": 0.9, "val/filtered_dice": 0.4},
+            {"split": "val", "epoch": 2, "val/dice": 0.5, "val/filtered_dice": 0.8},
+        ],
+        selection_metric="val/filtered_dice",
+        selection_mode="max",
+    )
+
+    assert best["epoch"] == 2
+    assert best["selection_metric"] == "val/filtered_dice"
+    assert best["selection_value"] == 0.8
+    assert best["metrics"]["val/dice"] == 0.5
 
 
 def test_provider_loads_with_training_adapter() -> None:
@@ -161,12 +178,22 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert (outputs / "models" / "best_epoch_model.pt").is_file()
     final_metrics = json.loads((outputs / "final_metrics.json").read_text())
     best_metrics = json.loads((outputs / "best_metrics.json").read_text())
-    assert "val/dice" in final_metrics
-    assert best_metrics["selection_metric"] == "val/dice"
+    assert "val/raw_dice" in final_metrics
+    assert "val/filtered_dice" in final_metrics
+    assert "val/filtered_iou" in final_metrics
+    assert "val/filtered_precision" in final_metrics
+    assert "val/filtered_recall" in final_metrics
+    assert best_metrics["selection_metric"] == "val/filtered_dice"
 
     evaluation = evaluate_run(run.run_dir, max_artifact_samples=1)
     assert evaluation.status == "completed"
     aggregate = json.loads((evaluation.evaluation_dir / "aggregate_metrics.json").read_text())
     assert "raw/dice" in aggregate["metrics"]
+    assert "raw/iou" in aggregate["metrics"]
+    assert "raw/precision" in aggregate["metrics"]
+    assert "raw/recall" in aggregate["metrics"]
     assert "filtered/dice" in aggregate["metrics"]
+    assert "filtered/iou" in aggregate["metrics"]
+    assert "filtered/precision" in aggregate["metrics"]
+    assert "filtered/recall" in aggregate["metrics"]
     assert "artifact_filters/removed_pixel_count" in aggregate["metrics"]

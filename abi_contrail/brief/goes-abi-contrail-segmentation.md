@@ -19,9 +19,10 @@ This workspace provides the `goes_abi_contrail_segmentation` Research Problem fo
 - Loss allowlist: `bce_dice`
 - Optimizer allowlist: `adamw`
 - Sampling policies: `sequential`, `deterministic_shuffle`
-- Temporary primary metric: `val/dice`
+- Primary checkpoint metric: `val/filtered_dice` (ADR-0003)
+- Validation reporting keeps raw overlap metrics (`val/raw_dice`, `val/raw_iou`, `val/raw_precision`, `val/raw_recall`) alongside filtered metrics (`val/filtered_dice`, `val/filtered_iou`, `val/filtered_precision`, `val/filtered_recall`).
 
-Dataset loading, leakage-safe splits, artifact filtering, filtered metrics, source-balanced sampling, and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
+Source-balanced sampling and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
 
 ## Learned channel-mixer guidance
 
