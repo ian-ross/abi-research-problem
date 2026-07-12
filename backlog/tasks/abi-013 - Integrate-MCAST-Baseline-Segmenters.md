@@ -4,7 +4,7 @@ title: Integrate MCAST Baseline Segmenters
 status: To Do
 assignee: []
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-12 12:44'
 labels:
   - baselines
   - evaluation
@@ -39,3 +39,9 @@ Evaluate MCAST detection model versions 1.1 and 2.1 as provider-owned Baseline S
 5. Evaluate baselines through the same raw/filtered metric path as candidates.
 6. Store baseline metrics/artifacts so acceptance reports can compare candidates to the best available Baseline Segmenter.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- MCAST source code path: /home/iross/work/mit/code/mcast. The planning-inputs/mcast symlink was removed because it interfered with editor/tooling traversal; use the absolute path when implementing this task.
+<!-- SECTION:NOTES:END -->
