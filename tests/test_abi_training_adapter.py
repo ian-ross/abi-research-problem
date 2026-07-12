@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import yaml
+import torch
 import zarr
 
 from abi_contrail.adapters import ABITrainingAdapter, build_spec
@@ -106,6 +107,17 @@ def test_training_adapter_uses_resolved_manifest_input_mode_for_channel_selectio
     assert tuple(target.shape) == (1, 256, 256)
 
 
+def test_training_adapter_dispatches_trusted_allowlisted_primary_losses() -> None:
+    adapter = ABITrainingAdapter()
+    logits = torch.zeros((1, 1, 4, 4), dtype=torch.float32)
+    target = torch.zeros_like(logits)
+    target[:, :, 1:3, 1:3] = 1.0
+
+    for loss_name in ("bce_dice", "focal_tversky", "bce_dice_cldice"):
+        loss = adapter.compute_primary_loss(loss_name, logits, target)
+        assert torch.isfinite(loss)
+
+
 def test_build_spec_declares_training_capability_with_filtered_dice_metric() -> None:
     spec = build_spec()
 
@@ -183,6 +195,8 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert "val/filtered_iou" in final_metrics
     assert "val/filtered_precision" in final_metrics
     assert "val/filtered_recall" in final_metrics
+    assert "val/raw_contrail_connectivity" in final_metrics
+    assert "val/filtered_contrail_connectivity" in final_metrics
     assert best_metrics["selection_metric"] == "val/filtered_dice"
 
     evaluation = evaluate_run(run.run_dir, max_artifact_samples=1)
@@ -196,4 +210,6 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert "filtered/iou" in aggregate["metrics"]
     assert "filtered/precision" in aggregate["metrics"]
     assert "filtered/recall" in aggregate["metrics"]
+    assert "raw/contrail_connectivity" in aggregate["metrics"]
+    assert "filtered/contrail_connectivity" in aggregate["metrics"]
     assert "artifact_filters/removed_pixel_count" in aggregate["metrics"]

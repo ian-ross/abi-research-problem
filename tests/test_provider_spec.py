@@ -27,7 +27,7 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert all(17 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
     assert spec.output_forms == ("mask_logits",)
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
-    assert spec.losses == ("bce_dice",)
+    assert spec.losses == ("bce_dice", "focal_tversky", "bce_dice_cldice")
     assert spec.primary_metric == "val/filtered_dice"
     assert spec.operation_capabilities.training is True
     assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)

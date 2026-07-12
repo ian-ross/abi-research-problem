@@ -126,13 +126,20 @@ class ABITrainingAdapter:
         return str(output_spec.get("form", OUTPUT_FORM_MASK_LOGITS))
 
     def compute_primary_loss(self, loss_name: str, logits: Any, target_mask: Any) -> Any:
-        if loss_name != "bce_dice":
+        from ml_autoresearch.problem_support.segmentation import bce_dice_cldice_loss, bce_dice_loss, focal_tversky_loss
+
+        losses = {
+            "bce_dice": bce_dice_loss,
+            "focal_tversky": focal_tversky_loss,
+            "bce_dice_cldice": bce_dice_cldice_loss,
+        }
+        try:
+            loss_function = losses[loss_name]
+        except KeyError as exc:
             from ml_autoresearch.errors import TrainingError
 
-            raise TrainingError(f"unsupported ABI loss: {loss_name}")
-        from ml_autoresearch.problem_support.segmentation import bce_dice_loss
-
-        return bce_dice_loss(logits, target_mask)
+            raise TrainingError(f"unsupported ABI loss: {loss_name}") from exc
+        return loss_function(logits, target_mask)
 
     def compute_auxiliary_losses(
         self,
@@ -149,7 +156,7 @@ class ABITrainingAdapter:
 
     def compute_validation_metrics(self, logits: Any, target_mask: Any) -> dict[str, float]:
         import torch
-        from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics
+        from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics, contrail_connectivity_metric
 
         probabilities = torch.sigmoid(logits.detach().cpu())
         raw_predictions = probabilities >= 0.5
@@ -161,6 +168,8 @@ class ABITrainingAdapter:
         filtered_tensor = torch.stack(filtered_predictions)
         raw_metrics = binary_segmentation_metrics(raw_predictions, targets)
         filtered_metrics = binary_segmentation_metrics(filtered_tensor, targets)
+        raw_connectivity = contrail_connectivity_metric(raw_predictions, targets)
+        filtered_connectivity = contrail_connectivity_metric(filtered_tensor, targets)
         return {
             "val/dice": raw_metrics["dice"],
             "val/iou": raw_metrics["iou"],
@@ -170,10 +179,14 @@ class ABITrainingAdapter:
             "val/raw_iou": raw_metrics["iou"],
             "val/raw_precision": raw_metrics["precision"],
             "val/raw_recall": raw_metrics["recall"],
+            "val/raw_cldice": raw_connectivity,
+            "val/raw_contrail_connectivity": raw_connectivity,
             "val/filtered_dice": filtered_metrics["dice"],
             "val/filtered_iou": filtered_metrics["iou"],
             "val/filtered_precision": filtered_metrics["precision"],
             "val/filtered_recall": filtered_metrics["recall"],
+            "val/filtered_cldice": filtered_connectivity,
+            "val/filtered_contrail_connectivity": filtered_connectivity,
         }
 
     def selection_policy(self) -> tuple[str, str]:
@@ -402,7 +415,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
                 "target": "contrail_mask",
             },
         },
-        losses=("bce_dice",),
+        losses=("bce_dice", "focal_tversky", "bce_dice_cldice"),
         optimizers=("adamw",),
         sampling_policies=("sequential", "deterministic_shuffle"),
         frame_selection_policies=("all_target_frames",),

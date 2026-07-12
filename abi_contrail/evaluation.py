@@ -58,7 +58,7 @@ class ABIEvaluationAdapter:
         del evaluation_dir, max_artifact_samples
         import torch
         import yaml
-        from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics
+        from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
         from ml_autoresearch.smoke import _extract_mask_logits, _import_candidate_model, input_spec_from_resolved_manifest, output_spec_from_resolved_manifest
 
         manifest_path = run_dir / "resolved_manifest.yaml"
@@ -110,6 +110,8 @@ class ABIEvaluationAdapter:
                     sample_target = target_masks[offset : offset + 1]
                     raw_metrics = binary_segmentation_metrics(sample_prediction, sample_target)
                     filtered_metrics = binary_segmentation_metrics(sample_filtered_prediction, sample_target)
+                    raw_connectivity = contrail_connectivity_metric(sample_prediction, sample_target)
+                    filtered_connectivity = contrail_connectivity_metric(sample_filtered_prediction, sample_target)
                     diagnostics = filtered.diagnostics
                     removed_count = int(diagnostics["removed_pixel_count"])
                     removed_area = float(diagnostics["removed_area_km2"])
@@ -119,7 +121,11 @@ class ABIEvaluationAdapter:
                         "sample_id": f"val/{index:06d}",
                         "dataset_index": int(index),
                         **{f"raw/{key}": value for key, value in raw_metrics.items()},
+                        "raw/cldice": raw_connectivity,
+                        "raw/contrail_connectivity": raw_connectivity,
                         **{f"filtered/{key}": value for key, value in filtered_metrics.items()},
+                        "filtered/cldice": filtered_connectivity,
+                        "filtered/contrail_connectivity": filtered_connectivity,
                         **{f"raw/{key}": value for key, value in binary_confusion_counts(sample_prediction, sample_target).items()},
                         **{f"filtered/{key}": value for key, value in binary_confusion_counts(sample_filtered_prediction, sample_target).items()},
                         "artifact_filters/removed_pixel_count": removed_count,
@@ -138,9 +144,15 @@ class ABIEvaluationAdapter:
         target_tensor = torch.cat(targets_all)
         raw_aggregate = binary_segmentation_metrics(raw_tensor, target_tensor)
         filtered_aggregate = binary_segmentation_metrics(filtered_tensor, target_tensor)
+        raw_connectivity = contrail_connectivity_metric(raw_tensor, target_tensor)
+        filtered_connectivity = contrail_connectivity_metric(filtered_tensor, target_tensor)
         aggregate = {
             **{f"raw/{key}": value for key, value in raw_aggregate.items()},
+            "raw/cldice": raw_connectivity,
+            "raw/contrail_connectivity": raw_connectivity,
             **{f"filtered/{key}": value for key, value in filtered_aggregate.items()},
+            "filtered/cldice": filtered_connectivity,
+            "filtered/contrail_connectivity": filtered_connectivity,
             "artifact_filters/removed_pixel_count": float(removed_pixels_total),
             "artifact_filters/removed_area_km2": float(removed_area_total),
         }
