@@ -1,7 +1,7 @@
 ---
 id: ABI-018
 title: Add trusted random mirroring augmentation policy
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-13 11:38'
@@ -48,3 +48,13 @@ Add a provider/harness-owned random mirroring augmentation policy for ABI Patch 
 - Implemented trusted dataset wrapper that flips inputs and targets together for no/horizontal/vertical/both modes with injectable selector for tests.
 - Updated provider brief and targeted tests.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented trusted random_mirroring augmentation for ABI training. ResearchProblemSpec now allowlists none and random_mirroring; ABITrainingAdapter wraps training datasets only when random_mirroring is selected. The wrapper applies a shared no/horizontal/vertical/both-axis flip to channel-first inputs, Contrail Mask targets, and tensor-like auxiliary sample values while preserving metadata passthrough. Updated the provider brief to document augmentation as harness/provider-owned and not candidate-owned.
+
+Tests:
+- uv run pytest tests/test_abi_training_adapter.py tests/test_provider_spec.py
+- uv run ruff check abi_contrail/adapters.py tests/test_abi_training_adapter.py tests/test_provider_spec.py
+<!-- SECTION:FINAL_SUMMARY:END -->
