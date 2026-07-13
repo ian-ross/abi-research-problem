@@ -1,7 +1,7 @@
 ---
 id: ABI-019
 title: Add threshold-curve evaluation artifacts
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-13 11:38'
