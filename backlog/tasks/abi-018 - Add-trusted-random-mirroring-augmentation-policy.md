@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-13 11:38'
-updated_date: '2026-07-13 11:43'
+updated_date: '2026-07-13 11:49'
 labels:
   - training
   - augmentation
@@ -22,11 +22,11 @@ Add a provider/harness-owned random mirroring augmentation policy for ABI Patch 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ResearchProblemSpec exposes an allowlisted random_mirroring augmentation policy in addition to none
-- [ ] #2 Training adapter applies random mirroring only when selected by the candidate manifest or resolved run configuration
-- [ ] #3 Input tensors and Contrail Mask targets are flipped consistently for no-flip, horizontal, vertical, and both-axis cases
-- [ ] #4 Unit tests cover deterministic/seeding behavior or injectable randomness so tiny fixtures verify all flip modes
-- [ ] #5 Provider brief documents the policy as trusted/harness-owned and not candidate-owned data augmentation
+- [x] #1 ResearchProblemSpec exposes an allowlisted random_mirroring augmentation policy in addition to none
+- [x] #2 Training adapter applies random mirroring only when selected by the candidate manifest or resolved run configuration
+- [x] #3 Input tensors and Contrail Mask targets are flipped consistently for no-flip, horizontal, vertical, and both-axis cases
+- [x] #4 Unit tests cover deterministic/seeding behavior or injectable randomness so tiny fixtures verify all flip modes
+- [x] #5 Provider brief documents the policy as trusted/harness-owned and not candidate-owned data augmentation
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -40,3 +40,11 @@ Add a provider/harness-owned random mirroring augmentation policy for ABI Patch 
 6. Update the provider brief to document random_mirroring as trusted harness/provider augmentation, not candidate-owned data augmentation.
 7. Run targeted uv pytest for adapter/spec/brief-related tests.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added provider-owned random_mirroring augmentation policy and spec allowlist exposure.
+- Implemented trusted dataset wrapper that flips inputs and targets together for no/horizontal/vertical/both modes with injectable selector for tests.
+- Updated provider brief and targeted tests.
+<!-- SECTION:NOTES:END -->
