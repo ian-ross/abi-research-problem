@@ -48,3 +48,19 @@ Write the agent-facing research brief and dataset profile for GOES ABI Contrail 
 - Updated profile artifact docs and ResearchProblemSpec artifact metadata.
 - Added profile/provider-spec tests; full test suite passes.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented ABI research brief and dataset profile support.
+
+Changes:
+- Rewrote abi_contrail/brief/goes-abi-contrail-segmentation.md as an agent-facing brief for binary GOES ABI Contrail Segmentation on ABI Patches, covering input modes, no-lon-lat guardrails, BTD/Learned Channel Mixer guidance, provider-owned boundaries, allowlists, and Capability Request rules.
+- Added abi_contrail/profile.py with a trusted JSON Dataset Profile generator for MIT and Google sources, including split counts, positivity, mask-area summaries, split policy metadata, projection caveats, and explicit --allow-missing placeholder behavior.
+- Replaced the placeholder profile markdown with operator guidance for profile generation and missing-data behavior.
+- Updated ResearchProblemSpec metadata to require the profile artifact guidance and added tests for declared artifact paths.
+
+Tests:
+- uv run pytest
+- uv run python -m abi_contrail.profile --allow-missing --output /tmp/abi-profile-placeholder.json
+<!-- SECTION:FINAL_SUMMARY:END -->
