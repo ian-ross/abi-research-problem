@@ -1,11 +1,11 @@
 ---
 id: ABI-020
 title: Add balanced SMP guidance to candidate brief
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-13 11:40'
-updated_date: '2026-07-13 12:01'
+updated_date: '2026-07-13 12:04'
 labels:
   - documentation
   - candidates
@@ -22,10 +22,10 @@ Add light, non-prescriptive guidance to the ABI research brief that positions SM
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Provider brief mentions SMP-style architectures only as optional quick baselines/comparators, not preferred solutions
-- [ ] #2 Guidance explicitly states existing UNet/MANet baselines should not constrain candidate search space
-- [ ] #3 Guidance highlights contrail-specific opportunities beyond generic SMP segmentation models
-- [ ] #4 No runnable SMP template is added unless clearly labeled as a minimal wrapper example rather than recommended architecture
+- [x] #1 Provider brief mentions SMP-style architectures only as optional quick baselines/comparators, not preferred solutions
+- [x] #2 Guidance explicitly states existing UNet/MANet baselines should not constrain candidate search space
+- [x] #3 Guidance highlights contrail-specific opportunities beyond generic SMP segmentation models
+- [x] #4 No runnable SMP template is added unless clearly labeled as a minimal wrapper example rather than recommended architecture
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -38,3 +38,19 @@ Add light, non-prescriptive guidance to the ABI research brief that positions SM
 5. Avoid adding runnable SMP code/templates in this task; if mentioning wrappers, label them as minimal comparator wrappers rather than recommended architectures.
 6. Run documentation/provider-spec smoke checks or targeted tests that validate brief paths/metadata if available.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added balanced SMP-style architecture guidance to abi_contrail/brief/goes-abi-contrail-segmentation.md.
+- Validated provider brief path with uv run pytest tests/test_provider_spec.py.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Added balanced candidate-brief guidance that treats SMP-style UNet/MANet architectures as optional quick baselines/comparators, explicitly prevents existing baselines from constraining model exploration, and highlights contrail-specific directions beyond generic segmentation backbones. No runnable SMP template was added.
+
+Tests:
+- uv run pytest tests/test_provider_spec.py
+<!-- SECTION:FINAL_SUMMARY:END -->
