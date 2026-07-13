@@ -1,10 +1,11 @@
 ---
 id: ABI-020
 title: Add balanced SMP guidance to candidate brief
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-13 11:40'
-updated_date: '2026-07-13 11:41'
+updated_date: '2026-07-13 12:01'
 labels:
   - documentation
   - candidates
