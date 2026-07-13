@@ -254,6 +254,8 @@ class ABIEvaluationAdapter:
             threshold=cutoff,
             filter_pipeline=build_default_artifact_filter_pipeline(data_config_for_dataset),
             model_record={"baseline/name": baseline.name, "baseline/version": baseline.version},
+            diagnostic_output_dir=evaluation_dir / "diagnostic_samples" if evaluation_dir is not None else None,
+            max_artifact_samples=8,
         )
         if evaluation_dir is not None:
             _write_baseline_evaluation_artifacts(
@@ -301,7 +303,6 @@ class ABIEvaluationAdapter:
         evaluation_dir: Path,
         max_artifact_samples: int,
     ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
-        del evaluation_dir, max_artifact_samples
         import torch
         import yaml
         from ml_autoresearch.smoke import _extract_mask_logits, _import_candidate_model, input_spec_from_resolved_manifest, output_spec_from_resolved_manifest
@@ -345,6 +346,8 @@ class ABIEvaluationAdapter:
             targets=torch.stack(targets_all),
             threshold=threshold,
             filter_pipeline=filter_pipeline,
+            diagnostic_output_dir=evaluation_dir / "diagnostic_samples",
+            max_artifact_samples=max_artifact_samples,
         )
 
 
@@ -356,6 +359,8 @@ def _evaluate_probability_tensor(
     threshold: float,
     filter_pipeline: ABIArtifactFilterPipeline,
     model_record: Mapping[str, object] | None = None,
+    diagnostic_output_dir: Path | None = None,
+    max_artifact_samples: int = 0,
 ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
     import torch
     from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
@@ -369,6 +374,7 @@ def _evaluate_probability_tensor(
     targets_all: list[torch.Tensor] = []
     probabilities_all: list[torch.Tensor] = []
     per_sample_records: list[dict[str, object]] = []
+    diagnostic_candidates: list[dict[str, object]] = []
     sample_sources: list[str | None] = []
     removed_pixels_total = 0
     removed_area_total = 0.0
@@ -411,6 +417,15 @@ def _evaluate_probability_tensor(
         record.update(metadata)
         sample_sources.append(_dataset_source_from_metadata(metadata))
         per_sample_records.append(record)
+        diagnostic_candidates.append(
+            {
+                "record": record,
+                "context": context,
+                "unfiltered_prediction": prediction,
+                "filtered_prediction": filtered.filtered_mask,
+                "diagnostics": diagnostics,
+            }
+        )
         raw_predictions.append(sample_prediction)
         filtered_predictions.append(sample_filtered_prediction)
         probabilities_all.append(probabilities[index : index + 1])
@@ -458,8 +473,162 @@ def _evaluate_probability_tensor(
             }
         )
     threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
-    diagnostic_manifest = {"samples": [], "note": "ABI v0 filtered evaluation does not yet emit qualitative diagnostic images."}
+    diagnostic_manifest = _build_diagnostic_geotiff_manifest(
+        candidates=diagnostic_candidates,
+        diagnostic_output_dir=diagnostic_output_dir,
+        max_artifact_samples=max_artifact_samples,
+    )
     return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
+
+
+def _build_diagnostic_geotiff_manifest(
+    *,
+    candidates: Sequence[dict[str, object]],
+    diagnostic_output_dir: Path | None,
+    max_artifact_samples: int,
+) -> dict[str, object]:
+    selected = _select_diagnostic_candidates(candidates, max_artifact_samples=max_artifact_samples)
+    manifest: dict[str, object] = {
+        "samples": [],
+        "selection_policy": "include one filter-hit case when available and one no-filter-hit case when available, then fill by dataset order up to max_artifact_samples after required categories",
+    }
+    if diagnostic_output_dir is None or not selected:
+        manifest["note"] = "GeoTIFF diagnostics were not requested." if diagnostic_output_dir is None else "No diagnostic samples selected."
+        return manifest
+
+    diagnostic_output_dir.mkdir(parents=True, exist_ok=True)
+    relative_base = diagnostic_output_dir.parent
+    for item in selected:
+        record = item["record"]
+        if not isinstance(record, dict):
+            continue
+        diagnostics = item["diagnostics"] if isinstance(item["diagnostics"], Mapping) else {}
+        dataset_index = int(record["dataset_index"])
+        sample_id = str(record["sample_id"])
+        safe_id = sample_id.replace("/", "_").replace(" ", "_")
+        georef = _georeferencing_from_context(item.get("context"), item["unfiltered_prediction"])
+        unfiltered_path = diagnostic_output_dir / f"{dataset_index:06d}_{safe_id}_unfiltered_prediction.tif"
+        filtered_path = diagnostic_output_dir / f"{dataset_index:06d}_{safe_id}_filtered_prediction.tif"
+        _write_mask_geotiff(unfiltered_path, item["unfiltered_prediction"], georef=georef)
+        _write_mask_geotiff(filtered_path, item["filtered_prediction"], georef=georef)
+        geotiffs = {
+            "unfiltered_prediction": unfiltered_path.relative_to(relative_base).as_posix(),
+            "filtered_prediction": filtered_path.relative_to(relative_base).as_posix(),
+        }
+        record["artifact_filters/diagnostic_geotiffs"] = geotiffs
+        filters_hit = _filters_hit(diagnostics)
+        manifest["samples"].append(
+            {
+                "sample_id": sample_id,
+                "dataset_index": dataset_index,
+                "selection_reason": "filter_hit" if int(diagnostics.get("removed_pixel_count", 0)) > 0 else "no_filter_hit",
+                "artifact_filters": {
+                    "filters_hit": filters_hit,
+                    "removed_pixel_count": int(diagnostics.get("removed_pixel_count", 0)),
+                    "removed_area_km2": float(diagnostics.get("removed_area_km2", 0.0)),
+                    "diagnostics": diagnostics,
+                },
+                "geotiffs": geotiffs,
+                "georeferencing": georef["metadata"],
+            }
+        )
+    return manifest
+
+
+def _select_diagnostic_candidates(candidates: Sequence[dict[str, object]], *, max_artifact_samples: int) -> list[dict[str, object]]:
+    if max_artifact_samples <= 0:
+        return []
+    hit = [item for item in candidates if _candidate_removed_pixels(item) > 0]
+    no_hit = [item for item in candidates if _candidate_removed_pixels(item) == 0]
+    effective_limit = max(max_artifact_samples, 2 if hit and no_hit else 1)
+    selected: list[dict[str, object]] = []
+    if hit:
+        selected.append(hit[0])
+    if no_hit and len(selected) < effective_limit:
+        selected.append(no_hit[0])
+    for item in candidates:
+        if len(selected) >= effective_limit:
+            break
+        if not any(item is existing for existing in selected):
+            selected.append(item)
+    return selected
+
+
+def _candidate_removed_pixels(candidate: Mapping[str, object]) -> int:
+    diagnostics = candidate.get("diagnostics")
+    if not isinstance(diagnostics, Mapping):
+        return 0
+    return int(diagnostics.get("removed_pixel_count", 0))
+
+
+def _filters_hit(diagnostics: Mapping[str, object]) -> list[str]:
+    hits: list[str] = []
+    filters = diagnostics.get("filters")
+    if not isinstance(filters, Sequence) or isinstance(filters, (str, bytes)):
+        return hits
+    for filter_record in filters:
+        if not isinstance(filter_record, Mapping):
+            continue
+        if int(filter_record.get("removed_pixel_count", 0)) > 0:
+            hits.append(str(filter_record.get("filter", "unknown_filter")))
+    return hits
+
+
+def _georeferencing_from_context(context: object, mask: object) -> dict[str, object]:
+    import numpy as np
+
+    array = np.asarray(mask)
+    if array.ndim == 3 and array.shape[0] == 1:
+        array = array[0]
+    height, width = array.shape[-2:]
+    ctx = context if isinstance(context, Mapping) else {}
+    lon = ctx.get("longitude")
+    lat = ctx.get("latitude")
+    if lon is not None and lat is not None:
+        lon_grid = np.asarray(lon, dtype=np.float64)
+        lat_grid = np.asarray(lat, dtype=np.float64)
+        min_lon = float(np.nanmin(lon_grid))
+        max_lon = float(np.nanmax(lon_grid))
+        min_lat = float(np.nanmin(lat_grid))
+        max_lat = float(np.nanmax(lat_grid))
+        pixel_width = abs(max_lon - min_lon) / max(1, width - 1)
+        pixel_height = abs(max_lat - min_lat) / max(1, height - 1)
+        tiepoint_x = min_lon - pixel_width / 2.0
+        tiepoint_y = max_lat + pixel_height / 2.0
+        return {
+            "pixel_scale": (pixel_width, pixel_height, 0.0),
+            "tiepoint": (0.0, 0.0, 0.0, tiepoint_x, tiepoint_y, 0.0),
+            "epsg": 4326,
+            "metadata": {
+                "crs": "EPSG:4326",
+                "model": "regular_lon_lat_from_provider_longitude_latitude_context",
+                "bbox": [tiepoint_x, min_lat - pixel_height / 2.0, max_lon + pixel_width / 2.0, tiepoint_y],
+                "pixel_size": [pixel_width, pixel_height],
+            },
+        }
+    return {
+        "pixel_scale": (1.0, 1.0, 0.0),
+        "tiepoint": (0.0, 0.0, 0.0, 0.0, float(height), 0.0),
+        "epsg": 0,
+        "metadata": {"crs": "LOCAL_PIXEL_GRID", "model": "pixel_grid_fallback", "pixel_size": [1.0, 1.0]},
+    }
+
+
+def _write_mask_geotiff(path: Path, mask: object, *, georef: Mapping[str, object]) -> None:
+    import numpy as np
+    from PIL import Image, TiffImagePlugin
+
+    array = np.asarray(mask)
+    if array.ndim == 3 and array.shape[0] == 1:
+        array = array[0]
+    image = Image.fromarray(array.astype(np.uint8, copy=False))
+    tags = TiffImagePlugin.ImageFileDirectory_v2()
+    tags[33550] = tuple(float(value) for value in georef["pixel_scale"])
+    tags[33922] = tuple(float(value) for value in georef["tiepoint"])
+    epsg = int(georef.get("epsg", 0))
+    if epsg:
+        tags[34735] = (1, 1, 0, 3, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, epsg)
+    image.save(path, format="TIFF", tiffinfo=tags)
 
 
 def _normalise_baseline_metrics(
