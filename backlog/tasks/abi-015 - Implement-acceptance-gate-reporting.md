@@ -35,10 +35,10 @@ Turn the agreed acceptance shape into explicit reports comparing candidate runs 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Define an acceptance-report schema comparing a candidate run with the best available Baseline Segmenter.
-2. Include aggregate filtered Dice/IoU, filtered recall tolerance, Contrail Connectivity Metric, source-stratified metrics, and Artifact Filter dependence.
-3. Implement reporting as a harness/provider evaluation artifact rather than a candidate responsibility.
-4. Treat numeric thresholds as configurable after baseline evaluation, but preserve the agreed gate shape.
-5. Add tests using synthetic metrics for pass, recall-regression, source-failure, and filter-dependence warning cases.
-6. Document that final promotion remains a human-reviewed decision informed by the report.
+1. Inspect existing evaluation, baseline, and provider-spec surfaces to locate the acceptance-report API.
+2. Add provider-owned acceptance-gate data structures/functions in abi_contrail.evaluation, consuming candidate and baseline aggregate/per-sample metrics rather than candidate code.
+3. Select the best available Baseline Segmenter by configured primary aggregate metric (filtered Dice by default, IoU as supported fallback/config).
+4. Emit report fields/flags for aggregate baseline comparison, filtered-recall tolerance regressions, Contrail Connectivity Metric comparison, Dataset Source-specific catastrophic failures, and Artifact Filter dependence.
+5. Add synthetic-metric unit tests covering pass, recall regression, source failure, filter-dependence warning, and best-baseline selection.
+6. Document/report that final promotion remains a human-reviewed decision; run uv-managed tests for the touched surface.
 <!-- SECTION:PLAN:END -->
