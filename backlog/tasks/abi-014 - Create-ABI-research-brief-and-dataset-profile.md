@@ -1,7 +1,7 @@
 ---
 id: ABI-014
 title: Create ABI research brief and dataset profile
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
