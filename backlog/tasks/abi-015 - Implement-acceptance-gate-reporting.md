@@ -1,10 +1,11 @@
 ---
 id: ABI-015
 title: Implement acceptance-gate reporting
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 12:04'
-updated_date: '2026-07-12 12:07'
+updated_date: '2026-07-13 10:45'
 labels:
   - evaluation
   - acceptance
