@@ -1,7 +1,7 @@
 ---
 id: ABI-015
 title: Implement acceptance-gate reporting
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-07-12 12:04'
