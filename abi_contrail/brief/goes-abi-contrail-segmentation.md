@@ -1,38 +1,62 @@
-# GOES ABI Contrail Segmentation provider brief
+# GOES ABI Contrail Segmentation Research Problem Brief
 
-This workspace provides the `goes_abi_contrail_segmentation` Research Problem for `ml-autoresearch`.
+## Task contract
 
-## v0 scaffold contract
+GOES ABI Contrail Segmentation is a binary semantic segmentation Research Problem. Given a provider-owned **ABI Patch** sample, a candidate model predicts `mask_logits` with shape `[1, 256, 256]`; trusted harness code compares these logits to the binary **Contrail Mask** target derived as `labels != 0`.
 
-- Provider target: `abi_contrail.research_problem:build_spec`
-- Research problem id: `goes_abi_contrail_segmentation`
-- Version and contract version: `v0`
-- Input modes are provider-selected channel-first ABI Patches:
-  - `abi_16ch`: `[16, 256, 256]`, GOES ABI channels 1-16.
-  - `abi_16ch_plus_sza`: `[17, 256, 256]`, GOES ABI channels 1-16 plus Solar Geometry Input.
-  - `abi_thermal_10ch`: `[10, 256, 256]`, GOES ABI channels 7-16.
-- Candidate inputs always exclude longitude and latitude.
-- Reusable candidate front ends are available from `abi_contrail.model_support`:
-  - `Conv1x1ChannelMixer` learns per-pixel linear mixtures across the harness-approved input channels.
-  - `RawPlusLearnedChannelMixer` concatenates explicit raw-channel and/or brightness-temperature-difference features with learned 1x1 projections.
-- Output form: `mask_logits`, a `[1, 256, 256]` Contrail Mask logit tensor.
-- Optional manifest-declared auxiliary targets are provider-derived and shape-matched to `mask_logits`:
-  - `line` uses output `line_logits`.
-  - `boundary` uses output `boundary_logits`.
-  - `centerline` uses output `centerline_logits`, derived consistently with the trusted clDice centerline/skeleton support.
-- Loss allowlist: `bce_dice`, `focal_tversky`, `bce_dice_cldice`
-- Auxiliary loss allowlist: `weighted_bce`; auxiliary target weights must be declared in `manifest.yaml`.
-- Optimizer allowlist: `adamw`
-- Sampling policies: `sequential`, `deterministic_shuffle`, `mit_only`, `google_only`, `combined_source_balanced`.
-- Primary checkpoint metric: `val/filtered_dice` (ADR-0003)
-- Validation reporting keeps raw overlap metrics (`val/raw_dice`, `val/raw_iou`, `val/raw_precision`, `val/raw_recall`) alongside filtered metrics (`val/filtered_dice`, `val/filtered_iou`, `val/filtered_precision`, `val/filtered_recall`).
-- Acceptance-gate reviews must inspect Dataset Source-stratified validation metrics, including `val/source/mit/raw_dice`, `val/source/mit/filtered_dice`, `val/source/google/raw_dice`, and `val/source/google/filtered_dice` when both sources are present. Whole-validation evaluation reports the same split as `source/{mit,google}/raw/*` and `source/{mit,google}/filtered/*`, and per-sample records include Dataset Source plus scene/time provenance.
-- Candidate-defined arbitrary losses or auxiliary objectives are not allowed. Future loss functions or auxiliary target types require a Capability Request, human approval, trusted implementation in `ml-autoresearch` harness/problem-support code, and a provider/agent-control-boundary allowlist update.
+The research problem id is `goes_abi_contrail_segmentation`, version `v0`, contract version `v0`. The sample unit is a 256 x 256 GOES ABI patch from the MIT and/or Google Dataset Sources.
 
-Source-balanced sampling and MCAST Baseline Segmenters are intentionally staged in later backlog tasks.
+## Candidate input modes and forbidden channels
 
-## Learned channel-mixer guidance
+The provider exposes only declared channel-first tensors:
 
-GOES ABI contrail work often benefits from relationships between thermal infrared brightness temperatures, including window and water-vapor band differences that can make thin ice clouds and line-shaped contrails more separable from surrounding cloud or surface backgrounds. Candidate architectures may use `RawPlusLearnedChannelMixer(..., difference_channel_pairs=((a, b), ...))` to preserve explicit brightness-temperature-difference planes computed as `input[a] - input[b]` while also giving the learned projection access to all provider-approved input channels.
+- `abi_16ch`: `[16, 256, 256]`, GOES ABI channels 1-16.
+- `abi_16ch_plus_sza`: `[17, 256, 256]`, GOES ABI channels 1-16 plus Solar Geometry Input / solar zenith angle.
+- `abi_thermal_10ch`: `[10, 256, 256]`, GOES ABI channels 7-16.
 
-Do not treat any short list of brightness-temperature differences as the fixed search space. The provider supplies safe input tensors and lightweight front-end utilities; candidates remain free to learn other ABI channel combinations, preserve raw bands, add BTD features, or ignore these mixers entirely.
+Candidate models must never receive longitude or latitude inputs. Source channels used for longitude/latitude may exist in local arrays for trusted diagnostics, Artifact Filters, or projection-aware provider logic, but they are not candidate features and must not be reconstructed as hidden inputs.
+
+## Channel-combination and BTD guidance
+
+Contrails are thin ice-cloud structures, so useful evidence can come from relationships between ABI channels rather than from a single band. Thermal infrared brightness-temperature differences (BTDs), including window and water-vapor band differences, can help separate thin ice clouds or line-shaped contrails from background cloud and surface structure.
+
+Candidates may use reusable front ends from `abi_contrail.model_support`:
+
+- `Conv1x1ChannelMixer` for learned per-pixel linear mixtures across provider-approved channels.
+- `RawPlusLearnedChannelMixer` to concatenate raw channels, explicit brightness-temperature-difference planes, and learned 1x1 projections.
+
+Do not treat any fixed BTD shortlist as the whole search space. A good proposal states why the chosen input mode or channel mixer should improve thin-contrail recall, cloud-edge precision, threshold stability, or source transfer. Candidates remain free to ignore these utilities, preserve raw bands, add approved-channel BTD features, or learn channel combinations directly.
+
+## Provider-owned boundaries
+
+Candidate code may define model architecture and approved manifest choices, but must not own data loading, split logic, losses, metrics, Artifact Filters, Baseline Segmenter loading, or sampling policy implementation. These are trusted provider/harness responsibilities.
+
+The v0 primary checkpoint metric is `val/filtered_dice`. Validation reporting keeps raw overlap metrics beside filtered metrics and reports Dataset Source-stratified metrics when both MIT and Google samples are present.
+
+## Loss and auxiliary-target allowlists
+
+Primary loss allowlist:
+
+- `bce_dice`
+- `focal_tversky`
+- `bce_dice_cldice`
+
+Auxiliary targets are manifest-declared and provider-derived from the Contrail Mask:
+
+- `line` -> model output `line_logits`
+- `boundary` -> model output `boundary_logits`
+- `centerline` -> model output `centerline_logits`
+
+Auxiliary outputs are shape-matched to `[1, 256, 256]`. The auxiliary loss allowlist is `weighted_bce`; weights must be declared in `manifest.yaml`.
+
+Candidate-defined arbitrary losses, auxiliary labels, target transforms, or hidden objectives are not allowed. A new loss, auxiliary target, metric, Artifact Filter, sampling policy, or data source requires a Capability Request, human approval, trusted implementation in harness/problem-support code, and an allowlist update before candidate use.
+
+## Data and split notes
+
+Dataset Source is part of trusted sample metadata. Google patch membership follows train/validation provenance encoded in scene or file names. MIT full-scene sources are split by whole scene before 256 x 256 windowing to avoid leakage across adjacent patches from the same scene.
+
+ABI projection and geolocation are important for interpreting diagnostics, but not for candidate inputs. Pixel size and viewing geometry vary across the GOES disk; profile artifacts should record projection caveats and source-specific count summaries for the local mounted snapshot.
+
+## Baselines and evaluation context
+
+MCAST Baseline Segmenters and provider-owned Artifact Filters are trusted comparison/evaluation components, not candidate-owned training code. Candidate experiments should compare against the current best validated run or an explicitly declared baseline family, and should inspect filtered/unfiltered metrics, source-stratified metrics, and false positive/false negative diagnostics rather than relying on a single aggregate score.

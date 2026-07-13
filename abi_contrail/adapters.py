@@ -764,18 +764,18 @@ def build_spec(data_config: Mapping[str, object] | None = None):
                 "name": "goes_abi_contrail_segmentation",
                 "role": "problem_brief",
                 "path": "abi_contrail/brief/goes-abi-contrail-segmentation.md",
-                "summary": "Initial GOES ABI Contrail Segmentation task contract and provider registration notes.",
+                "summary": "Agent-facing GOES ABI Contrail Segmentation task contract, input guardrails, allowlists, and experiment guidance.",
                 "required": True,
             },
         ),
         dataset_profile_artifacts=(
             {
                 "name": "goes_abi_initial_dataset_profile",
-                "role": "initial_dataset_profile_placeholder",
+                "role": "operator_generated_dataset_profile_or_generator",
                 "path": "abi_contrail/profile/initial-dataset-profile.md",
-                "summary": "Placeholder dataset profile for the ABI provider scaffold; filled by later data-profile tasks.",
-                "split_scope": "not yet data-backed in ABI-001 scaffold",
-                "required": False,
+                "summary": "Instructions for trusted ABI dataset profile generation covering MIT/Google counts, positivity, split policy, and projection caveats.",
+                "split_scope": "Google provenance plus MIT deterministic whole-scene split before windowing",
+                "required": True,
             },
         ),
     )

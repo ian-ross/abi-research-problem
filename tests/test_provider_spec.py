@@ -51,6 +51,11 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.operation_capabilities.training is True
     assert spec.operation_capabilities.evaluation_modes == ("whole_validation_failure_analysis",)
     assert spec.evaluation_adapter is not None
+    for document in spec.brief_documents:
+        assert Path(str(document.path)).is_file()
+    for artifact in spec.dataset_profile_artifacts:
+        assert Path(str(artifact.path)).is_file()
+        assert artifact.role == "operator_generated_dataset_profile_or_generator"
 
 
 def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:
