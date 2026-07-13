@@ -472,13 +472,146 @@ def _evaluate_probability_tensor(
                 f"source/{source}/filtered/contrail_connectivity": source_filtered_connectivity,
             }
         )
-    threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
+    threshold_sweep = _build_threshold_curve_artifact(
+        dataset=dataset,
+        probabilities=probabilities,
+        targets=targets,
+        filter_pipeline=filter_pipeline,
+        default_threshold=threshold,
+    )
     diagnostic_manifest = _build_diagnostic_geotiff_manifest(
         candidates=diagnostic_candidates,
         diagnostic_output_dir=diagnostic_output_dir,
         max_artifact_samples=max_artifact_samples,
     )
     return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
+
+
+def _build_threshold_curve_artifact(
+    *,
+    dataset: object,
+    probabilities: Any,
+    targets: Any,
+    filter_pipeline: ABIArtifactFilterPipeline,
+    default_threshold: float,
+    threshold_grid: Sequence[float] | None = None,
+) -> dict[str, object]:
+    """Build provider-owned raw/filtered threshold-curve artifacts.
+
+    The primary evaluation metrics are computed elsewhere at the caller-provided
+    threshold.  This artifact is diagnostic only: it sweeps an explicit grid
+    over probability maps and records aggregate precision/recall/Dice for raw
+    thresholded masks and for masks after provider Artifact Filters.
+    """
+
+    import torch
+
+    probs = torch.nan_to_num(probabilities.detach().cpu().float(), nan=float("-inf"), posinf=1.0, neginf=float("-inf"))
+    target_masks = targets.detach().cpu() >= 0.5
+    thresholds = tuple(float(value) for value in (threshold_grid or _default_threshold_grid()))
+    raw_curve: list[dict[str, object]] = []
+    filtered_curve: list[dict[str, object]] = []
+
+    for threshold in thresholds:
+        raw_predictions = probs >= threshold
+        raw_curve.append(_threshold_curve_record(threshold=threshold, predictions=raw_predictions, targets=target_masks))
+
+        filtered_predictions: list[torch.Tensor] = []
+        for index in range(raw_predictions.shape[0]):
+            probability = probs[index].numpy()
+            prediction = raw_predictions[index].numpy()
+            filtered = filter_pipeline.apply(prediction, probability, context=_filter_context(dataset, index))
+            filtered_predictions.append(torch.from_numpy(filtered.filtered_mask.astype(bool)).unsqueeze(0))
+        filtered_tensor = torch.cat(filtered_predictions) if filtered_predictions else raw_predictions.clone()
+        filtered_curve.append(_threshold_curve_record(threshold=threshold, predictions=filtered_tensor, targets=target_masks))
+
+    best_filtered = _best_threshold_by_metric(filtered_curve, metric="dice")
+    best_raw = _best_threshold_by_metric(raw_curve, metric="dice")
+    equal_pr_filtered = _precision_recall_equal_threshold(filtered_curve)
+    equal_pr_raw = _precision_recall_equal_threshold(raw_curve)
+    return {
+        "artifact_type": "abi_threshold_curve_evaluation",
+        "default_threshold": float(default_threshold),
+        "thresholds": list(thresholds),
+        "curves": {"raw": raw_curve, "filtered": filtered_curve},
+        "best_threshold_by_filtered_dice": best_filtered,
+        "best_threshold_by_raw_dice": best_raw,
+        "precision_recall_equal_threshold": equal_pr_filtered,
+        "precision_recall_equal_threshold_raw": equal_pr_raw,
+        "primary_metric_note": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
+    }
+
+
+def _default_threshold_grid() -> tuple[float, ...]:
+    return tuple(round(index * 0.05, 2) for index in range(1, 20))
+
+
+def _threshold_curve_record(*, threshold: float, predictions: Any, targets: Any) -> dict[str, object]:
+    from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics
+
+    sample_count = int(targets.shape[0])
+    if sample_count == 0:
+        metrics: dict[str, object] = {"dice": None, "iou": None, "precision": None, "recall": None}
+        counts: dict[str, object] = {
+            "positive_pixel_count": 0,
+            "predicted_positive_pixel_count": 0,
+            "true_positive_pixels": 0,
+            "false_positive_pixels": 0,
+            "false_negative_pixels": 0,
+        }
+    else:
+        metrics = binary_segmentation_metrics(predictions, targets)
+        counts = {key: int(value) for key, value in binary_confusion_counts(predictions, targets).items()}
+    return {"threshold": float(threshold), "sample_count": sample_count, "metrics": metrics, "counts": counts}
+
+
+def _best_threshold_by_metric(curve: Sequence[Mapping[str, object]], *, metric: str) -> dict[str, object] | None:
+    best: dict[str, object] | None = None
+    for record in curve:
+        metrics = record.get("metrics")
+        if not isinstance(metrics, Mapping):
+            continue
+        value = _finite_float(metrics.get(metric))
+        if value is None:
+            continue
+        threshold = _finite_float(record.get("threshold"))
+        if threshold is None:
+            continue
+        if best is None or value > float(best[metric]):
+            best = {"threshold": threshold, metric: value}
+    return best
+
+
+def _precision_recall_equal_threshold(curve: Sequence[Mapping[str, object]]) -> dict[str, object] | None:
+    best: dict[str, object] | None = None
+    for record in curve:
+        metrics = record.get("metrics")
+        if not isinstance(metrics, Mapping):
+            continue
+        precision = _finite_float(metrics.get("precision"))
+        recall = _finite_float(metrics.get("recall"))
+        threshold = _finite_float(record.get("threshold"))
+        if precision is None or recall is None or threshold is None:
+            continue
+        gap = abs(precision - recall)
+        if best is None or gap < float(best["absolute_precision_recall_gap"]):
+            best = {
+                "threshold": threshold,
+                "precision": precision,
+                "recall": recall,
+                "absolute_precision_recall_gap": gap,
+            }
+    return best
+
+
+def _finite_float(value: object) -> float | None:
+    import math
+
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    return numeric if math.isfinite(numeric) else None
 
 
 def _build_diagnostic_geotiff_manifest(
