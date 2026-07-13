@@ -1,9 +1,11 @@
 ---
 id: ABI-016
 title: Add GeoTIFF diagnostics for filtered and unfiltered ABI predictions
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 16:34'
+updated_date: '2026-07-13 11:15'
 labels:
   - evaluation
   - filters
