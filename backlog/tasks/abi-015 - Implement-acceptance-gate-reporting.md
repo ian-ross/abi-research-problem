@@ -52,3 +52,16 @@ Turn the agreed acceptance shape into explicit reports comparing candidate runs 
 - Updated provider brief to state gate shape and human-reviewed promotion.
 - Validation: uv run ruff check abi_contrail/evaluation.py tests/test_acceptance_gate_reporting.py tests/test_mcast_baseline_segmenters.py; uv run pytest -q
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented provider-owned acceptance-gate reporting in abi_contrail.evaluation. The report selects the best available Baseline Segmenter by configured filtered Dice/IoU, compares aggregate metrics, flags filtered-recall regressions, includes Contrail Connectivity Metric deltas, flags source-specific catastrophic failures, warns on Artifact Filter dependence, and always records human-reviewed promotion. Added aggregate confusion counts needed for normal Artifact Filter dependence reports and documented the gate in the provider brief.
+
+Tests:
+- uv run ruff check abi_contrail/evaluation.py tests/test_acceptance_gate_reporting.py tests/test_mcast_baseline_segmenters.py
+- uv run pytest -q
+
+Review:
+- Fresh reviewer found no blocker; noted aggregate removed-fraction concern, fixed by emitting aggregate raw/filtered confusion counts.
+<!-- SECTION:FINAL_SUMMARY:END -->
