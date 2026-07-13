@@ -4,6 +4,7 @@ title: Add balanced SMP guidance to candidate brief
 status: To Do
 assignee: []
 created_date: '2026-07-13 11:40'
+updated_date: '2026-07-13 11:41'
 labels:
   - documentation
   - candidates
@@ -25,3 +26,14 @@ Add light, non-prescriptive guidance to the ABI research brief that positions SM
 - [ ] #3 Guidance highlights contrail-specific opportunities beyond generic SMP segmentation models
 - [ ] #4 No runnable SMP template is added unless clearly labeled as a minimal wrapper example rather than recommended architecture
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Read the current provider brief and README sections that discuss candidate model design, baselines, learned channel mixers, losses, and acceptance gates.
+2. Add a concise guidance paragraph that frames SMP-style encoder-decoder models as optional quick baselines/comparators only.
+3. Explicitly state that existing UNet/MANet baselines and SMP families should not constrain the candidate search space.
+4. Add balanced examples of contrail-specific opportunities beyond generic SMP models: thin-line continuity/connectivity, ABI spectral interactions/BTDs, source-transfer robustness, calibration/threshold behavior, and artifact-aware false-positive suppression.
+5. Avoid adding runnable SMP code/templates in this task; if mentioning wrappers, label them as minimal comparator wrappers rather than recommended architectures.
+6. Run documentation/provider-spec smoke checks or targeted tests that validate brief paths/metadata if available.
+<!-- SECTION:PLAN:END -->
