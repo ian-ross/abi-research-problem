@@ -1,10 +1,11 @@
 ---
 id: ABI-019
 title: Add threshold-curve evaluation artifacts
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-13 11:38'
-updated_date: '2026-07-13 11:41'
+updated_date: '2026-07-13 11:50'
 labels:
   - evaluation
   - metrics
