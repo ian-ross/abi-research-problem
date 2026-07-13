@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,138 @@ from abi_contrail.artifact_filters import ABIArtifactFilterPipeline, build_defau
 from abi_contrail.baseline_segmenters import MCAST_BASELINE_METADATA, MCASTBaselineSegmenter, configured_mcast_baseline_assets
 
 EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS = "whole_validation_failure_analysis"
+
+
+@dataclass(frozen=True)
+class AcceptanceGateConfig:
+    """Configurable thresholds for provider-owned acceptance-gate reports."""
+
+    primary_metric: str = "filtered/dice"
+    filtered_recall_tolerance: float = 0.05
+    contrail_connectivity_metric: str = "filtered/contrail_connectivity"
+    dataset_sources: tuple[str, ...] = ("mit", "google")
+    source_failure_metric_name: str = "filtered/dice"
+    source_failure_relative_drop: float = 0.50
+    source_failure_absolute_floor: float = 0.10
+    artifact_filter_removed_fraction_limit: float = 0.50
+    artifact_filter_improvement_limit: float = 0.20
+
+
+def build_acceptance_gate_report(
+    *,
+    candidate_metrics: Mapping[str, object],
+    baseline_metrics: Mapping[str, Mapping[str, object]] | Sequence[Mapping[str, object]],
+    candidate_run_id: str | None = None,
+    config: AcceptanceGateConfig | None = None,
+) -> dict[str, object]:
+    """Build a human-reviewed ABI acceptance-gate report.
+
+    The report consumes trusted evaluation artifacts (aggregate candidate and
+    Baseline Segmenter metrics).  It does not execute candidate code and it does
+    not make an automatic promotion decision; final promotion remains a human
+    judgment informed by the gate flags.
+    """
+
+    gate_config = config or AcceptanceGateConfig()
+    baselines = _normalise_baseline_metrics(baseline_metrics)
+    if not baselines:
+        raise ValueError("at least one Baseline Segmenter metric record is required")
+    best_name, best_metrics = max(
+        baselines,
+        key=lambda item: _required_float(item[1], gate_config.primary_metric, f"baseline {item[0]!r}"),
+    )
+
+    candidate_primary = _required_float(candidate_metrics, gate_config.primary_metric, "candidate")
+    baseline_primary = _required_float(best_metrics, gate_config.primary_metric, f"baseline {best_name!r}")
+    aggregate_comparison = {
+        "metric": gate_config.primary_metric,
+        "candidate": candidate_primary,
+        "baseline": baseline_primary,
+        "delta": candidate_primary - baseline_primary,
+        "candidate_beats_baseline": candidate_primary >= baseline_primary,
+    }
+
+    flags: list[dict[str, object]] = []
+    if candidate_primary < baseline_primary:
+        flags.append(
+            {
+                "id": "aggregate_below_best_baseline",
+                "severity": "fail",
+                "message": f"candidate {gate_config.primary_metric} is below the best available Baseline Segmenter",
+                "candidate": candidate_primary,
+                "baseline": baseline_primary,
+            }
+        )
+
+    recall_regression = _recall_regression(candidate_metrics, best_metrics, gate_config)
+    if recall_regression["flagged"]:
+        flags.append(
+            {
+                "id": "filtered_recall_regression",
+                "severity": "fail",
+                "message": "candidate filtered recall regressed beyond configured tolerance",
+                **recall_regression,
+            }
+        )
+
+    connectivity = _metric_comparison(
+        candidate_metrics,
+        best_metrics,
+        gate_config.contrail_connectivity_metric,
+        required=True,
+    )
+    if connectivity["delta"] < 0:
+        flags.append(
+            {
+                "id": "contrail_connectivity_regression",
+                "severity": "warning",
+                "message": "candidate Contrail Connectivity Metric is below the best baseline",
+                **connectivity,
+            }
+        )
+
+    source_failures = _dataset_source_failures(candidate_metrics, best_metrics, gate_config)
+    for failure in source_failures:
+        flags.append(
+            {
+                "id": "dataset_source_catastrophic_failure",
+                "severity": failure["severity"],
+                "message": f"candidate has a Dataset Source-specific catastrophic failure on {failure['source']}",
+                **failure,
+            }
+        )
+
+    artifact_dependence = _artifact_filter_dependence(candidate_metrics, gate_config)
+    if artifact_dependence["flagged"]:
+        flags.append(
+            {
+                "id": "excessive_artifact_filter_dependence",
+                "severity": "warning",
+                "message": "candidate appears excessively dependent on provider Artifact Filters",
+                **artifact_dependence,
+            }
+        )
+
+    overall_status = "gate_flags_present" if flags else "ready_for_human_review"
+    return {
+        "report_type": "abi_acceptance_gate_report",
+        "candidate_run_id": candidate_run_id,
+        "best_baseline": {
+            "name": best_name,
+            "selection_metric": gate_config.primary_metric,
+            "selection_value": baseline_primary,
+        },
+        "aggregate_comparison": aggregate_comparison,
+        "recall_regression": recall_regression,
+        "contrail_connectivity_comparison": connectivity,
+        "dataset_source_failures": source_failures,
+        "artifact_filter_dependence": artifact_dependence,
+        "flags": flags,
+        "overall_status": overall_status,
+        "promotion_decision": "human_review_required",
+        "human_review_required": True,
+        "human_review_note": "This report is an acceptance-gate input only; final candidate promotion remains a human-reviewed decision.",
+    }
 
 
 class ABIEvaluationAdapter:
@@ -135,6 +268,28 @@ class ABIEvaluationAdapter:
 
     def display_prediction_sample_input(self, inputs: Any) -> Any:
         return self.training_adapter.display_prediction_sample_input(inputs)
+
+    def build_acceptance_gate_report(
+        self,
+        *,
+        candidate_metrics: Mapping[str, object],
+        baseline_metrics: Mapping[str, Mapping[str, object]] | Sequence[Mapping[str, object]],
+        candidate_run_id: str | None = None,
+        config: AcceptanceGateConfig | None = None,
+        output_path: Path | None = None,
+    ) -> dict[str, object]:
+        """Build and optionally persist the provider-owned acceptance report."""
+
+        report = build_acceptance_gate_report(
+            candidate_metrics=candidate_metrics,
+            baseline_metrics=baseline_metrics,
+            candidate_run_id=candidate_run_id,
+            config=config,
+        )
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        return report
 
     def _evaluate_validation_split(
         self,
@@ -272,9 +427,11 @@ def _evaluate_probability_tensor(
         **{f"raw/{key}": value for key, value in raw_aggregate.items()},
         "raw/cldice": raw_connectivity,
         "raw/contrail_connectivity": raw_connectivity,
+        **{f"raw/{key}": float(value) for key, value in binary_confusion_counts(raw_tensor, target_tensor).items()},
         **{f"filtered/{key}": value for key, value in filtered_aggregate.items()},
         "filtered/cldice": filtered_connectivity,
         "filtered/contrail_connectivity": filtered_connectivity,
+        **{f"filtered/{key}": float(value) for key, value in binary_confusion_counts(filtered_tensor, target_tensor).items()},
         "artifact_filters/removed_pixel_count": float(removed_pixels_total),
         "artifact_filters/removed_area_km2": float(removed_area_total),
     }
@@ -303,6 +460,132 @@ def _evaluate_probability_tensor(
     threshold_sweep = {"default_threshold": float(threshold), "note": "ABI filtered evaluation records threshold-specific raw and filtered metrics."}
     diagnostic_manifest = {"samples": [], "note": "ABI v0 filtered evaluation does not yet emit qualitative diagnostic images."}
     return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
+
+
+def _normalise_baseline_metrics(
+    baseline_metrics: Mapping[str, Mapping[str, object]] | Sequence[Mapping[str, object]],
+) -> list[tuple[str, Mapping[str, object]]]:
+    if isinstance(baseline_metrics, Mapping):
+        return [(str(name), metrics) for name, metrics in baseline_metrics.items()]
+    normalised: list[tuple[str, Mapping[str, object]]] = []
+    for index, metrics in enumerate(baseline_metrics):
+        name = metrics.get("baseline/name", metrics.get("name", f"baseline_{index}"))
+        normalised.append((str(name), metrics))
+    return normalised
+
+
+def _required_float(metrics: Mapping[str, object], key: str, owner: str) -> float:
+    value = metrics.get(key)
+    if value is None:
+        raise ValueError(f"missing required {owner} metric {key!r}")
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{owner} metric {key!r} is not numeric: {value!r}") from exc
+
+
+def _optional_float(metrics: Mapping[str, object], key: str) -> float | None:
+    value = metrics.get(key)
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _metric_comparison(
+    candidate_metrics: Mapping[str, object],
+    baseline_metrics: Mapping[str, object],
+    metric: str,
+    *,
+    required: bool,
+) -> dict[str, object]:
+    candidate = _required_float(candidate_metrics, metric, "candidate") if required else _optional_float(candidate_metrics, metric)
+    baseline = _required_float(baseline_metrics, metric, "baseline") if required else _optional_float(baseline_metrics, metric)
+    delta = None if candidate is None or baseline is None else candidate - baseline
+    return {"metric": metric, "candidate": candidate, "baseline": baseline, "delta": delta}
+
+
+def _recall_regression(
+    candidate_metrics: Mapping[str, object],
+    baseline_metrics: Mapping[str, object],
+    config: AcceptanceGateConfig,
+) -> dict[str, object]:
+    comparison = _metric_comparison(candidate_metrics, baseline_metrics, "filtered/recall", required=True)
+    candidate = float(comparison["candidate"])
+    baseline = float(comparison["baseline"])
+    tolerance = float(config.filtered_recall_tolerance)
+    return {
+        **comparison,
+        "tolerance": tolerance,
+        "allowed_floor": baseline - tolerance,
+        "flagged": candidate < baseline - tolerance,
+    }
+
+
+def _dataset_source_failures(
+    candidate_metrics: Mapping[str, object],
+    baseline_metrics: Mapping[str, object],
+    config: AcceptanceGateConfig,
+) -> list[dict[str, object]]:
+    failures: list[dict[str, object]] = []
+    for source in config.dataset_sources:
+        metric = f"source/{source}/{config.source_failure_metric_name}"
+        candidate = _optional_float(candidate_metrics, metric)
+        baseline = _optional_float(baseline_metrics, metric)
+        if candidate is None or baseline is None:
+            continue
+        relative_floor = baseline * (1.0 - config.source_failure_relative_drop)
+        absolute_floor = float(config.source_failure_absolute_floor)
+        if candidate < absolute_floor or candidate < relative_floor:
+            failures.append(
+                {
+                    "source": source,
+                    "metric": metric,
+                    "candidate": candidate,
+                    "baseline": baseline,
+                    "relative_floor": relative_floor,
+                    "absolute_floor": absolute_floor,
+                    "severity": "fail",
+                }
+            )
+    return failures
+
+
+def _artifact_filter_dependence(candidate_metrics: Mapping[str, object], config: AcceptanceGateConfig) -> dict[str, object]:
+    removed_pixels = _optional_float(candidate_metrics, "artifact_filters/removed_pixel_count")
+    raw_predicted_pixels = _optional_float(candidate_metrics, "raw/predicted_positive_pixel_count")
+    removed_fraction = None
+    if removed_pixels is not None and raw_predicted_pixels is not None and raw_predicted_pixels > 0:
+        removed_fraction = removed_pixels / raw_predicted_pixels
+
+    raw_metric = config.primary_metric.replace("filtered/", "raw/", 1)
+    raw_primary = _optional_float(candidate_metrics, raw_metric)
+    filtered_primary = _optional_float(candidate_metrics, config.primary_metric)
+    filtered_minus_raw = None
+    if raw_primary is not None and filtered_primary is not None:
+        filtered_minus_raw = filtered_primary - raw_primary
+
+    reasons: list[str] = []
+    if removed_fraction is not None and removed_fraction > config.artifact_filter_removed_fraction_limit:
+        reasons.append("removed_fraction_exceeds_limit")
+    if filtered_minus_raw is not None and filtered_minus_raw > config.artifact_filter_improvement_limit:
+        reasons.append("filtered_metric_improvement_exceeds_limit")
+
+    return {
+        "flagged": bool(reasons),
+        "reasons": reasons,
+        "removed_pixels": removed_pixels,
+        "raw_predicted_positive_pixels": raw_predicted_pixels,
+        "removed_fraction": removed_fraction,
+        "removed_fraction_limit": float(config.artifact_filter_removed_fraction_limit),
+        "raw_metric": raw_metric,
+        "raw_primary": raw_primary,
+        "filtered_primary": filtered_primary,
+        "filtered_minus_raw_primary": filtered_minus_raw,
+        "filtered_minus_raw_limit": float(config.artifact_filter_improvement_limit),
+    }
 
 
 def _write_baseline_evaluation_artifacts(
@@ -420,4 +703,9 @@ def _dataset_source_from_metadata(metadata: Mapping[str, object]) -> str | None:
     return source if source in {"mit", "google"} else None
 
 
-__all__ = ["ABIEvaluationAdapter", "EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS"]
+__all__ = [
+    "ABIEvaluationAdapter",
+    "AcceptanceGateConfig",
+    "EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS",
+    "build_acceptance_gate_report",
+]

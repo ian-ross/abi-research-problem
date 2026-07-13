@@ -60,3 +60,5 @@ ABI projection and geolocation are important for interpreting diagnostics, but n
 ## Baselines and evaluation context
 
 MCAST Baseline Segmenters and provider-owned Artifact Filters are trusted comparison/evaluation components, not candidate-owned training code. Candidate experiments should compare against the current best validated run or an explicitly declared baseline family, and should inspect filtered/unfiltered metrics, source-stratified metrics, and false positive/false negative diagnostics rather than relying on a single aggregate score.
+
+Acceptance-gate reports are provider-owned evaluation artifacts. They select the best available Baseline Segmenter by configured aggregate filtered Dice (or filtered IoU), compare the candidate on that metric, flag filtered-recall regressions beyond tolerance, include Contrail Connectivity Metric deltas, flag Dataset Source-specific catastrophic failures, and warn when a candidate appears excessively dependent on Artifact Filters. The report is an input to review only: final promotion remains a human decision.

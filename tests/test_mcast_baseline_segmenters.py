@@ -115,6 +115,7 @@ def test_baseline_evaluation_uses_same_filtered_metric_path_and_records_baseline
 
     assert aggregate["raw/dice"] == pytest.approx(1.0)
     assert aggregate["filtered/dice"] == pytest.approx(1.0)
+    assert aggregate["raw/predicted_positive_pixel_count"] == pytest.approx(1024.0)
     assert "artifact_filters/removed_pixel_count" in aggregate
     assert records[0]["baseline/name"] == MCAST_BASELINE_1_1
     assert records[0]["Dataset Source"] == "google"
