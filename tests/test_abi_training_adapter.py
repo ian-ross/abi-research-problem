@@ -9,7 +9,14 @@ import yaml
 import torch
 import zarr
 
-from abi_contrail.adapters import ABITrainingAdapter, build_spec, derive_auxiliary_target, source_balanced_sampling_weights
+from abi_contrail.adapters import (
+    ABITrainingAdapter,
+    AUGMENTATION_POLICY_RANDOM_MIRRORING,
+    _RandomMirroringDataset,
+    build_spec,
+    derive_auxiliary_target,
+    source_balanced_sampling_weights,
+)
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
@@ -106,6 +113,76 @@ def test_training_adapter_logs_sampling_policy_metadata(tmp_path: Path) -> None:
     assert datasets.data_policy_metadata["positive_patch_preference"] == 3.0
     assert datasets.data_policy_metadata["source_mixture"] == {"mit": 1 / 3, "google": 2 / 3}
     assert "combined_source_balanced" in datasets.data_policy_metadata["available_sampling_policies"]
+
+
+def test_training_adapter_wraps_only_selected_random_mirroring_policy() -> None:
+    class TinyDataset:
+        def __len__(self) -> int:
+            return 1
+
+        def __getitem__(self, index: int):
+            return torch.zeros((1, 2, 2)), torch.zeros((1, 2, 2))
+
+    adapter = ABITrainingAdapter()
+    dataset = TinyDataset()
+
+    assert adapter.apply_augmentation_policy(dataset, "none") is dataset
+    wrapped = adapter.apply_augmentation_policy(dataset, AUGMENTATION_POLICY_RANDOM_MIRRORING)
+
+    assert isinstance(wrapped, _RandomMirroringDataset)
+
+
+def test_random_mirroring_flips_inputs_and_targets_consistently_for_all_modes() -> None:
+    image = torch.tensor(
+        [
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ],
+        dtype=torch.float32,
+    )
+    mask = torch.tensor([[[0, 1, 2], [3, 4, 5]]], dtype=torch.float32)
+
+    class TinyDataset:
+        modes = ("none", "horizontal", "vertical", "both")
+
+        def __len__(self) -> int:
+            return len(self.modes)
+
+        def __getitem__(self, index: int):
+            return image.clone(), mask.clone()
+
+    mirrored = _RandomMirroringDataset(TinyDataset(), flip_selector=lambda index: TinyDataset.modes[index])
+
+    expected = {
+        "none": (image, mask),
+        "horizontal": (torch.flip(image, dims=[-1]), torch.flip(mask, dims=[-1])),
+        "vertical": (torch.flip(image, dims=[-2]), torch.flip(mask, dims=[-2])),
+        "both": (torch.flip(image, dims=[-2, -1]), torch.flip(mask, dims=[-2, -1])),
+    }
+    for index, mode in enumerate(TinyDataset.modes):
+        augmented_image, augmented_mask = mirrored[index]
+        expected_image, expected_mask = expected[mode]
+        assert torch.equal(augmented_image, expected_image)
+        assert torch.equal(augmented_mask, expected_mask)
+
+
+def test_random_mirroring_uses_torch_seed_for_default_selector() -> None:
+    class TinyDataset:
+        def __len__(self) -> int:
+            return 1
+
+        def __getitem__(self, index: int):
+            image = torch.arange(4, dtype=torch.float32).reshape(1, 2, 2)
+            return image, image.clone()
+
+    mirrored = _RandomMirroringDataset(TinyDataset())
+    torch.manual_seed(12345)
+    first = mirrored[0]
+    torch.manual_seed(12345)
+    second = mirrored[0]
+
+    assert torch.equal(first[0], second[0])
+    assert torch.equal(first[1], second[1])
 
 
 def test_source_aware_sampling_weights_filter_and_balance_sources() -> None:

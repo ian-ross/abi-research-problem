@@ -51,6 +51,9 @@ SAMPLING_POLICY_DETERMINISTIC_SHUFFLE = "deterministic_shuffle"
 SAMPLING_POLICY_MIT_ONLY = "mit_only"
 SAMPLING_POLICY_GOOGLE_ONLY = "google_only"
 SAMPLING_POLICY_COMBINED_SOURCE_BALANCED = "combined_source_balanced"
+AUGMENTATION_POLICY_NONE = "none"
+AUGMENTATION_POLICY_RANDOM_MIRRORING = "random_mirroring"
+ABI_AUGMENTATION_POLICIES = (AUGMENTATION_POLICY_NONE, AUGMENTATION_POLICY_RANDOM_MIRRORING)
 ABI_SAMPLING_POLICIES = (
     SAMPLING_POLICY_SEQUENTIAL,
     SAMPLING_POLICY_DETERMINISTIC_SHUFFLE,
@@ -252,11 +255,13 @@ class ABITrainingAdapter:
         )
 
     def apply_augmentation_policy(self, dataset: object, augmentation_policy: str) -> object:
-        if augmentation_policy != "none":
-            from ml_autoresearch.errors import TrainingError
+        if augmentation_policy == AUGMENTATION_POLICY_NONE:
+            return dataset
+        if augmentation_policy == AUGMENTATION_POLICY_RANDOM_MIRRORING:
+            return _RandomMirroringDataset(dataset)
+        from ml_autoresearch.errors import TrainingError
 
-            raise TrainingError(f"unsupported ABI augmentation policy: {augmentation_policy}")
-        return dataset
+        raise TrainingError(f"unsupported ABI augmentation policy: {augmentation_policy}")
 
     def data_loader_for_sampling(
         self,
@@ -556,6 +561,115 @@ class _TorchABIPatchDataset:
         return context
 
 
+class _RandomMirroringDataset:
+    """Provider-owned random mirror wrapper for channel-first segmentation samples.
+
+    The selector returns one of four equally supported modes: no flip,
+    horizontal flip, vertical flip, or both-axis flip. Inputs, Contrail Mask
+    targets, and any tensor-like auxiliary targets in the sample are flipped
+    with the same mode so spatial alignment is preserved.
+    """
+
+    _MODE_NONE = "none"
+    _MODE_HORIZONTAL = "horizontal"
+    _MODE_VERTICAL = "vertical"
+    _MODE_BOTH = "both"
+    _MODES = (_MODE_NONE, _MODE_HORIZONTAL, _MODE_VERTICAL, _MODE_BOTH)
+
+    def __init__(self, dataset: object, flip_selector: object | None = None) -> None:
+        self.dataset = dataset
+        self._flip_selector = flip_selector
+
+    def __len__(self) -> int:
+        return len(self.dataset)  # type: ignore[arg-type]
+
+    def __getitem__(self, index: int):
+        sample = self.dataset[index]  # type: ignore[index]
+        mode = self._select_mode(index)
+        return self._flip_sample(sample, mode)
+
+    def sample_metadata(self, index: int) -> dict[str, object]:
+        if hasattr(self.dataset, "sample_metadata"):
+            return self.dataset.sample_metadata(index)  # type: ignore[attr-defined]
+        return {}
+
+    def raw_inputs(self, index: int):
+        return self.dataset.raw_inputs(index)  # type: ignore[attr-defined]
+
+    def filter_context(self, index: int) -> dict[str, object]:
+        if hasattr(self.dataset, "filter_context"):
+            return self.dataset.filter_context(index)  # type: ignore[attr-defined]
+        return {}
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self.dataset, name)
+
+    def _select_mode(self, index: int) -> str:
+        if self._flip_selector is None:
+            import torch
+
+            return self._MODES[int(torch.randint(0, len(self._MODES), ()).item())]
+        selector = self._flip_selector
+        try:
+            selected = selector(index)  # type: ignore[operator]
+        except TypeError:
+            selected = selector()  # type: ignore[operator]
+        return self._normalise_mode(selected)
+
+    @classmethod
+    def _normalise_mode(cls, selected: object) -> str:
+        if isinstance(selected, str):
+            aliases = {
+                "none": cls._MODE_NONE,
+                "no_flip": cls._MODE_NONE,
+                "horizontal": cls._MODE_HORIZONTAL,
+                "h": cls._MODE_HORIZONTAL,
+                "vertical": cls._MODE_VERTICAL,
+                "v": cls._MODE_VERTICAL,
+                "both": cls._MODE_BOTH,
+                "both_axes": cls._MODE_BOTH,
+                "hv": cls._MODE_BOTH,
+            }
+            try:
+                return aliases[selected]
+            except KeyError as exc:
+                raise ValueError(f"unsupported ABI mirror mode: {selected}") from exc
+        if isinstance(selected, int):
+            return cls._MODES[selected % len(cls._MODES)]
+        raise ValueError(f"unsupported ABI mirror mode: {selected!r}")
+
+    @classmethod
+    def _flip_sample(cls, sample: object, mode: str) -> object:
+        if isinstance(sample, tuple):
+            return tuple(cls._flip_value(value, mode) for value in sample)
+        if isinstance(sample, list):
+            return [cls._flip_value(value, mode) for value in sample]
+        if isinstance(sample, Mapping):
+            return {key: cls._flip_value(value, mode) for key, value in sample.items()}
+        return cls._flip_value(sample, mode)
+
+    @classmethod
+    def _flip_value(cls, value: object, mode: str) -> object:
+        if mode == cls._MODE_NONE or not hasattr(value, "ndim") or not hasattr(value, "shape"):
+            return value
+        if int(value.ndim) < 2:  # type: ignore[arg-type]
+            return value
+        dims: list[int] = []
+        if mode in {cls._MODE_VERTICAL, cls._MODE_BOTH}:
+            dims.append(-2)
+        if mode in {cls._MODE_HORIZONTAL, cls._MODE_BOTH}:
+            dims.append(-1)
+        if not dims:
+            return value
+        if value.__class__.__module__.split(".")[0] == "torch":
+            import torch
+
+            return torch.flip(value, dims=dims)  # type: ignore[arg-type]
+        import numpy as np
+
+        return np.flip(value, axis=tuple(dims)).copy()  # type: ignore[arg-type]
+
+
 class _CombinedTorchABIPatchDataset:
     """Concatenate provider ABI datasets while preserving per-source metadata."""
 
@@ -754,7 +868,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         sampling_policies=ABI_SAMPLING_POLICIES,
         frame_selection_policies=("all_target_frames",),
         input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
-        augmentation_policies=("none",),
+        augmentation_policies=ABI_AUGMENTATION_POLICIES,
         primary_metric="val/filtered_dice",
         operation_capabilities={"training": True, "evaluation_modes": (EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS,)},
         training_adapter=training_adapter,

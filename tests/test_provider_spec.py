@@ -46,6 +46,7 @@ def test_build_spec_declares_abi_v0_contract() -> None:
         "google_only",
         "combined_source_balanced",
     )
+    assert spec.augmentation_policies == ("none", "random_mirroring")
     assert spec.auxiliary_losses == ("weighted_bce",)
     assert spec.primary_metric == "val/filtered_dice"
     assert spec.operation_capabilities.training is True

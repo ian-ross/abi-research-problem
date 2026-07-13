@@ -29,7 +29,12 @@ Do not treat any fixed BTD shortlist as the whole search space. A good proposal 
 
 ## Provider-owned boundaries
 
-Candidate code may define model architecture and approved manifest choices, but must not own data loading, split logic, losses, metrics, Artifact Filters, Baseline Segmenter loading, or sampling policy implementation. These are trusted provider/harness responsibilities.
+Candidate code may define model architecture and approved manifest choices, but must not own data loading, split logic, losses, metrics, Artifact Filters, Baseline Segmenter loading, sampling policy implementation, or augmentation transforms. These are trusted provider/harness responsibilities.
+
+Augmentation policy allowlist:
+
+- `none`: no training-sample augmentation.
+- `random_mirroring`: trusted harness/provider augmentation that randomly applies one of no flip, horizontal flip, vertical flip, or both-axis flip to each training sample. ABI input tensors and Contrail Mask targets are flipped together to preserve spatial alignment. Candidates may select this policy in the manifest, but candidate code must not implement its own data augmentation or target transforms.
 
 The v0 primary checkpoint metric is `val/filtered_dice`. Validation reporting keeps raw overlap metrics beside filtered metrics and reports Dataset Source-stratified metrics when both MIT and Google samples are present.
 
@@ -49,7 +54,7 @@ Auxiliary targets are manifest-declared and provider-derived from the Contrail M
 
 Auxiliary outputs are shape-matched to `[1, 256, 256]`. The auxiliary loss allowlist is `weighted_bce`; weights must be declared in `manifest.yaml`.
 
-Candidate-defined arbitrary losses, auxiliary labels, target transforms, or hidden objectives are not allowed. A new loss, auxiliary target, metric, Artifact Filter, sampling policy, or data source requires a Capability Request, human approval, trusted implementation in harness/problem-support code, and an allowlist update before candidate use.
+Candidate-defined arbitrary losses, auxiliary labels, target transforms, augmentation transforms, or hidden objectives are not allowed. A new loss, auxiliary target, metric, Artifact Filter, sampling policy, augmentation policy, or data source requires a Capability Request, human approval, trusted implementation in harness/problem-support code, and an allowlist update before candidate use.
 
 ## Data and split notes
 
