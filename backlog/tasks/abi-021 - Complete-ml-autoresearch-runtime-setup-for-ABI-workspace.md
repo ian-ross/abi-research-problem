@@ -1,9 +1,11 @@
 ---
 id: ABI-021
 title: Complete ml-autoresearch runtime setup for ABI workspace
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-07 10:23'
+updated_date: '2026-08-07 10:23'
 labels:
   - harness
   - containers
