@@ -53,3 +53,18 @@ Integrate the Harness named Research Problem Data Root contract into the ABI pro
 - Host and --network none runner-container smokes both passed on one ABI validation Patch with 588 geographic pixels removed, no training/downloads, and no longitude/latitude Candidate inputs.
 - Full validation: uv run --group torch pytest -q (83 passed); uv build --wheel; uv run ml-autoresearch validate-runtime-images --workspace-root .
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented Harness named Research Problem data roots for ABI training and ancillary data. Added trusted root normalization and path containment, migrated dataset/evaluation/baseline/profile/smoke flows to Harness-supplied data_roots, preserved legacy single-root callers, enabled direct Natural Earth provisioning under the ancillary root, and documented the ABI-022 handoff. Added SciPy to the runner runtime and replaced the disposable ABI-023 wrapper smoke with host and network-disabled named-mount validation.
+
+Validation:
+- uv run --group torch pytest -q (83 passed)
+- uv build --wheel
+- uv run ml-autoresearch build-runtime-images --workspace-root . --update-config
+- uv run ml-autoresearch validate-runtime-images --workspace-root .
+- uv run abi-provision-natural-earth --ancillary-root /data/iross/abi-ml-autoresearch/ancillary --verify-only
+- uv run abi-geographic-filter-smoke --workspace-root . --max-samples 64 (1 Patch, 588 pixels removed)
+- Docker runner smoke with --network none and read-only /data/training plus /data/ancillary mounts (1 Patch, 588 pixels removed, no training/downloads)
+<!-- SECTION:FINAL_SUMMARY:END -->
