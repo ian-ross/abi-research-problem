@@ -1,10 +1,11 @@
 ---
 id: ABI-022
 title: Accelerate trusted ABI postprocessing and metrics on GPU
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-07 11:56'
-updated_date: '2026-08-07 20:04'
+updated_date: '2026-08-07 21:13'
 labels:
   - evaluation
   - performance
