@@ -27,3 +27,13 @@ Run the provider-owned MCAST detection 1.1 and 2.1 Baseline Segmenter evaluation
 - [ ] #3 Aggregate and per-sample raw/filtered metrics are stored for acceptance-gate comparison
 - [ ] #4 Run configuration, asset paths or asset provenance, commit SHA, and validation split configuration are documented
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Validate configured MIT/Google data paths and local MCAST 1.1/2.1 assets
+2. Smoke-load both checkpoints and run one GPU inference patch
+3. Run both provider-owned baseline validation evaluations on the combined Working Validation Split
+4. Verify aggregate, per-sample, threshold-sweep, diagnostics, and provenance artifacts
+5. Record metrics, commands, paths, validation split configuration, and commit SHA
+<!-- SECTION:PLAN:END -->
