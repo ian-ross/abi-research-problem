@@ -25,12 +25,12 @@ Integrate the Harness named Research Problem Data Root contract into the ABI pro
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Workspace configuration and the committed template declare logical training and ancillary Research Problem data roots, with root-relative provider paths that resolve to host directories natively and /data/training plus /data/ancillary in Docker
-- [ ] #2 The ABI provider consumes the Harness-supplied data_roots mapping for dataset loading and ancillary resolution while preserving the legacy dataset_root/data_root path for existing native callers and tests
-- [ ] #3 Natural Earth provisioning and verification can target the standalone ancillary root directly, and geographic_ancillary_manifest, coastline, and river paths resolve beneath that root without depending on a writable training dataset directory
-- [ ] #4 Tests cover native and simulated-container named-root resolution, invalid or missing logical roots, legacy single-root compatibility, and the invariant that longitude/latitude remain unavailable to Candidate Experiment inputs
-- [ ] #5 A bounded host and network-disabled container smoke validates the existing /data/iross/abi-ml-autoresearch/ancillary bundle without training, runtime downloads, or symlink-union data wrappers
-- [ ] #6 Setup and operator documentation describes the named-root layout and ABI-022 baseline handoff; the disposable abi-023-smoke-data wrapper is removed once validation no longer depends on it
+- [x] #1 Workspace configuration and the committed template declare logical training and ancillary Research Problem data roots, with root-relative provider paths that resolve to host directories natively and /data/training plus /data/ancillary in Docker
+- [x] #2 The ABI provider consumes the Harness-supplied data_roots mapping for dataset loading and ancillary resolution while preserving the legacy dataset_root/data_root path for existing native callers and tests
+- [x] #3 Natural Earth provisioning and verification can target the standalone ancillary root directly, and geographic_ancillary_manifest, coastline, and river paths resolve beneath that root without depending on a writable training dataset directory
+- [x] #4 Tests cover native and simulated-container named-root resolution, invalid or missing logical roots, legacy single-root compatibility, and the invariant that longitude/latitude remain unavailable to Candidate Experiment inputs
+- [x] #5 A bounded host and network-disabled container smoke validates the existing /data/iross/abi-ml-autoresearch/ancillary bundle without training, runtime downloads, or symlink-union data wrappers
+- [x] #6 Setup and operator documentation describes the named-root layout and ABI-022 baseline handoff; the disposable abi-023-smoke-data wrapper is removed once validation no longer depends on it
 <!-- AC:END -->
 
 ## Implementation Plan
