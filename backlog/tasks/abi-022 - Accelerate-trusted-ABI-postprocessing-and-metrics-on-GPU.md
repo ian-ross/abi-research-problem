@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:56'
-updated_date: '2026-08-07 21:13'
+updated_date: '2026-08-07 21:15'
 labels:
   - evaluation
   - performance
@@ -33,6 +33,20 @@ Replace the current per-sample CPU/NumPy postprocessing hot path with a bounded-
 - [ ] #6 Progress logs distinguish Artifact Filter, connectivity metric, ordinary metric, and threshold-sweep phases and report benchmark timings
 - [ ] #7 Accelerated evaluation retains aggregate/per-sample raw and filtered metrics, diagnostics, provenance, and candidate boundary guarantees
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Capture the current CPU evaluator as the parity oracle: inventory aggregate/per-sample/threshold/diagnostic schemas, initial MCAST 1.1/2.1 outputs and timings, and add focused fixtures for filter hits, empty masks, NaN probabilities, source strata, and scanline stddev values below/at/above the configured boundary.
+2. Introduce a trusted provider-owned bounded-batch postprocessing engine with explicit CPU and CUDA backends, configurable batch size/device selection, and no full-validation GPU residency; preserve the existing Artifact Filter pipeline and candidate/provider boundary.
+3. Add a preparation/cache phase that obtains each sample filter context once, pre-rasterizes or caches provider-owned geographic feature masks outside operational and threshold loops, and discards longitude/latitude from the hot-loop representation so unavailable filtering never rereads source coordinates.
+4. Implement batched geographic and contiguous-scanline filtering on torch tensors while preserving ordered filter semantics, diagnostics, removed-pixel/area accounting, and NumPy population-standard-deviation boundary behavior within documented tolerances.
+5. Implement batched ordinary metric/confusion reducers and clDice/connectivity evaluation on CPU/CUDA, reusing each target skeleton for raw and filtered scores and retaining per-sample, aggregate, and Dataset Source-stratified metric keys.
+6. Rework the 19-threshold diagnostic sweep to process bounded sample batches (and bounded threshold tiles if needed), reuse prepared geographic masks, accumulate raw/filtered counts without retaining full sweep tensors on GPU, and preserve the threshold_sweep.json schema and threshold-selection semantics.
+7. Integrate the engine into candidate and MCAST baseline evaluation, add phase-specific progress/timing logs and persisted benchmark/backend provenance, and expose only trusted operator configuration such as postprocessing batch size while keeping CPU fallback automatic and available.
+8. Add exact/tolerance parity tests for CPU versus CUDA (skipping CUDA only where unavailable), regression tests for context-read counts, geographic cache reuse, target-skeleton reuse, bounded transfers, progress phases, artifact schemas, and candidate exclusion of longitude/latitude; run focused and full uv-managed test suites.
+9. Run bounded A100 benchmarks and accelerated MCAST 1.1/2.1 evaluations: compare scanline-only outputs against /data/iross/abi-ml-autoresearch/baselines/initial-20260807, then generate immutable geographic-enabled replacement artifacts per the ABI-023 handoff, record timings/provenance/parity results, and inspect filter-hit diagnostics before completing the task.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
