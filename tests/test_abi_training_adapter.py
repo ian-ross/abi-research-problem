@@ -18,6 +18,7 @@ from abi_contrail.adapters import (
     derive_auxiliary_target,
     source_balanced_sampling_weights,
 )
+from abi_contrail.evaluation import _evaluation_data_config
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
 from ml_autoresearch.runs import RunStatus, run_candidate_with_research_problem
@@ -100,6 +101,29 @@ def test_abi_training_adapter_validates_data_root_and_builds_split_datasets(tmp_
     assert len(datasets.train_dataset) == 1
     assert len(datasets.validation_dataset) == 1
     assert datasets.data_policy_metadata["split_policy"] == "respect_google_scene_name_train_validation_provenance"
+
+
+def test_training_adapter_consumes_named_training_root(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    training_root = Path(str(data_config.pop("dataset_root")))
+    ancillary_root = tmp_path / "ancillary"
+    ancillary_root.mkdir()
+    data_config["data_roots"] = {
+        "training": str(training_root),
+        "ancillary": str(ancillary_root),
+    }
+    adapter = ABITrainingAdapter()
+
+    root = adapter.validate_data_root(data_config)
+    datasets = adapter.build_datasets(
+        data_config=data_config,
+        resolved_manifest_path=tmp_path / "resolved.yaml",
+    )
+
+    assert root == training_root.resolve()
+    assert len(datasets.train_dataset) == 1
+    assert len(datasets.validation_dataset) == 1
+    assert datasets.train_dataset[0][0].shape[0] == 16
 
 
 def test_training_adapter_loads_google_split_metadata_from_trusted_parquet(tmp_path: Path) -> None:
@@ -382,6 +406,40 @@ def test_best_epoch_selection_follows_filtered_dice_not_raw_dice() -> None:
     assert best["metrics"]["val/dice"] == 0.5
 
 
+def test_evaluation_config_preserves_container_named_ancillary_root(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "run_metadata.json").write_text(
+        json.dumps(
+            {
+                "dataset": {
+                    "layout": "google",
+                    "inputs_zarr": "google/inputs.zarr",
+                    "labels_zarr": "google/labels.zarr",
+                }
+            }
+        )
+    )
+
+    config = _evaluation_data_config(
+        run_dir,
+        Path("/data/training"),
+        base_config={
+            "data_roots": {
+                "training": "/host/training",
+                "ancillary": "/data/ancillary",
+            },
+            "geographic_ancillary_manifest": "natural-earth/manifest.json",
+        },
+    )
+
+    assert config["data_roots"] == {
+        "training": "/data/training",
+        "ancillary": "/data/ancillary",
+    }
+    assert config["geographic_ancillary_manifest"] == "natural-earth/manifest.json"
+
+
 def test_provider_loads_with_training_adapter() -> None:
     loaded = load_research_problem_provider(
         ResearchProblemProviderConfig(
@@ -401,6 +459,9 @@ def test_provider_loads_with_training_adapter() -> None:
 def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp_path: Path) -> None:
     pytest.importorskip("torch")
     data_config = _write_google_fixture(tmp_path / "fixture")
+    training_root = Path(str(data_config.pop("dataset_root")))
+    ancillary_root = tmp_path / "ancillary"
+    ancillary_root.mkdir()
     candidate = _write_minimal_candidate(tmp_path)
     provider_config = ResearchProblemProviderConfig(
         id="goes_abi_contrail_segmentation",
@@ -408,6 +469,7 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
         package_root=Path("."),
         provider_target="abi_contrail.research_problem:build_spec",
         data_config=data_config,
+        data_roots={"training": training_root, "ancillary": ancillary_root},
     )
 
     run = run_candidate_with_research_problem(

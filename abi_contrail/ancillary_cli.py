@@ -19,25 +19,38 @@ from abi_contrail.ancillary import (
     verify_manifest_dataset_file,
 )
 from abi_contrail.artifact_filters import ABIArtifactFilterPipeline, build_default_artifact_filter_pipeline
+from abi_contrail.data_config import with_training_root_override
 
 DownloadFunction = Callable[[str, Path], None]
 
 
 def provision_natural_earth(
     *,
-    dataset_root: str | Path,
+    ancillary_root: str | Path | None = None,
+    dataset_root: str | Path | None = None,
     source_manifest_path: str | Path | None = None,
-    destination: str | Path = "ancillary/natural-earth",
+    destination: str | Path | None = None,
     downloader: DownloadFunction | None = None,
     verify_only: bool = False,
 ) -> dict[str, object]:
-    """Idempotently provision pinned Natural Earth files beneath a data root."""
+    """Idempotently provision pinned Natural Earth files beneath an ancillary root.
 
-    root = Path(dataset_root).expanduser().resolve()
+    ``dataset_root`` is retained as a legacy alias.  Its historical default
+    destination remains ``ancillary/natural-earth``; the named ancillary-root
+    contract installs directly to ``natural-earth``.
+    """
+
+    if (ancillary_root is None) == (dataset_root is None):
+        raise AncillaryDataError("provide exactly one of ancillary_root or legacy dataset_root")
+    legacy_single_root = ancillary_root is None
+    root = Path(dataset_root if legacy_single_root else ancillary_root).expanduser().resolve()  # type: ignore[arg-type]
+    root_label = "dataset_root" if legacy_single_root else "ancillary_root"
     if not root.is_dir():
-        raise AncillaryDataError(f"dataset_root does not exist or is not a directory: {root}")
+        raise AncillaryDataError(f"{root_label} does not exist or is not a directory: {root}")
     source_path = Path(source_manifest_path or committed_natural_earth_manifest_path()).expanduser().resolve()
     manifest = load_ancillary_manifest(source_path)
+    if destination is None:
+        destination = "ancillary/natural-earth" if legacy_single_root else "natural-earth"
     destination_path = Path(destination).expanduser()
     if not destination_path.is_absolute():
         destination_path = root / destination_path
@@ -46,7 +59,7 @@ def provision_natural_earth(
         destination_path.relative_to(root)
     except ValueError as exc:
         raise AncillaryDataError(
-            f"Natural Earth destination must be beneath dataset_root {root}: {destination_path}"
+            f"Natural Earth destination must be beneath {root_label} {root}: {destination_path}"
         ) from exc
     destination_path.mkdir(parents=True, exist_ok=True)
     fetch = downloader or _download_http
@@ -90,15 +103,19 @@ def provision_natural_earth(
             os.replace(temporary_manifest, installed_manifest)
         finally:
             temporary_manifest.unlink(missing_ok=True)
-    return {
+    report = {
         "status": "verified" if verify_only else "provisioned",
-        "dataset_root": str(root),
+        "ancillary_root": str(root),
+        "root_contract": "legacy_single_dataset_root" if legacy_single_root else "named_ancillary_root",
         "destination": str(destination_path),
         "manifest": str(installed_manifest),
         "bundle_id": manifest["bundle_id"],
         "datasets": results,
         "evaluation_network_policy": "offline_no_runtime_downloads",
     }
+    if legacy_single_root:
+        report["dataset_root"] = str(root)
+    return report
 
 
 def run_geographic_filter_smoke(
@@ -159,12 +176,15 @@ def provision_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Provision pinned Natural Earth data for the trusted ABI Geographic Feature Filter."
     )
-    parser.add_argument("--dataset-root", type=Path, required=True)
-    parser.add_argument("--destination", type=Path, default=Path("ancillary/natural-earth"))
+    roots = parser.add_mutually_exclusive_group(required=True)
+    roots.add_argument("--ancillary-root", type=Path, help="Standalone trusted ancillary data root.")
+    roots.add_argument("--dataset-root", type=Path, help="Legacy single data-root compatibility alias.")
+    parser.add_argument("--destination", type=Path)
     parser.add_argument("--source-manifest", type=Path, default=committed_natural_earth_manifest_path())
     parser.add_argument("--verify-only", action="store_true")
     args = parser.parse_args(argv)
     report = provision_natural_earth(
+        ancillary_root=args.ancillary_root,
         dataset_root=args.dataset_root,
         source_manifest_path=args.source_manifest,
         destination=args.destination,
@@ -180,9 +200,19 @@ def smoke_main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--workspace-root", type=Path, default=Path("."))
     parser.add_argument(
+        "--training-root",
+        type=Path,
+        help="Optional trusted host training-root override for operator smoke validation.",
+    )
+    parser.add_argument(
+        "--ancillary-root",
+        type=Path,
+        help="Optional trusted host ancillary-root override for operator smoke validation.",
+    )
+    parser.add_argument(
         "--dataset-root",
         type=Path,
-        help="Optional trusted host dataset-root override for operator smoke validation.",
+        help="Legacy single data-root override; cannot be combined with named-root overrides.",
     )
     parser.add_argument("--max-samples", type=int, default=64)
     args = parser.parse_args(argv)
@@ -195,9 +225,22 @@ def smoke_main(argv: list[str] | None = None) -> int:
     provider = config.research_problem_provider
     if provider is None:
         raise RuntimeError("workspace has no configured Research Problem provider")
-    data_config = dict(provider.data_config)
+    data_config = provider.effective_data_config()
     if args.dataset_root is not None:
+        if args.training_root is not None or args.ancillary_root is not None:
+            parser.error("--dataset-root cannot be combined with --training-root or --ancillary-root")
+        data_config.pop("data_roots", None)
         data_config["dataset_root"] = str(args.dataset_root.expanduser().resolve())
+    else:
+        if args.training_root is not None:
+            data_config = with_training_root_override(data_config, args.training_root)
+        if args.ancillary_root is not None:
+            raw_roots = data_config.get("data_roots")
+            if not isinstance(raw_roots, Mapping):
+                parser.error("--ancillary-root requires configured named data roots")
+            roots = dict(raw_roots)
+            roots["ancillary"] = str(args.ancillary_root.expanduser().resolve())
+            data_config["data_roots"] = roots
     adapter = ABITrainingAdapter(data_config)
     dataset = adapter.build_evaluation_dataset(
         data_config=data_config,

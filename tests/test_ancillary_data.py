@@ -89,10 +89,52 @@ def test_provisioning_is_idempotent_and_writes_verified_manifest(tmp_path: Path)
     )
 
     assert len(downloads) == 2
+    assert first["dataset_root"] == str(dataset_root.resolve())
+    assert first["root_contract"] == "legacy_single_dataset_root"
     assert {item["status"] for item in first["datasets"]} == {"downloaded"}
     assert {item["status"] for item in second["datasets"]} == {"already_valid"}
     installed = dataset_root / "ancillary" / "natural-earth" / "manifest.json"
     assert json.loads(installed.read_text())["bundle_id"] == "natural-earth-fixture-v1"
+
+
+def test_standalone_ancillary_root_provisioning_and_named_resolution(tmp_path: Path) -> None:
+    payloads = {
+        "natural_earth_10m_coastline": b'{"type":"FeatureCollection","features":[]}',
+        "natural_earth_10m_rivers_north_america": b'{"type":"FeatureCollection","features":[]}',
+    }
+    manifest_path = _write_manifest(tmp_path / "source-manifest.json", _manifest_for(payloads))
+    training_root = tmp_path / "training"
+    ancillary_root = tmp_path / "ancillary"
+    training_root.mkdir()
+    ancillary_root.mkdir()
+
+    def download(url: str, destination: Path) -> None:
+        destination.write_bytes(payloads[Path(url).stem])
+
+    report = provision_natural_earth(
+        ancillary_root=ancillary_root,
+        source_manifest_path=manifest_path,
+        downloader=download,
+    )
+    config = {
+        "data_roots": {
+            "training": str(training_root),
+            "ancillary": str(ancillary_root),
+        },
+        "geographic_filter_required": True,
+        "geographic_ancillary_manifest": "natural-earth/manifest.json",
+        "coastline_geojson": "natural-earth/natural_earth_10m_coastline.geojson",
+        "rivers_geojson": "natural-earth/natural_earth_10m_rivers_north_america.geojson",
+    }
+    bundle = resolve_geographic_ancillary(config)
+
+    assert report["root_contract"] == "named_ancillary_root"
+    assert report["manifest"] == str(ancillary_root / "natural-earth" / "manifest.json")
+    assert bundle.manifest_path == (ancillary_root / "natural-earth" / "manifest.json").resolve()
+    assert bundle.coastline_geojson is not None
+    assert bundle.coastline_geojson.is_relative_to(ancillary_root)
+    assert bundle.rivers_geojson is not None
+    assert bundle.rivers_geojson.is_relative_to(ancillary_root)
 
 
 def test_dataset_root_relative_ancillary_resolution_validates_checksums(tmp_path: Path) -> None:

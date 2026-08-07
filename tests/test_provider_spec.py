@@ -59,6 +59,28 @@ def test_build_spec_declares_abi_v0_contract() -> None:
         assert artifact.role == "operator_generated_dataset_profile_or_generator"
 
 
+def test_named_roots_do_not_change_candidate_longitude_latitude_boundary(tmp_path: Path) -> None:
+    training = tmp_path / "training"
+    ancillary = tmp_path / "ancillary"
+    training.mkdir()
+    ancillary.mkdir()
+
+    spec = build_spec(
+        data_config={
+            "data_roots": {
+                "training": str(training),
+                "ancillary": str(ancillary),
+            }
+        }
+    )
+
+    for mode in spec.input_modes:
+        input_spec = spec.input_specs[mode]
+        assert input_spec["forbidden_channels"] == ["longitude", "latitude"]
+        assert 16 not in input_spec["source_channel_indices"]
+        assert 17 not in input_spec["source_channel_indices"]
+
+
 def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:
     spec = build_spec()
 

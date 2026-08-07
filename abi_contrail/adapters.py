@@ -12,6 +12,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from abi_contrail.data_config import (
+    ABIDataConfigError,
+    TRAINING_DATA_ROOT,
+    named_data_roots,
+    resolve_root_relative_path,
+    resolve_training_data_root,
+)
 from abi_contrail.datasets import (
     ABI_FORBIDDEN_SOURCE_INDICES,
     ABI_INPUT_MODE_SOURCE_INDICES,
@@ -149,15 +156,21 @@ class ABITrainingAdapter:
     def __init__(self, data_config: Mapping[str, object] | None = None) -> None:
         from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
 
+        self.data_config = dict(data_config or {})
         self.filter_pipeline = build_default_artifact_filter_pipeline(data_config)
         self._sampling_config = _sampling_config(data_config or {})
 
     def validate_data_root(self, data_config: Mapping[str, object]) -> Path:
-        root = Path(str(data_config.get("dataset_root", "."))).expanduser().resolve()
-        if not root.is_dir():
-            from ml_autoresearch.errors import ResearchProblemDataError
+        from ml_autoresearch.errors import ResearchProblemDataError
 
-            raise ResearchProblemDataError(f"ABI dataset_root does not exist or is not a directory: {root}")
+        try:
+            root = resolve_training_data_root(data_config)
+        except ABIDataConfigError as exc:
+            raise ResearchProblemDataError(str(exc)) from exc
+        if not root.is_dir():
+            raise ResearchProblemDataError(
+                f"ABI training data root does not exist or is not a directory: {root}"
+            )
         source_configs = self._source_data_configs(root, data_config)
         for source_config in source_configs:
             self._resolve_required_path(root, source_config, "inputs_zarr")
@@ -511,18 +524,22 @@ class ABITrainingAdapter:
 
     @staticmethod
     def _resolve_required_path(root: Path, data_config: Mapping[str, object], key: str) -> Path:
+        from ml_autoresearch.errors import ResearchProblemDataError
+
         value = data_config.get(key)
-        if not isinstance(value, str) or not value:
-            from ml_autoresearch.errors import ResearchProblemDataError
-
+        if value is None or value == "":
             raise ResearchProblemDataError(f"ABI data_config.{key} is required")
-        path = Path(value).expanduser()
-        if not path.is_absolute():
-            path = root / path
-        path = path.resolve()
+        try:
+            named_root = TRAINING_DATA_ROOT if named_data_roots(data_config) is not None else None
+            path = resolve_root_relative_path(
+                root,
+                value,
+                config_key=key,
+                named_root=named_root,
+            )
+        except ABIDataConfigError as exc:
+            raise ResearchProblemDataError(str(exc)) from exc
         if not path.exists():
-            from ml_autoresearch.errors import ResearchProblemDataError
-
             raise ResearchProblemDataError(f"ABI data_config.{key} does not exist: {path}")
         return path
 

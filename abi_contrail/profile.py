@@ -13,6 +13,7 @@ from typing import Any
 from ml_autoresearch.errors import ResearchProblemDataError
 
 from abi_contrail.adapters import RESEARCH_PROBLEM_ID, RESEARCH_PROBLEM_VERSION, split_data_policy_metadata
+from abi_contrail.data_config import ABIDataConfigError, resolve_training_data_root
 from abi_contrail.datasets import (
     ABIPatchIndexRecord,
     build_google_abi_patch_index,
@@ -34,9 +35,14 @@ def generate_dataset_profile(data_config: Mapping[str, object]) -> dict[str, Any
     distributed train/validation provenance.
     """
 
-    root = Path(str(data_config.get("dataset_root", "."))).expanduser().resolve()
+    try:
+        root = resolve_training_data_root(data_config)
+    except ABIDataConfigError as exc:
+        raise ResearchProblemDataError(str(exc)) from exc
     if not root.is_dir():
-        raise ResearchProblemDataError(f"ABI dataset_root does not exist or is not a directory: {root}")
+        raise ResearchProblemDataError(
+            f"ABI training data root does not exist or is not a directory: {root}"
+        )
 
     source_profiles = [_profile_source(root, source_config) for source_config in _source_data_configs(data_config)]
     return {

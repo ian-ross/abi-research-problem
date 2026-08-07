@@ -12,6 +12,7 @@ from typing import Any
 from abi_contrail.adapters import ABITrainingAdapter
 from abi_contrail.artifact_filters import ABIArtifactFilterPipeline, build_default_artifact_filter_pipeline
 from abi_contrail.baseline_segmenters import MCAST_BASELINE_METADATA, MCASTBaselineSegmenter, configured_mcast_baseline_assets
+from abi_contrail.data_config import with_training_root_override
 
 EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS = "whole_validation_failure_analysis"
 
@@ -153,7 +154,8 @@ class ABIEvaluationAdapter:
 
     def __init__(self, *, training_adapter: ABITrainingAdapter | None = None, filter_pipeline: ABIArtifactFilterPipeline | None = None) -> None:
         self.training_adapter = training_adapter or ABITrainingAdapter()
-        self.filter_pipeline = filter_pipeline or build_default_artifact_filter_pipeline()
+        self.data_config = dict(getattr(self.training_adapter, "data_config", {}))
+        self.filter_pipeline = filter_pipeline or build_default_artifact_filter_pipeline(self.data_config)
 
     def run_evaluation_mode(
         self,
@@ -238,7 +240,7 @@ class ABIEvaluationAdapter:
         )
         merged_config = dict(data_config)
         if data_root is not None:
-            merged_config["dataset_root"] = str(data_root)
+            merged_config = with_training_root_override(merged_config, data_root)
         assets = configured_mcast_baseline_assets(merged_config)
         try:
             asset_path = assets[baseline_name]
@@ -347,7 +349,11 @@ class ABIEvaluationAdapter:
         batch_size = int(manifest.get("training", {}).get("batch_size", 1))
         input_spec = input_spec_from_resolved_manifest(manifest_path)
         output_spec = output_spec_from_resolved_manifest(manifest_path)
-        data_config = _evaluation_data_config(run_dir, data_root)
+        data_config = _evaluation_data_config(
+            run_dir,
+            data_root,
+            base_config=self.data_config,
+        )
         filter_pipeline = build_default_artifact_filter_pipeline(data_config)
         dataset = self.training_adapter.build_evaluation_dataset(data_config=data_config, resolved_manifest_path=manifest_path)
 
@@ -1039,41 +1045,43 @@ def _write_baseline_evaluation_artifacts(
     )
 
 
-def _evaluation_data_config(run_dir: Path, data_root: Path) -> dict[str, object]:
+def _evaluation_data_config(
+    run_dir: Path,
+    data_root: Path,
+    *,
+    base_config: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    config = dict(base_config or {})
     metadata_path = run_dir / "run_metadata.json"
-    if not metadata_path.is_file():
-        return {"dataset_root": str(data_root)}
-    metadata = json.loads(metadata_path.read_text())
-    dataset = metadata.get("dataset")
-    if not isinstance(dataset, Mapping):
-        return {"dataset_root": str(data_root)}
-    config = {
-        key: value
-        for key, value in dataset.items()
-        if key
-        in {
-            "layout",
-            "inputs_zarr",
-            "labels_zarr",
-            "metadata_rows",
-            "scene_names",
-            "goes_times",
-            "val_fraction",
-            "split_seed",
-            "patch_size",
-            "stride",
-            "geographic_ancillary_manifest",
-            "geographic_filter_required",
-            "coastline_geojson",
-            "rivers_geojson",
-            "geographic_filter_pixel_buffer",
-            "scanline_min_length_pixels",
-            "scanline_max_probability_std",
-            "pixel_area_km2",
-        }
-    }
-    config["dataset_root"] = str(data_root)
-    return config
+    if metadata_path.is_file():
+        metadata = json.loads(metadata_path.read_text())
+        dataset = metadata.get("dataset")
+        if isinstance(dataset, Mapping):
+            for key in {
+                "layout",
+                "inputs_zarr",
+                "labels_zarr",
+                "metadata_rows",
+                "metadata_parquet",
+                "scene_names",
+                "goes_times",
+                "val_fraction",
+                "split_seed",
+                "patch_size",
+                "stride",
+                "geographic_ancillary_manifest",
+                "geographic_filter_required",
+                "coastline_geojson",
+                "rivers_geojson",
+                "geographic_filter_pixel_buffer",
+                "scanline_min_length_pixels",
+                "scanline_max_probability_std",
+                "pixel_area_km2",
+                "sources",
+            }:
+                if key in dataset:
+                    config[key] = dataset[key]
+    return with_training_root_override(config, data_root)
 
 
 def _baseline_source(dataset: object, index: int, fallback_inputs: Any) -> Any:

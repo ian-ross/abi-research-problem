@@ -16,17 +16,29 @@ bundle.
 
 ```bash
 uv sync --group baselines
-DATASET_ROOT=/home/mcast/data/ml-training-data/contrail-detection
-uv run abi-provision-natural-earth --dataset-root "$DATASET_ROOT" --verify-only
+ANCILLARY_ROOT=/data/iross/abi-ml-autoresearch/ancillary
+uv run abi-provision-natural-earth --ancillary-root "$ANCILLARY_ROOT" --verify-only
 uv run abi-geographic-filter-smoke --workspace-root . --max-samples 64
 ```
 
-Confirm `ml-autoresearch.toml` contains dataset-root-relative ancillary config:
+Confirm `ml-autoresearch.toml` declares distinct host roots. The Harness passes
+the host mapping to native evaluation and mounts it read-only at
+`/data/training` plus `/data/ancillary` in Docker:
 
 ```toml
+[research_problem.data_roots]
+training = "/home/mcast/data/ml-training-data/contrail-detection"
+ancillary = "/data/iross/abi-ml-autoresearch/ancillary"
+
+[research_problem.data_config]
 geographic_filter_required = true
-geographic_ancillary_manifest = "ancillary/natural-earth/manifest.json"
+geographic_ancillary_manifest = "natural-earth/manifest.json"
+coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
+rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
 ```
+
+No files are written beneath the training root. Do not recreate the retired
+`abi-023-smoke-data` symlink wrapper.
 
 ## Replacement evaluation
 

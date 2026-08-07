@@ -52,7 +52,7 @@ def run_configured_baseline_evaluations(
     if unknown:
         raise ValueError(f"unsupported MCAST baseline name(s): {sorted(unknown)}")
 
-    data_config = dict(provider.data_config)
+    data_config = provider.effective_data_config()
     geographic_ancillary = resolve_geographic_ancillary(data_config)
     configured_assets = configured_mcast_baseline_assets(data_config)
     missing = [name for name in names if name not in configured_assets]

@@ -17,16 +17,22 @@ cp ml-autoresearch.toml.example ml-autoresearch.toml
 ```
 
 Update the Harness checkout, runs root, ABI dataset, and MCAST asset paths. The
-operational data configuration supports both Dataset Sources through trusted
-Parquet metadata:
+operational data configuration uses separate logical roots for the primary
+training data and trusted ancillary bundle. Dataset Source paths are relative to
+`training`; geographic paths are relative to `ancillary`:
 
 ```toml
+[research_problem.data_roots]
+training = "/path/to/contrail-detection"
+ancillary = "/path/to/abi-ml-autoresearch/ancillary"
+
 [research_problem.data_config]
-dataset_root = "/path/to/contrail-detection"
 mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
 mcast_detection_2_1_path = "/path/to/models/detection-2.1"
 geographic_filter_required = true
-geographic_ancillary_manifest = "ancillary/natural-earth/manifest.json"
+geographic_ancillary_manifest = "natural-earth/manifest.json"
+coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
+rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
 
 [[research_problem.data_config.sources]]
 layout = "mit"
@@ -41,6 +47,13 @@ labels_zarr = "google/labels.zarr"
 metadata_parquet = "google/metadata.parquet"
 ```
 
+The Harness validates these host directories and mounts them read-only at
+`/data/training` and `/data/ancillary` for Docker operations; it supplies the
+resolved `data_roots` mapping to the trusted provider. Native operations receive
+the resolved host paths. Legacy direct callers that provide only `dataset_root`
+or `data_root` remain supported, with ancillary paths resolved beneath that
+single root.
+
 The provider opens the operational named arrays inside both zarr groups. Google
 keeps its source train/validation provenance; MIT is split by whole scene before
 256x256 windowing. Longitude and latitude remain trusted provider context and
@@ -54,21 +67,22 @@ public-domain license references, byte sizes, and SHA-256 hashes are committed
 in `abi_contrail/data/natural-earth-v5.1.2.json`. Evaluation is offline and
 never downloads ancillary data.
 
-Provision once during explicit operator setup beneath the configured ABI
-dataset root, then verify idempotently without network access:
+Provision once during explicit operator setup directly beneath the standalone
+ancillary root, then verify idempotently without network access:
 
 ```bash
-DATASET_ROOT=/path/to/contrail-detection
-uv run abi-provision-natural-earth --dataset-root "$DATASET_ROOT"
-uv run abi-provision-natural-earth --dataset-root "$DATASET_ROOT" --verify-only
+ANCILLARY_ROOT=/path/to/abi-ml-autoresearch/ancillary
+uv run abi-provision-natural-earth --ancillary-root "$ANCILLARY_ROOT"
+uv run abi-provision-natural-earth --ancillary-root "$ANCILLARY_ROOT" --verify-only
 ```
 
-The installed manifest is
-`$DATASET_ROOT/ancillary/natural-earth/manifest.json`. Keeping its configured
-path relative to `dataset_root` makes the same value resolve on the host and
-inside the Harness-owned container, where the root is mounted at `/data`.
-Missing, truncated, or checksum-mismatched required files stop evaluation with
-a clear trusted-data error.
+The installed manifest is `$ANCILLARY_ROOT/natural-earth/manifest.json`. The
+same root-relative value resolves beneath the host ancillary directory and at
+`/data/ancillary/natural-earth/manifest.json` in Docker. The training directory
+can remain read-only and does not need an ancillary symlink or wrapper union.
+The legacy `--dataset-root` provisioning alias remains available for old
+single-root installations. Missing, truncated, or checksum-mismatched required
+files stop evaluation with a clear trusted-data error.
 
 After dataset and runtime setup, run the bounded provider-only smoke check. It
 uses at most the configured number of validation ABI Patches, creates an
@@ -139,8 +153,9 @@ uv run ml-autoresearch prepare-agent-boundary --workspace-root .
 ```
 
 The full training dataset is not mounted into the Agent Control Boundary by
-default. Candidate Execution receives the configured dataset read-only at
-`/data` through Harness-owned Docker mounts.
+default. Candidate Execution receives trusted Research Problem roots only
+through Harness-owned read-only Docker mounts at `/data/training` and
+`/data/ancillary`; candidate inputs still contain no longitude or latitude.
 
 ## MCAST baseline evaluation
 
@@ -219,9 +234,11 @@ The artifacts under
 `/data/iross/abi-ml-autoresearch/baselines/initial-20260807` are explicitly
 **scanline-only** parity targets: geographic ancillary availability was false
 for every sample. Do not overwrite them or describe them as geographic-enabled.
-After ABI-022 lands, generate replacement MCAST 1.1/2.1 artifacts with the
-required Geographic Feature Filter active under a separately named output root,
-following `evaluation-requests/abi-023-geographic-enabled-mcast-baselines.md`.
+Use the ABI-022 accelerated evaluator to generate replacement MCAST 1.1/2.1
+artifacts with the required Geographic Feature Filter active under a separately
+named output root, following
+`evaluation-requests/abi-023-geographic-enabled-mcast-baselines.md`. The handoff
+uses the standalone named ancillary root and does not modify the training data.
 
 ## Development validation
 

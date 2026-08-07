@@ -13,9 +13,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from abi_contrail.data_config import (
+    ABIDataConfigError,
+    ANCILLARY_DATA_ROOT,
+    named_data_roots,
+    resolve_ancillary_data_root,
+    resolve_root_relative_path,
+)
+
 COASTLINE_DATASET_ID = "natural_earth_10m_coastline"
 RIVERS_DATASET_ID = "natural_earth_10m_rivers_north_america"
-DEFAULT_ANCILLARY_MANIFEST = "ancillary/natural-earth/manifest.json"
+DEFAULT_ANCILLARY_MANIFEST = "natural-earth/manifest.json"
 
 
 class AncillaryDataError(ValueError):
@@ -102,7 +110,7 @@ def load_ancillary_manifest(path: str | Path) -> dict[str, object]:
 
 
 def resolve_geographic_ancillary(data_config: Mapping[str, object] | None = None) -> GeographicAncillaryBundle:
-    """Resolve dataset-root-relative ancillary paths and verify every byte."""
+    """Resolve ancillary-root-relative paths and verify every byte offline."""
 
     config = data_config or {}
     required = _bool_value(config.get("geographic_filter_required", False), "geographic_filter_required")
@@ -122,8 +130,17 @@ def resolve_geographic_ancillary(data_config: Mapping[str, object] | None = None
     if not isinstance(manifest_value, str):
         raise AncillaryDataError("data_config.geographic_ancillary_manifest must be a path string")
 
-    root = _dataset_root(config)
-    manifest_path = _resolve_from_root(root, manifest_value)
+    try:
+        root = resolve_ancillary_data_root(config)
+        named_root = ANCILLARY_DATA_ROOT if named_data_roots(config) is not None else None
+        manifest_path = resolve_root_relative_path(
+            root,
+            manifest_value,
+            config_key="geographic_ancillary_manifest",
+            named_root=named_root,
+        )
+    except ABIDataConfigError as exc:
+        raise AncillaryDataError(str(exc)) from exc
     manifest = load_ancillary_manifest(manifest_path)
     datasets = {str(item["id"]): dict(item) for item in manifest["datasets"] if isinstance(item, Mapping)}
     coastline = _configured_or_manifest_path(
@@ -132,6 +149,7 @@ def resolve_geographic_ancillary(data_config: Mapping[str, object] | None = None
         configured=config.get("coastline_geojson"),
         dataset=datasets[COASTLINE_DATASET_ID],
         config_key="coastline_geojson",
+        named_root=named_root,
     )
     rivers = _configured_or_manifest_path(
         root=root,
@@ -139,6 +157,7 @@ def resolve_geographic_ancillary(data_config: Mapping[str, object] | None = None
         configured=config.get("rivers_geojson"),
         dataset=datasets[RIVERS_DATASET_ID],
         config_key="rivers_geojson",
+        named_root=named_root,
     )
     paths = {COASTLINE_DATASET_ID: coastline, RIVERS_DATASET_ID: rivers}
     sources: list[dict[str, object]] = []
@@ -185,22 +204,6 @@ def verify_manifest_dataset_file(path: Path, dataset: Mapping[str, object]) -> N
     _verify_file(path, dataset)
 
 
-def _dataset_root(config: Mapping[str, object]) -> Path:
-    value = config.get("dataset_root", config.get("data_root"))
-    if not isinstance(value, str) or not value:
-        raise AncillaryDataError(
-            "dataset_root is required to resolve geographic ancillary paths"
-        )
-    return Path(value).expanduser().resolve()
-
-
-def _resolve_from_root(root: Path, value: str) -> Path:
-    path = Path(value).expanduser()
-    if not path.is_absolute():
-        path = root / path
-    return path.resolve()
-
-
 def _configured_or_manifest_path(
     *,
     root: Path,
@@ -208,11 +211,18 @@ def _configured_or_manifest_path(
     configured: object,
     dataset: Mapping[str, object],
     config_key: str,
+    named_root: str | None,
 ) -> Path:
     if configured is not None and configured != "":
-        if not isinstance(configured, str):
-            raise AncillaryDataError(f"data_config.{config_key} must be a path string")
-        return _resolve_from_root(root, configured)
+        try:
+            return resolve_root_relative_path(
+                root,
+                configured,
+                config_key=config_key,
+                named_root=named_root,
+            )
+        except ABIDataConfigError as exc:
+            raise AncillaryDataError(str(exc)) from exc
     return (manifest_path.parent / str(dataset["filename"])).resolve()
 
 

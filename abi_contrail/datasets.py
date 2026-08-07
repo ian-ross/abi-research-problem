@@ -21,6 +21,13 @@ from typing import Any, Literal
 
 import numpy as np
 
+from abi_contrail.data_config import (
+    ABIDataConfigError,
+    TRAINING_DATA_ROOT,
+    named_data_roots,
+    resolve_root_relative_path,
+)
+
 ABI_PATCH_SHAPE = (16, 256, 256)
 CONTRAIL_MASK_SHAPE = (1, 256, 256)
 ABI_16CH_CHANNEL_COUNT = 16
@@ -137,10 +144,16 @@ def load_abi_metadata_rows(root: str | Path, data_config: Mapping[str, object]) 
         return None
     if not isinstance(metadata_value, str) or not metadata_value:
         raise ValueError("ABI data_config.metadata_parquet must be a non-empty path string")
-    metadata_path = Path(metadata_value).expanduser()
-    if not metadata_path.is_absolute():
-        metadata_path = Path(root) / metadata_path
-    metadata_path = metadata_path.resolve()
+    try:
+        named_root = TRAINING_DATA_ROOT if named_data_roots(data_config) is not None else None
+        metadata_path = resolve_root_relative_path(
+            Path(root).expanduser().resolve(),
+            metadata_value,
+            config_key="metadata_parquet",
+            named_root=named_root,
+        )
+    except ABIDataConfigError as exc:
+        raise ValueError(str(exc)) from exc
     if not metadata_path.is_file():
         raise ValueError(f"ABI data_config.metadata_parquet does not exist: {metadata_path}")
 

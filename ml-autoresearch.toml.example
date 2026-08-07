@@ -5,6 +5,7 @@ runner_requirements = [
   "zarr>=3.2.1,<4",
   "pandas>=3,<4",
   "pyarrow>=25,<26",
+  "scipy>=1.18,<2",
 ]
 
 [candidate_execution]
@@ -24,14 +25,20 @@ package_root = "."
 provider_target = "abi_contrail.research_problem:build_spec"
 expected_contract_version = "v0"
 
+[research_problem.data_roots]
+training = "/path/to/contrail-detection"
+ancillary = "/path/to/abi-ml-autoresearch/ancillary"
+
 [research_problem.data_config]
-dataset_root = "/path/to/contrail-detection"
 mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
 mcast_detection_2_1_path = "/path/to/models/detection-2.1"
-# Provision with abi-provision-natural-earth before setup/evaluation. This path
-# remains valid when the Harness remaps dataset_root to /data in Docker.
+# Provision with abi-provision-natural-earth before setup/evaluation. These
+# paths remain valid when the Harness maps the roots to /data/training and
+# /data/ancillary in Docker.
 geographic_filter_required = true
-geographic_ancillary_manifest = "ancillary/natural-earth/manifest.json"
+geographic_ancillary_manifest = "natural-earth/manifest.json"
+coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
+rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
 
 [[research_problem.data_config.sources]]
 layout = "mit"
