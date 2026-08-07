@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-import zarr
 
 ABI_PATCH_SHAPE = (16, 256, 256)
 CONTRAIL_MASK_SHAPE = (1, 256, 256)
@@ -86,15 +85,15 @@ class ABIPatchSplitIndex:
 
 
 def open_mit_abi_patch_arrays(inputs_zarr: str | Path, labels_zarr: str | Path) -> ABIPatchArrays:
-    """Open MIT-style top-level zarr arrays.
+    """Open MIT zarr inputs and labels from either arrays or named-array groups.
 
-    MIT fixtures and reprojected scene arrays are arrays at the zarr root, so
-    they must be opened with ``zarr.open_array`` rather than as groups.
+    Legacy fixtures use arrays at the zarr root. The operational ABI training
+    snapshot uses groups containing ``inputs`` and ``labels`` arrays.
     """
 
     return ABIPatchArrays(
-        inputs=zarr.open_array(str(inputs_zarr), mode="r"),
-        labels=zarr.open_array(str(labels_zarr), mode="r"),
+        inputs=_open_zarr_array(inputs_zarr, key="inputs"),
+        labels=_open_zarr_array(labels_zarr, key="labels"),
         layout="mit",
     )
 
@@ -102,13 +101,63 @@ def open_mit_abi_patch_arrays(inputs_zarr: str | Path, labels_zarr: str | Path) 
 def open_google_abi_patch_arrays(inputs_zarr: str | Path, labels_zarr: str | Path) -> ABIPatchArrays:
     """Open Google-style zarr groups containing ``inputs`` and ``labels`` arrays."""
 
-    inputs_group = zarr.open_group(str(inputs_zarr), mode="r")
-    labels_group = zarr.open_group(str(labels_zarr), mode="r")
     return ABIPatchArrays(
-        inputs=inputs_group["inputs"],
-        labels=labels_group["labels"],
+        inputs=_open_zarr_array(inputs_zarr, key="inputs"),
+        labels=_open_zarr_array(labels_zarr, key="labels"),
         layout="google",
     )
+
+
+def _open_zarr_array(path: str | Path, *, key: str) -> Any:
+    """Open a zarr root array or a named array from a zarr group."""
+
+    import zarr
+
+    root = zarr.open(str(path), mode="r")
+    if hasattr(root, "shape"):
+        return root
+    try:
+        return root[key]
+    except KeyError as exc:
+        raise ValueError(f"zarr group {path} does not contain required array {key!r}") from exc
+
+
+def load_abi_metadata_rows(root: str | Path, data_config: Mapping[str, object]) -> tuple[dict[str, object], ...] | None:
+    """Load trusted ABI scene metadata from inline rows or a Parquet artifact."""
+
+    inline_rows = data_config.get("metadata_rows")
+    if inline_rows is not None:
+        if not isinstance(inline_rows, Sequence) or isinstance(inline_rows, (str, bytes)):
+            raise ValueError("ABI data_config.metadata_rows must be a sequence of mappings")
+        if not all(isinstance(row, Mapping) for row in inline_rows):
+            raise ValueError("ABI data_config.metadata_rows must contain only mappings")
+        return tuple(dict(row) for row in inline_rows)  # type: ignore[arg-type]
+    metadata_value = data_config.get("metadata_parquet")
+    if metadata_value is None:
+        return None
+    if not isinstance(metadata_value, str) or not metadata_value:
+        raise ValueError("ABI data_config.metadata_parquet must be a non-empty path string")
+    metadata_path = Path(metadata_value).expanduser()
+    if not metadata_path.is_absolute():
+        metadata_path = Path(root) / metadata_path
+    metadata_path = metadata_path.resolve()
+    if not metadata_path.is_file():
+        raise ValueError(f"ABI data_config.metadata_parquet does not exist: {metadata_path}")
+
+    import pandas as pd
+
+    frame = pd.read_parquet(metadata_path)
+    rows: list[dict[str, object]] = []
+    for sample_index, raw_row in enumerate(frame.to_dict(orient="records")):
+        row = dict(raw_row)
+        scene_name = row.get("scene_name", row.get("scene"))
+        if scene_name is None:
+            raise ValueError(f"ABI metadata row {sample_index} is missing scene/scene_name")
+        row["scene_name"] = str(scene_name)
+        row.setdefault("sample_index", sample_index)
+        row.setdefault("positive", bool(int(row.get("contrail_pixels", 0) or 0) > 0))
+        rows.append(row)
+    return tuple(rows)
 
 
 def open_abi_patch_arrays(
@@ -510,6 +559,7 @@ __all__ = [
     "build_google_abi_patch_index",
     "build_mit_abi_patch_index",
     "collapse_contrail_mask",
+    "load_abi_metadata_rows",
     "open_abi_patch_arrays",
     "open_google_abi_patch_arrays",
     "open_mit_abi_patch_arrays",

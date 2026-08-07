@@ -22,6 +22,7 @@ from abi_contrail.datasets import (
     INPUT_MODE_ABI_THERMAL_10CH,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
+    load_abi_metadata_rows,
     open_abi_patch_arrays,
 )
 
@@ -185,6 +186,7 @@ class ABITrainingAdapter:
             metadata["labels_zarr"] = str(data_config["labels_zarr"])
         for optional_key in (
             "metadata_rows",
+            "metadata_parquet",
             "scene_names",
             "goes_times",
             "val_fraction",
@@ -222,7 +224,7 @@ class ABITrainingAdapter:
             inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
             labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
             arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
-            split_index = self._build_split_index(arrays.labels, layout=layout, data_config=source_config)
+            split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
             train_records = self._limit_records(split_index.train, max_samples)
             validation_records = self._limit_records(split_index.validation, max_samples)
             source_datasets.append(
@@ -442,18 +444,25 @@ class ABITrainingAdapter:
             raise ResearchProblemDataError("ABI data_config.sources must not be empty")
         return tuple(source_configs)
 
-    def _build_split_index(self, labels: Any, *, layout: str, data_config: Mapping[str, object]):
+    def _build_split_index(self, labels: Any, *, root: Path, layout: str, data_config: Mapping[str, object]):
+        metadata_rows = self._metadata_rows(root, data_config)
         if layout == "google":
-            metadata_rows = data_config.get("metadata_rows")
-            if not isinstance(metadata_rows, Sequence) or isinstance(metadata_rows, (str, bytes)):
+            if metadata_rows is None:
                 from ml_autoresearch.errors import ResearchProblemDataError
 
-                raise ResearchProblemDataError("google ABI fixtures require data_config.metadata_rows")
-            return build_google_abi_patch_index(metadata_rows)  # type: ignore[arg-type]
+                raise ResearchProblemDataError(
+                    "google ABI data requires data_config.metadata_rows or data_config.metadata_parquet"
+                )
+            return build_google_abi_patch_index(metadata_rows)
+        scene_names = self._optional_string_sequence(data_config.get("scene_names"))
+        goes_times = self._optional_string_sequence(data_config.get("goes_times"))
+        if metadata_rows is not None:
+            scene_names = tuple(str(row["scene_name"]) for row in metadata_rows)
+            goes_times = tuple(str(row["goes_time"]) if row.get("goes_time") is not None else None for row in metadata_rows)
         return build_mit_abi_patch_index(
             labels,
-            scene_names=self._optional_string_sequence(data_config.get("scene_names")),
-            goes_times=self._optional_string_sequence(data_config.get("goes_times")),
+            scene_names=scene_names,
+            goes_times=goes_times,
             val_fraction=float(data_config.get("val_fraction", 0.2)),
             seed=int(data_config.get("split_seed", 20260712)),
             patch_size=int(data_config.get("patch_size", 256)),
@@ -474,6 +483,15 @@ class ABITrainingAdapter:
 
             raise TrainingError(f"unsupported ABI input mode: {input_mode}")
         return input_mode
+
+    @staticmethod
+    def _metadata_rows(root: Path, data_config: Mapping[str, object]) -> tuple[dict[str, object], ...] | None:
+        from ml_autoresearch.errors import ResearchProblemDataError
+
+        try:
+            return load_abi_metadata_rows(root, data_config)
+        except ValueError as exc:
+            raise ResearchProblemDataError(str(exc)) from exc
 
     @staticmethod
     def _optional_string_sequence(value: object) -> tuple[str, ...] | None:

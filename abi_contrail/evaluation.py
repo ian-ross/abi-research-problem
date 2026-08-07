@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+import time
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -212,6 +213,8 @@ class ABIEvaluationAdapter:
         device: str | Any = "cpu",
         model_factory: Any | None = None,
         evaluation_dir: Path | None = None,
+        progress_callback: Callable[[str], None] | None = None,
+        log_every: int = 100,
     ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
         """Evaluate one configured baseline through the same raw/filtered path.
 
@@ -222,6 +225,17 @@ class ABIEvaluationAdapter:
 
         import torch
 
+        if log_every <= 0:
+            raise ValueError("log_every must be positive")
+        emit = progress_callback or (lambda _message: None)
+        device_text = str(device)
+        cuda_name = None
+        if device_text.startswith("cuda") and torch.cuda.is_available():
+            cuda_name = torch.cuda.get_device_name(torch.device(device))
+        emit(
+            f"{baseline_name}: runtime device={device_text} cuda_name={cuda_name or 'n/a'} "
+            f"torch_cpu_threads={torch.get_num_threads()}"
+        )
         merged_config = dict(data_config)
         if data_root is not None:
             merged_config["dataset_root"] = str(data_root)
@@ -233,17 +247,32 @@ class ABIEvaluationAdapter:
             key = metadata.asset_config_key if metadata is not None else "<unknown>"
             raise ValueError(f"missing asset path for baseline {baseline_name!r}; set data_config.{key}") from exc
         data_config_for_dataset = {key: value for key, value in merged_config.items() if key not in {m.asset_config_key for m in MCAST_BASELINE_METADATA.values()}}
+        emit(f"{baseline_name}: building validation dataset")
         dataset = self.training_adapter.build_evaluation_dataset(data_config=data_config_for_dataset, resolved_manifest_path=Path("__abi_baseline_default_manifest__.yaml"))
+        sample_count = len(dataset)
+        emit(f"{baseline_name}: validation dataset ready; samples={sample_count}")
+        emit(f"{baseline_name}: loading model asset={asset_path} device={device}")
         baseline = MCASTBaselineSegmenter.load(baseline_name, asset_path, device=device, model_factory=model_factory)
+        emit(f"{baseline_name}: model loaded; threshold={threshold if threshold is not None else baseline.threshold}")
         probabilities_all: list[torch.Tensor] = []
         targets_all: list[torch.Tensor] = []
+        inference_started = time.monotonic()
         with torch.no_grad():
-            for index in range(len(dataset)):
+            for index in range(sample_count):
                 inputs, target = dataset[index]
                 source = _baseline_source(dataset, index, inputs)
                 result = baseline.predict_patch(source, threshold=threshold, device=device)
                 probabilities_all.append(result.probabilities.detach().cpu())
                 targets_all.append(target.detach().cpu())
+                _emit_periodic_progress(
+                    emit,
+                    phase=f"{baseline_name}: inference",
+                    completed=index + 1,
+                    total=sample_count,
+                    started_at=inference_started,
+                    log_every=log_every,
+                )
+        emit(f"{baseline_name}: stacking prediction tensors")
         probabilities = torch.stack(probabilities_all)
         targets = torch.stack(targets_all)
         cutoff = float(threshold if threshold is not None else baseline.threshold)
@@ -256,8 +285,11 @@ class ABIEvaluationAdapter:
             model_record={"baseline/name": baseline.name, "baseline/version": baseline.version},
             diagnostic_output_dir=evaluation_dir / "diagnostic_samples" if evaluation_dir is not None else None,
             max_artifact_samples=8,
+            progress_callback=emit,
+            log_every=log_every,
         )
         if evaluation_dir is not None:
+            emit(f"{baseline_name}: writing evaluation artifacts to {evaluation_dir}")
             _write_baseline_evaluation_artifacts(
                 evaluation_dir=evaluation_dir,
                 baseline_name=baseline.name,
@@ -266,6 +298,7 @@ class ABIEvaluationAdapter:
                 threshold=cutoff,
                 result=result,
             )
+            emit(f"{baseline_name}: evaluation artifacts written")
         return result
 
     def display_prediction_sample_input(self, inputs: Any) -> Any:
@@ -361,10 +394,15 @@ def _evaluate_probability_tensor(
     model_record: Mapping[str, object] | None = None,
     diagnostic_output_dir: Path | None = None,
     max_artifact_samples: int = 0,
+    progress_callback: Callable[[str], None] | None = None,
+    log_every: int = 100,
 ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
     import torch
     from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
 
+    if log_every <= 0:
+        raise ValueError("log_every must be positive")
+    emit = progress_callback or (lambda _message: None)
     probabilities = probabilities.detach().cpu()
     targets = targets.detach().cpu()
     predictions = probabilities >= threshold
@@ -378,7 +416,10 @@ def _evaluate_probability_tensor(
     sample_sources: list[str | None] = []
     removed_pixels_total = 0
     removed_area_total = 0.0
-    for index in range(predictions.shape[0]):
+    metric_sample_count = int(predictions.shape[0])
+    metrics_started = time.monotonic()
+    emit(f"metrics/filtering started; samples={metric_sample_count}")
+    for index in range(metric_sample_count):
         probability = probabilities[index].numpy()
         prediction = predictions[index].numpy()
         context = _filter_context(dataset, index)
@@ -430,7 +471,16 @@ def _evaluate_probability_tensor(
         filtered_predictions.append(sample_filtered_prediction)
         probabilities_all.append(probabilities[index : index + 1])
         targets_all.append(sample_target)
+        _emit_periodic_progress(
+            emit,
+            phase="metrics/filtering samples",
+            completed=index + 1,
+            total=metric_sample_count,
+            started_at=metrics_started,
+            log_every=log_every,
+        )
 
+    emit("computing aggregate and per-source metrics")
     raw_tensor = torch.cat(raw_predictions)
     filtered_tensor = torch.cat(filtered_predictions)
     target_tensor = torch.cat(targets_all)
@@ -478,12 +528,16 @@ def _evaluate_probability_tensor(
         targets=targets,
         filter_pipeline=filter_pipeline,
         default_threshold=threshold,
+        progress_callback=emit,
+        log_every=log_every,
     )
+    emit("building diagnostic sample artifacts")
     diagnostic_manifest = _build_diagnostic_geotiff_manifest(
         candidates=diagnostic_candidates,
         diagnostic_output_dir=diagnostic_output_dir,
         max_artifact_samples=max_artifact_samples,
     )
+    emit("metrics, threshold sweep, and diagnostics complete")
     return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
 
 
@@ -495,6 +549,8 @@ def _build_threshold_curve_artifact(
     filter_pipeline: ABIArtifactFilterPipeline,
     default_threshold: float,
     threshold_grid: Sequence[float] | None = None,
+    progress_callback: Callable[[str], None] | None = None,
+    log_every: int = 100,
 ) -> dict[str, object]:
     """Build provider-owned raw/filtered threshold-curve artifacts.
 
@@ -506,24 +562,47 @@ def _build_threshold_curve_artifact(
 
     import torch
 
+    if log_every <= 0:
+        raise ValueError("log_every must be positive")
+    emit = progress_callback or (lambda _message: None)
     probs = torch.nan_to_num(probabilities.detach().cpu().float(), nan=float("-inf"), posinf=1.0, neginf=float("-inf"))
     target_masks = targets.detach().cpu() >= 0.5
     thresholds = tuple(float(value) for value in (threshold_grid or _default_threshold_grid()))
     raw_curve: list[dict[str, object]] = []
     filtered_curve: list[dict[str, object]] = []
+    sweep_started = time.monotonic()
+    emit(f"threshold sweep started; thresholds={len(thresholds)} samples={int(probs.shape[0])}")
 
-    for threshold in thresholds:
+    for threshold_index, threshold in enumerate(thresholds, start=1):
         raw_predictions = probs >= threshold
         raw_curve.append(_threshold_curve_record(threshold=threshold, predictions=raw_predictions, targets=target_masks))
 
         filtered_predictions: list[torch.Tensor] = []
-        for index in range(raw_predictions.shape[0]):
+        threshold_sample_count = int(raw_predictions.shape[0])
+        threshold_started = time.monotonic()
+        for index in range(threshold_sample_count):
             probability = probs[index].numpy()
             prediction = raw_predictions[index].numpy()
             filtered = filter_pipeline.apply(prediction, probability, context=_filter_context(dataset, index))
             filtered_predictions.append(torch.from_numpy(filtered.filtered_mask.astype(bool)).unsqueeze(0))
+            _emit_periodic_progress(
+                emit,
+                phase=f"threshold sweep {threshold_index}/{len(thresholds)} samples",
+                completed=index + 1,
+                total=threshold_sample_count,
+                started_at=threshold_started,
+                log_every=log_every,
+            )
         filtered_tensor = torch.cat(filtered_predictions) if filtered_predictions else raw_predictions.clone()
         filtered_curve.append(_threshold_curve_record(threshold=threshold, predictions=filtered_tensor, targets=target_masks))
+        _emit_periodic_progress(
+            emit,
+            phase="threshold sweep",
+            completed=threshold_index,
+            total=len(thresholds),
+            started_at=sweep_started,
+            log_every=1,
+        )
 
     best_filtered = _best_threshold_by_metric(filtered_curve, metric="dice")
     best_raw = _best_threshold_by_metric(raw_curve, metric="dice")
@@ -540,6 +619,28 @@ def _build_threshold_curve_artifact(
         "precision_recall_equal_threshold_raw": equal_pr_raw,
         "primary_metric_note": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
     }
+
+
+def _emit_periodic_progress(
+    emit: Callable[[str], None],
+    *,
+    phase: str,
+    completed: int,
+    total: int,
+    started_at: float,
+    log_every: int,
+) -> None:
+    if completed != total and completed % log_every != 0:
+        return
+    elapsed = max(0.0, time.monotonic() - started_at)
+    rate = completed / elapsed if elapsed > 0 else 0.0
+    remaining = max(0, total - completed)
+    eta = remaining / rate if rate > 0 else 0.0
+    percent = 100.0 if total <= 0 else 100.0 * completed / total
+    emit(
+        f"{phase}: {completed}/{total} ({percent:.1f}%); "
+        f"elapsed={elapsed:.1f}s rate={rate:.2f} samples/s eta={eta:.1f}s"
+    )
 
 
 def _default_threshold_grid() -> tuple[float, ...]:

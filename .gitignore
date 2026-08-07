@@ -8,4 +8,11 @@ notebooks/
 
 ml-autoresearch.toml
 .ml-autoresearch/
+.ml-autoresearch.toml.swp
+agent-reference/
+agent-history/
+agent-research-problem/
+agent-sessions/
+agent-work/
+baseline-evaluations/
 

@@ -1,0 +1,14 @@
+name: abi_tiny_smoke
+research_problem: goes_abi_contrail_segmentation
+description: Tiny ABI model used only to validate the configured Candidate Execution Boundary.
+input_mode: abi_16ch
+output_form: mask_logits
+data:
+  sampling_policy: sequential
+  augmentation_policy: none
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.001
+  batch_size: 1
+  max_epochs: 1

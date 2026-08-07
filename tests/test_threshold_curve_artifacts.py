@@ -92,6 +92,7 @@ def test_evaluation_returns_serializable_threshold_curve_without_changing_aggreg
     targets = torch.zeros_like(probabilities)
     targets[0, 0, 0, 0] = 1.0
 
+    progress_messages: list[str] = []
     aggregate, per_sample, threshold_sweep, diagnostic_manifest = _evaluate_probability_tensor(
         dataset=_ThresholdDataset(),
         probabilities=probabilities,
@@ -100,8 +101,12 @@ def test_evaluation_returns_serializable_threshold_curve_without_changing_aggreg
         filter_pipeline=_pipeline(),
         diagnostic_output_dir=None,
         max_artifact_samples=0,
+        progress_callback=progress_messages.append,
+        log_every=1,
     )
 
+    assert any("metrics/filtering samples: 1/1" in message for message in progress_messages)
+    assert any("threshold sweep: 19/19" in message for message in progress_messages)
     assert aggregate["filtered/dice"] == pytest.approx(1.0)
     assert aggregate["raw/dice"] == pytest.approx(2 / 3)
     assert threshold_sweep["artifact_type"] == "abi_threshold_curve_evaluation"

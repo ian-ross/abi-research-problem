@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import zarr
 
 from abi_contrail.profile import generate_dataset_profile, main, missing_data_profile
@@ -68,6 +69,29 @@ def test_generate_dataset_profile_summarizes_mit_and_google_counts(tmp_path: Pat
     assert profile["split_policy"]["google_split_policy"] == "respect_google_scene_name_train_validation_provenance"
     assert profile["split_policy"]["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
     assert any("Longitude and latitude" in caveat for caveat in profile["projection_caveats"])
+
+
+def test_generate_dataset_profile_loads_source_metadata_from_parquet(tmp_path: Path) -> None:
+    google_inputs, google_labels = _write_google_patches(tmp_path)
+    pd.DataFrame(
+        [
+            {"scene": "train-000", "contrail_pixels": 0, "goes_time": "2020-01-01 00:00"},
+            {"scene": "validation-000", "contrail_pixels": 16, "goes_time": "2020-01-01 00:10"},
+        ]
+    ).to_parquet(tmp_path / "metadata.parquet")
+
+    profile = generate_dataset_profile(
+        {
+            "dataset_root": str(tmp_path),
+            "layout": "google",
+            "inputs_zarr": str(google_inputs),
+            "labels_zarr": str(google_labels),
+            "metadata_parquet": "metadata.parquet",
+        }
+    )
+
+    assert profile["combined_counts"]["split_counts"] == {"train": 1, "validation": 1, "total": 2}
+    assert profile["combined_counts"]["positive_patch_count"] == 1
 
 
 def test_profile_missing_data_placeholder_is_explicit() -> None:

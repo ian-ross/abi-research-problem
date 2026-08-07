@@ -17,6 +17,7 @@ from abi_contrail.datasets import (
     ABIPatchIndexRecord,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
+    load_abi_metadata_rows,
     open_abi_patch_arrays,
 )
 
@@ -115,16 +116,26 @@ def _profile_source(root: Path, source_config: Mapping[str, object]) -> dict[str
     inputs_path = _resolve_required_path(root, source_config, "inputs_zarr")
     labels_path = _resolve_required_path(root, source_config, "labels_zarr")
     arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
+    try:
+        metadata_rows = load_abi_metadata_rows(root, source_config)
+    except ValueError as exc:
+        raise ResearchProblemDataError(str(exc)) from exc
     if layout == "google":
-        metadata_rows = source_config.get("metadata_rows")
-        if not isinstance(metadata_rows, Sequence) or isinstance(metadata_rows, (str, bytes)):
-            raise ResearchProblemDataError("google ABI profile sources require data_config.metadata_rows")
-        split_index = build_google_abi_patch_index(metadata_rows)  # type: ignore[arg-type]
+        if metadata_rows is None:
+            raise ResearchProblemDataError(
+                "google ABI profile sources require data_config.metadata_rows or data_config.metadata_parquet"
+            )
+        split_index = build_google_abi_patch_index(metadata_rows)
     else:
+        scene_names = _optional_string_sequence(source_config.get("scene_names"))
+        goes_times = _optional_string_sequence(source_config.get("goes_times"))
+        if metadata_rows is not None:
+            scene_names = tuple(str(row["scene_name"]) for row in metadata_rows)
+            goes_times = tuple(str(row["goes_time"]) if row.get("goes_time") is not None else None for row in metadata_rows)
         split_index = build_mit_abi_patch_index(
             arrays.labels,
-            scene_names=_optional_string_sequence(source_config.get("scene_names")),
-            goes_times=_optional_string_sequence(source_config.get("goes_times")),
+            scene_names=scene_names,
+            goes_times=goes_times,
             val_fraction=float(source_config.get("val_fraction", 0.2)),
             seed=int(source_config.get("split_seed", 20260712)),
             patch_size=int(source_config.get("patch_size", 256)),

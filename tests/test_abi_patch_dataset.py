@@ -44,8 +44,31 @@ def _write_google_groups(tmp_path) -> tuple[object, object]:
     return inputs_path, labels_path
 
 
+def _write_mit_groups(tmp_path) -> tuple[object, object]:
+    inputs_path = tmp_path / "mit_group_inputs.zarr"
+    labels_path = tmp_path / "mit_group_labels.zarr"
+    inputs_group = zarr.open_group(str(inputs_path), mode="w")
+    labels_group = zarr.open_group(str(labels_path), mode="w")
+    inputs_group.create_array("inputs", data=_patch_inputs())
+    labels_group.create_array("labels", data=_patch_labels())
+    return inputs_path, labels_path
+
+
 def test_mit_zarr_arrays_are_opened_as_top_level_arrays(tmp_path) -> None:
     inputs_path, labels_path = _write_mit_arrays(tmp_path)
+
+    arrays = open_mit_abi_patch_arrays(inputs_path, labels_path)
+    dataset = ABIPatchDataset(arrays)
+    sample = dataset[0]
+
+    assert arrays.layout == "mit"
+    assert sample["source_layout"] == "mit"
+    assert sample["inputs"].shape == (16, 2, 3)
+    assert sample["target"].shape == (1, 2, 3)
+
+
+def test_mit_zarr_groups_are_opened_through_named_arrays(tmp_path) -> None:
+    inputs_path, labels_path = _write_mit_groups(tmp_path)
 
     arrays = open_mit_abi_patch_arrays(inputs_path, labels_path)
     dataset = ABIPatchDataset(arrays)

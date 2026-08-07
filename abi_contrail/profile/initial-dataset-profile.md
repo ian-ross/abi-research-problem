@@ -7,7 +7,7 @@
 - research_problem_id: goes_abi_contrail_segmentation
 - research_problem_version: v0
 - dataset_identity: GOES ABI Contrail Segmentation on ABI Patches from MIT and Google Dataset Sources
-- data_config_scope: local ABI `data_config` with MIT and/or Google zarr paths
+- data_config_scope: local ABI `data_config` with MIT and/or Google zarr paths plus trusted `metadata.parquet` paths
 - generation_command: `uv run python -m abi_contrail.profile --data-config <CONFIG_JSON> --output profile/generated-abi-dataset-profile.json`
 - generation_version: abi_contrail.profile.v0
 - generation_timestamp: operator-generated; run the command above for the local dataset snapshot timestamp

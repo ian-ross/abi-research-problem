@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import yaml
 import torch
@@ -99,6 +100,28 @@ def test_abi_training_adapter_validates_data_root_and_builds_split_datasets(tmp_
     assert len(datasets.train_dataset) == 1
     assert len(datasets.validation_dataset) == 1
     assert datasets.data_policy_metadata["split_policy"] == "respect_google_scene_name_train_validation_provenance"
+
+
+def test_training_adapter_loads_google_split_metadata_from_trusted_parquet(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    metadata_rows = data_config.pop("metadata_rows")
+    metadata_path = tmp_path / "fixture" / "metadata.parquet"
+    pd.DataFrame(
+        [
+            {"scene": "train-000", "contrail_pixels": 12, "goes_time": "2020-01-01 00:00"},
+            {"scene": "validation-000", "contrail_pixels": 0, "goes_time": "2020-01-01 00:10"},
+        ]
+    ).to_parquet(metadata_path)
+    data_config["metadata_parquet"] = "metadata.parquet"
+    adapter = ABITrainingAdapter()
+
+    datasets = adapter.build_datasets(data_config=data_config, resolved_manifest_path=tmp_path / "resolved.yaml")
+
+    assert len(datasets.train_dataset) == 1
+    assert len(datasets.validation_dataset) == 1
+    assert datasets.train_dataset.sample_metadata(0)["scene_name"] == metadata_rows[0]["scene_name"].split("/")[0]
+    assert datasets.train_dataset.sample_metadata(0)["positive"] is True
+    assert datasets.validation_dataset.sample_metadata(0)["positive"] is False
 
 
 def test_training_adapter_logs_sampling_policy_metadata(tmp_path: Path) -> None:

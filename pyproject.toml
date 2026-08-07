@@ -21,6 +21,9 @@ dependencies = [
     "zarr>=3.2.1",
 ]
 
+[project.scripts]
+abi-baseline-evaluate = "abi_contrail.baseline_cli:main"
+
 [project.entry-points."ml_autoresearch.research_problems"]
 goes_abi_contrail_segmentation = "abi_contrail.research_problem:build_spec"
 
@@ -43,12 +46,20 @@ dev = [
     "pytest>=9.1.1",
 ]
 torch = [
-    "torch>=2.13.0",
+    "torch==2.5.1+cu121",
 ]
 baselines = [
-    "segmentation-models-pytorch>=0.5.0",
-    "torch>=2.13.0",
+    "segmentation-models-pytorch==0.5.0",
+    "torch==2.5.1+cu121",
+    "torchvision==0.20.1+cu121",
 ]
 
 [tool.uv.sources]
 ml-autoresearch = { path = "../ml-autoresearch", editable = true }
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
