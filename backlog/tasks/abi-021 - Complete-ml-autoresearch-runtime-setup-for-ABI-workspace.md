@@ -28,3 +28,13 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - [ ] #4 Harness setup/config validation and a bounded provider or candidate smoke run succeed without real model training
 - [ ] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inspect the ABI provider, current workspace config, data/weight path assumptions, and existing baseline interfaces
+2. Inspect ml-autoresearch configuration, image-build, setup, smoke, candidate-run, and trusted-artifact documentation and code
+3. Compare with the sibling gvccs workspace pattern and identify ABI-specific differences
+4. Produce an exact setup/run sequence, flag missing code or configuration, and separate this setup task from ABI-017 GPU baseline execution
+5. After approval, implement only the agreed setup changes and run bounded validation
+<!-- SECTION:PLAN:END -->
