@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-07-12 21:02'
-updated_date: '2026-08-07 11:00'
+updated_date: '2026-08-07 11:29'
 labels:
   - baselines
   - evaluation
@@ -37,3 +37,12 @@ Run the provider-owned MCAST detection 1.1 and 2.1 Baseline Segmenter evaluation
 4. Verify aggregate, per-sample, threshold-sweep, diagnostics, and provenance artifacts
 5. Record metrics, commands, paths, validation split configuration, and commit SHA
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Smoke-loaded MCAST 1.1 and 2.1 and ran one 256x256 patch through each on the A100 with CUDA 12.1/PyTorch 2.5.1.
+- The first combined full evaluation was aborted at operator request after it saturated all CPU cores; it produced no metric artifacts.
+- Added timestamped CLI/file progress logging and documented commands that hard-cap CPU affinity and numerical thread pools to 75% while exposing only the A100.
+- Awaiting operator-run full evaluations; keep this task In Progress until both artifact sets are verified.
+<!-- SECTION:NOTES:END -->
