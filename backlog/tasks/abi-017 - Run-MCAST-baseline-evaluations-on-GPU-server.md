@@ -53,3 +53,21 @@ Run the provider-owned MCAST detection 1.1 and 2.1 Baseline Segmenter evaluation
 - Aggregate confusion totals match sums of all per-sample records; records are unique and finite; threshold sweeps, manifests, provenance hashes, and all diagnostic GeoTIFF references validate.
 - Geographic ancillary data were not configured and the scanline filter removed zero pixels, so raw and filtered metrics are identical. These are intentionally the initial scanline-only targets; ABI-023 tracks geographic provisioning and replacement runs.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed trusted MCAST 1.1 and 2.1 GPU baseline evaluations over the combined 3,088-sample Working Validation Split (MIT 1,232; Google 1,856). Stored aggregate and per-sample raw/filtered metrics, 19-point threshold sweeps, bounded diagnostic GeoTIFFs, logs, split configuration, Git state, and checkpoint provenance under /data/iross/abi-ml-autoresearch/baselines/initial-20260807.
+
+Primary results:
+- MCAST 1.1: Dice 0.3979016, recall 0.3554189, clDice 0.5429516 at threshold 0.42
+- MCAST 2.1: Dice 0.3995654, recall 0.4748965, clDice 0.1963650 at threshold 0.314
+
+Validation:
+- Parsed all 6,176 per-sample JSONL records; sample IDs unique and values finite
+- Aggregate raw/filtered confusion counts equal summed per-sample counts
+- Verified threshold sweep structure, artifact manifests, asset hashes, and all 32 diagnostic GeoTIFF references
+
+Limitation:
+- Natural Earth ancillary data were not configured and no scanline runs met removal criteria, so filtered metrics equal raw metrics. ABI-023 tracks geographic provisioning and replacement runs; ABI-022 uses these initial artifacts as acceleration parity targets.
+<!-- SECTION:FINAL_SUMMARY:END -->
