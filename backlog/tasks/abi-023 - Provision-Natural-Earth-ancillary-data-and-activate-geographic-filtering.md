@@ -1,11 +1,11 @@
 ---
 id: ABI-023
 title: Provision Natural Earth ancillary data and activate geographic filtering
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:58'
-updated_date: '2026-08-07 14:38'
+updated_date: '2026-08-07 14:54'
 labels:
   - evaluation
   - filters
@@ -24,13 +24,13 @@ Close the ABI-007 provisioning gap by adding an explicit, reproducible operator 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 An explicit idempotent operator command provisions the approved Natural Earth 1:10m coastline and North America river datasets under the trusted external data root; evaluation remains offline and performs no runtime downloads
-- [ ] #2 Ancillary source versions, immutable download URLs, licenses, file sizes, and SHA-256 checksums are pinned and recorded in a provenance manifest
-- [ ] #3 Research Problem configuration supports durable dataset-root-relative ancillary paths and resolves them correctly for both host baseline evaluation and Harness-owned container evaluation
-- [ ] #4 Evaluation emits a clear error when required geographic ancillary data are missing or invalid, rather than silently applying an empty Geographic Feature Filter
-- [ ] #5 Run manifests and filter diagnostics record whether geographic filtering was active plus the ancillary dataset identities and checksums
-- [ ] #6 Tests and a bounded integration smoke check demonstrate that coastline/river geometry is rasterized onto ABI geolocation grids and removes overlapping predicted-positive pixels without exposing longitude or latitude to candidate models
-- [ ] #7 The initial MCAST artifacts are documented as scanline-only, and replacement MCAST 1.1/2.1 artifacts are generated or handed off with the Geographic Feature Filter active
+- [x] #1 An explicit idempotent operator command provisions the approved Natural Earth 1:10m coastline and North America river datasets under the trusted external data root; evaluation remains offline and performs no runtime downloads
+- [x] #2 Ancillary source versions, immutable download URLs, licenses, file sizes, and SHA-256 checksums are pinned and recorded in a provenance manifest
+- [x] #3 Research Problem configuration supports durable dataset-root-relative ancillary paths and resolves them correctly for both host baseline evaluation and Harness-owned container evaluation
+- [x] #4 Evaluation emits a clear error when required geographic ancillary data are missing or invalid, rather than silently applying an empty Geographic Feature Filter
+- [x] #5 Run manifests and filter diagnostics record whether geographic filtering was active plus the ancillary dataset identities and checksums
+- [x] #6 Tests and a bounded integration smoke check demonstrate that coastline/river geometry is rasterized onto ABI geolocation grids and removes overlapping predicted-positive pixels without exposing longitude or latitude to candidate models
+- [x] #7 The initial MCAST artifacts are documented as scanline-only, and replacement MCAST 1.1/2.1 artifacts are generated or handed off with the Geographic Feature Filter active
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -51,4 +51,22 @@ Close the ABI-007 provisioning gap by adding an explicit, reproducible operator 
 <!-- SECTION:NOTES:BEGIN -->
 - ABI-017 initial runs are complete and verified as scanline-only targets. Geographic availability was false for all 6,176 per-sample records; the scanline filter removed zero pixels at operational thresholds and raw/filtered threshold curves were identical across all 19 thresholds.
 - Initial artifacts are under /data/iross/abi-ml-autoresearch/baselines/initial-20260807 and must remain distinguishable from future geographic-enabled replacement artifacts.
+
+- Added pinned Natural Earth v5.1.2 source manifest and idempotent provision/verify CLI; evaluation-side resolution is offline and checksum-strict.
+- Added dataset-root-relative host/container resolution, required-data failures, active/intersection diagnostics, and run/baseline provenance.
+- Bounded real-data smoke passed on 1 ABI validation patch: 16 candidate channels, 588 rasterized/removed geographic pixels, no longitude/latitude candidate exposure. A network-disabled runner-container smoke resolved the same bundle at /data.
+- The production dataset root is not writable by the current operator. Provisioning and geographic-enabled MCAST replacement runs are handed off in evaluation-requests/abi-023-geographic-enabled-mcast-baselines.md; the initial-20260807 artifacts are documented as scanline-only.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented trusted Natural Earth ancillary provisioning and Geographic Feature Filter activation. Added a pinned v5.1.2 provenance manifest, atomic/idempotent provision and offline verification commands, dataset-root-relative host/container resolution, strict missing/hash failures, filter and run-manifest provenance, bounded real-ABI and container smoke validation, and replacement-baseline handoff documentation.
+
+Validation:
+- uv run --group torch pytest -q (70 passed)
+- uv build --wheel (passed; pinned manifest included)
+- uv run abi-provision-natural-earth --dataset-root /data/iross/abi-ml-autoresearch/abi-023-smoke-data --verify-only
+- uv run abi-geographic-filter-smoke --workspace-root . --dataset-root /data/iross/abi-ml-autoresearch/abi-023-smoke-data --max-samples 64 (passed; 588 pixels rasterized/removed)
+- Network-disabled runner-container /data manifest resolution smoke (passed)
+<!-- SECTION:FINAL_SUMMARY:END -->
