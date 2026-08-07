@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 20:04'
-updated_date: '2026-08-07 20:10'
+updated_date: '2026-08-07 20:27'
 labels:
   - provider
   - configuration
@@ -43,3 +43,13 @@ Integrate the Harness named Research Problem Data Root contract into the ABI pro
 5. Validate the existing provisioned ancillary bundle on the host and in a network-disabled runner container with a bounded geographic-filter smoke; do not run full baselines or model training in this task.
 6. Update operator documentation and the ABI-022 handoff, remove the disposable abi-023-smoke-data wrapper after validation, run the full uv-managed test suite, and record validation/provenance in the task.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Added a central ABI named-root normalization seam for Harness data_roots, with training/ancillary resolution, contained root-relative paths, and legacy dataset_root/data_root compatibility.
+- Updated training, profile, ancillary, baseline, smoke, and post-run evaluation paths; standalone ancillary provisioning now supports --ancillary-root and preserves the legacy CLI alias.
+- Updated local/template configuration for training and ancillary roots, added SciPy to runner requirements, rebuilt and validated runtime images, and retired the ABI-023 wrapper report.
+- Host and --network none runner-container smokes both passed on one ABI validation Patch with 588 geographic pixels removed, no training/downloads, and no longitude/latitude Candidate inputs.
+- Full validation: uv run --group torch pytest -q (83 passed); uv build --wheel; uv run ml-autoresearch validate-runtime-images --workspace-root .
+<!-- SECTION:NOTES:END -->
