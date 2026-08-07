@@ -1,7 +1,7 @@
 ---
 id: ABI-024
 title: Adopt named training and ancillary data roots
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-07 20:04'
