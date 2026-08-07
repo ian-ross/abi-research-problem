@@ -1,9 +1,11 @@
 ---
 id: ABI-017
 title: Run MCAST baseline evaluations on GPU server
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-07-12 21:02'
+updated_date: '2026-08-07 11:00'
 labels:
   - baselines
   - evaluation
