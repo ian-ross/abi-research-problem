@@ -4,7 +4,7 @@ title: Accelerate trusted ABI postprocessing and metrics on GPU
 status: To Do
 assignee: []
 created_date: '2026-08-07 11:56'
-updated_date: '2026-08-07 14:16'
+updated_date: '2026-08-07 20:04'
 labels:
   - evaluation
   - performance
@@ -12,6 +12,7 @@ labels:
   - filters
 dependencies:
   - ABI-023
+  - ABI-024
 priority: high
 ---
 
