@@ -1,10 +1,11 @@
 ---
 id: ABI-023
 title: Provision Natural Earth ancillary data and activate geographic filtering
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-07 11:58'
-updated_date: '2026-08-07 14:16'
+updated_date: '2026-08-07 14:35'
 labels:
   - evaluation
   - filters
