@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:58'
-updated_date: '2026-08-07 14:35'
+updated_date: '2026-08-07 14:38'
 labels:
   - evaluation
   - filters
@@ -32,6 +32,19 @@ Close the ABI-007 provisioning gap by adding an explicit, reproducible operator 
 - [ ] #6 Tests and a bounded integration smoke check demonstrate that coastline/river geometry is rasterized onto ABI geolocation grids and removes overlapping predicted-positive pixels without exposing longitude or latitude to candidate models
 - [ ] #7 The initial MCAST artifacts are documented as scanline-only, and replacement MCAST 1.1/2.1 artifacts are generated or handed off with the Geographic Feature Filter active
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Define the trusted ancillary-data contract: add a committed Natural Earth provenance manifest with pinned dataset/version identities, immutable download URLs, public-domain/license references, expected filenames, byte sizes, and SHA-256 checksums; keep downloaded vectors outside the repository and prohibit evaluation-time network access.
+2. Add an explicit uv-run operator provisioning command that installs both approved GeoJSON datasets beneath a dataset-root-relative ancillary directory, verifies hashes and sizes before atomic replacement, is idempotent for already-valid files, and emits the installed manifest/provenance.
+3. Centralize trusted ancillary configuration and validation: resolve configured manifest/coastline/river paths relative to dataset_root, support the same relative values after the Harness rewrites dataset_root to /data, and fail before evaluation when geographic filtering is required but files, identities, sizes, or checksums are invalid. Update the committed TOML template and local setup documentation.
+4. Activate the provider-owned Geographic Feature Filter with the validated ancillary bundle. Keep longitude/latitude available only through trusted filter_context, distinguish ancillary availability/activation from whether a particular ABI Patch intersects a feature, and preserve a stable raster-mask interface for ABI-022 without moving filtering into candidate code.
+5. Propagate geographic-filter state and ancillary provenance into per-sample filter diagnostics, baseline evaluation metadata, and run manifests, including explicit inactive/error reasons where applicable. Document the existing initial-20260807 MCAST artifacts as scanline-only.
+6. Add tiny deterministic tests for provisioning/idempotency, checksum and missing-data failures, dataset-root-relative host and simulated /data resolution, LineString/MultiLineString rasterization and buffered filter hits on ABI-style longitude/latitude grids, provenance serialization, and the candidate boundary that excludes longitude/latitude.
+7. Add and run a bounded operator integration smoke that uses configured real ancillary files plus a small number of ABI validation patches and an all-positive trusted prediction to prove geographic pixels are rasterized and removed without training or exposing coordinates to a candidate.
+8. Run focused and full uv-managed validation, then create the ABI-023 operator handoff for geographic-enabled MCAST 1.1/2.1 replacement artifacts. Defer the expensive full rerun to the ABI-022 accelerated evaluator unless explicitly requested; record exact provisioning, smoke, and later rerun commands and output-root naming so replacement artifacts cannot be confused with initial scanline-only results.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
