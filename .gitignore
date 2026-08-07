@@ -6,3 +6,6 @@ __pycache__
 planning-inputs
 notebooks/
 
+ml-autoresearch.toml
+.ml-autoresearch/
+
