@@ -4,12 +4,14 @@ title: Provision Natural Earth ancillary data and activate geographic filtering
 status: To Do
 assignee: []
 created_date: '2026-08-07 11:58'
+updated_date: '2026-08-07 11:59'
 labels:
   - evaluation
   - filters
   - data
   - provisioning
-dependencies: []
+dependencies:
+  - ABI-017
 priority: high
 ---
 
