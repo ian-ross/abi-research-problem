@@ -1,10 +1,11 @@
 ---
 id: ABI-024
 title: Adopt named training and ancillary data roots
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-07 20:04'
-updated_date: '2026-08-07 20:04'
+updated_date: '2026-08-07 20:10'
 labels:
   - provider
   - configuration
