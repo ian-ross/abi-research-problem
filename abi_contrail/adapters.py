@@ -193,6 +193,8 @@ class ABITrainingAdapter:
             "split_seed",
             "patch_size",
             "stride",
+            "geographic_ancillary_manifest",
+            "geographic_filter_required",
             "coastline_geojson",
             "rivers_geojson",
             "geographic_filter_pixel_buffer",
@@ -205,6 +207,7 @@ class ABITrainingAdapter:
         ):
             if optional_key in data_config:
                 metadata[optional_key] = data_config[optional_key]
+        metadata["artifact_filters"] = self.filter_pipeline.provenance()
         return metadata
 
     def build_datasets(

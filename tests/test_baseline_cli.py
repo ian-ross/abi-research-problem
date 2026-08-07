@@ -72,3 +72,11 @@ mcast_detection_1_1_path = "{asset}"
     assert manifest["baseline"]["asset"]["sha256"]
     assert manifest["sample_count"] == 1
     assert manifest["artifacts"]["aggregate_metrics"] == "aggregate_metrics.json"
+    assert manifest["artifact_filters"]["geographic_feature_filter"] == {
+        "active": False,
+        "bundle_id": None,
+        "manifest_path": None,
+        "reason": "not_configured",
+        "required": False,
+        "sources": [],
+    }

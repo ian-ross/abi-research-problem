@@ -23,6 +23,8 @@ dependencies = [
 
 [project.scripts]
 abi-baseline-evaluate = "abi_contrail.baseline_cli:main"
+abi-geographic-filter-smoke = "abi_contrail.ancillary_cli:smoke_main"
+abi-provision-natural-earth = "abi_contrail.ancillary_cli:provision_main"
 
 [project.entry-points."ml_autoresearch.research_problems"]
 goes_abi_contrail_segmentation = "abi_contrail.research_problem:build_spec"

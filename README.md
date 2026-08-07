@@ -25,6 +25,8 @@ Parquet metadata:
 dataset_root = "/path/to/contrail-detection"
 mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
 mcast_detection_2_1_path = "/path/to/models/detection-2.1"
+geographic_filter_required = true
+geographic_ancillary_manifest = "ancillary/natural-earth/manifest.json"
 
 [[research_problem.data_config.sources]]
 layout = "mit"
@@ -43,6 +45,39 @@ The provider opens the operational named arrays inside both zarr groups. Google
 keeps its source train/validation provenance; MIT is split by whole scene before
 256x256 windowing. Longitude and latitude remain trusted provider context and
 are never candidate inputs.
+
+## Natural Earth ancillary data
+
+Geographic filtering uses pinned Natural Earth vector v5.1.2 GeoJSON for the
+1:10m coastline and North America rivers. Source versions, immutable URLs,
+public-domain license references, byte sizes, and SHA-256 hashes are committed
+in `abi_contrail/data/natural-earth-v5.1.2.json`. Evaluation is offline and
+never downloads ancillary data.
+
+Provision once during explicit operator setup beneath the configured ABI
+dataset root, then verify idempotently without network access:
+
+```bash
+DATASET_ROOT=/path/to/contrail-detection
+uv run abi-provision-natural-earth --dataset-root "$DATASET_ROOT"
+uv run abi-provision-natural-earth --dataset-root "$DATASET_ROOT" --verify-only
+```
+
+The installed manifest is
+`$DATASET_ROOT/ancillary/natural-earth/manifest.json`. Keeping its configured
+path relative to `dataset_root` makes the same value resolve on the host and
+inside the Harness-owned container, where the root is mounted at `/data`.
+Missing, truncated, or checksum-mismatched required files stop evaluation with
+a clear trusted-data error.
+
+After dataset and runtime setup, run the bounded provider-only smoke check. It
+uses at most the configured number of validation ABI Patches, creates an
+all-positive trusted prediction, and verifies that rasterized geography removes
+pixels. It does not train or invoke candidate code.
+
+```bash
+uv run abi-geographic-filter-smoke --workspace-root . --max-samples 64
+```
 
 ## Runtime images
 
@@ -178,8 +213,15 @@ subdirectory contains:
 
 This provider-owned command applies the same raw/filtered metric and Artifact
 Filter path as candidate assessment. It does not call MCAST operational
-postprocessing. Record the resulting paths and metrics when completing
-backlog task ABI-017.
+postprocessing.
+
+The artifacts under
+`/data/iross/abi-ml-autoresearch/baselines/initial-20260807` are explicitly
+**scanline-only** parity targets: geographic ancillary availability was false
+for every sample. Do not overwrite them or describe them as geographic-enabled.
+After ABI-022 lands, generate replacement MCAST 1.1/2.1 artifacts with the
+required Geographic Feature Filter active under a separately named output root,
+following `evaluation-requests/abi-023-geographic-enabled-mcast-baselines.md`.
 
 ## Development validation
 

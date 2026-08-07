@@ -276,12 +276,13 @@ class ABIEvaluationAdapter:
         probabilities = torch.stack(probabilities_all)
         targets = torch.stack(targets_all)
         cutoff = float(threshold if threshold is not None else baseline.threshold)
+        filter_pipeline = build_default_artifact_filter_pipeline(data_config_for_dataset)
         result = _evaluate_probability_tensor(
             dataset=dataset,
             probabilities=probabilities,
             targets=targets,
             threshold=cutoff,
-            filter_pipeline=build_default_artifact_filter_pipeline(data_config_for_dataset),
+            filter_pipeline=filter_pipeline,
             model_record={"baseline/name": baseline.name, "baseline/version": baseline.version},
             diagnostic_output_dir=evaluation_dir / "diagnostic_samples" if evaluation_dir is not None else None,
             max_artifact_samples=8,
@@ -297,6 +298,7 @@ class ABIEvaluationAdapter:
                 asset_path=asset_path,
                 threshold=cutoff,
                 result=result,
+                artifact_filter_provenance=filter_pipeline.provenance(),
             )
             emit(f"{baseline_name}: evaluation artifacts written")
         return result
@@ -999,6 +1001,7 @@ def _write_baseline_evaluation_artifacts(
     asset_path: Path,
     threshold: float,
     result: tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]],
+    artifact_filter_provenance: Mapping[str, object] | None = None,
 ) -> None:
     aggregate, per_sample_records, threshold_sweep, diagnostic_manifest = result
     evaluation_dir.mkdir(parents=True, exist_ok=True)
@@ -1021,6 +1024,7 @@ def _write_baseline_evaluation_artifacts(
             {
                 "status": "completed",
                 "baseline": {"name": baseline_name, "version": baseline_version, "asset_path": str(asset_path)},
+                "artifact_filters": dict(artifact_filter_provenance or {}),
                 "artifacts": {
                     "aggregate_metrics": "aggregate_metrics.json",
                     "per_sample_metrics": "per_sample_metrics.jsonl",
@@ -1058,6 +1062,8 @@ def _evaluation_data_config(run_dir: Path, data_root: Path) -> dict[str, object]
             "split_seed",
             "patch_size",
             "stride",
+            "geographic_ancillary_manifest",
+            "geographic_filter_required",
             "coastline_geojson",
             "rivers_geojson",
             "geographic_filter_pixel_buffer",

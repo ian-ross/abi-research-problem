@@ -10,7 +10,10 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
 
     assert data["research_problem"]["id"] == "goes_abi_contrail_segmentation"
     assert data["research_problem"]["provider_target"] == "abi_contrail.research_problem:build_spec"
-    sources = data["research_problem"]["data_config"]["sources"]
+    data_config = data["research_problem"]["data_config"]
+    assert data_config["geographic_filter_required"] is True
+    assert data_config["geographic_ancillary_manifest"] == "ancillary/natural-earth/manifest.json"
+    sources = data_config["sources"]
     assert {source["layout"] for source in sources} == {"mit", "google"}
     assert all(source["metadata_parquet"].endswith("metadata.parquet") for source in sources)
     requirements = data["runtime_images"]["runner_requirements"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -122,4 +123,6 @@ def test_baseline_evaluation_uses_same_filtered_metric_path_and_records_baseline
     assert threshold_sweep["default_threshold"] == pytest.approx(0.42)
     assert (evaluation_dir / "aggregate_metrics.json").is_file()
     assert (evaluation_dir / "per_sample_metrics.jsonl").is_file()
-    assert (evaluation_dir / "baseline_evaluation_metadata.json").is_file()
+    metadata = json.loads((evaluation_dir / "baseline_evaluation_metadata.json").read_text())
+    assert metadata["artifact_filters"]["geographic_feature_filter"]["active"] is False
+    assert metadata["artifact_filters"]["geographic_feature_filter"]["reason"] == "not_configured"

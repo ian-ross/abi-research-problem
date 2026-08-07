@@ -1,0 +1,39 @@
+{
+  "bundle_id": "natural-earth-vector-v5.1.2-abi-geographic-filter",
+  "datasets": [
+    {
+      "filename": "natural_earth_10m_coastline.geojson",
+      "id": "natural_earth_10m_coastline",
+      "immutable_url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/f1890d9f152c896d250a77557a5751a93d494776/geojson/ne_10m_coastline.geojson",
+      "license": {
+        "name": "Natural Earth public domain",
+        "url": "https://www.naturalearthdata.com/about/terms-of-use/"
+      },
+      "name": "Natural Earth 1:10m Coastline",
+      "sha256": "6f75ae0e0de157b14946e2255eb1f5486d9a13819032e26d4610852d296788f6",
+      "size_bytes": 10110735,
+      "source_path": "geojson/ne_10m_coastline.geojson",
+      "version": "5.1.2"
+    },
+    {
+      "filename": "natural_earth_10m_rivers_north_america.geojson",
+      "id": "natural_earth_10m_rivers_north_america",
+      "immutable_url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/f1890d9f152c896d250a77557a5751a93d494776/geojson/ne_10m_rivers_north_america.geojson",
+      "license": {
+        "name": "Natural Earth public domain",
+        "url": "https://www.naturalearthdata.com/about/terms-of-use/"
+      },
+      "name": "Natural Earth 1:10m North America Rivers",
+      "sha256": "dcd2348655a5f3d0ea7be35024073ab24f09115d2e4efb77e7bc0a33567db682",
+      "size_bytes": 8734704,
+      "source_path": "geojson/ne_10m_rivers_north_america.geojson",
+      "version": "5.1.2"
+    }
+  ],
+  "repository": {
+    "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+    "release": "v5.1.2",
+    "url": "https://github.com/nvkelso/natural-earth-vector"
+  },
+  "schema_version": 1
+}

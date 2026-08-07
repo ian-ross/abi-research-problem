@@ -28,6 +28,10 @@ expected_contract_version = "v0"
 dataset_root = "/path/to/contrail-detection"
 mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
 mcast_detection_2_1_path = "/path/to/models/detection-2.1"
+# Provision with abi-provision-natural-earth before setup/evaluation. This path
+# remains valid when the Harness remaps dataset_root to /data in Docker.
+geographic_filter_required = true
+geographic_ancillary_manifest = "ancillary/natural-earth/manifest.json"
 
 [[research_problem.data_config.sources]]
 layout = "mit"

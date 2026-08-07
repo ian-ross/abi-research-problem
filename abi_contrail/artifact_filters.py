@@ -15,7 +15,10 @@ from typing import Any
 
 import numpy as np
 
-NATURAL_EARTH_URL = "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/"
+from abi_contrail.ancillary import GeographicAncillaryBundle, resolve_geographic_ancillary
+
+NATURAL_EARTH_COMMIT = "f1890d9f152c896d250a77557a5751a93d494776"
+NATURAL_EARTH_URL = f"https://raw.githubusercontent.com/nvkelso/natural-earth-vector/{NATURAL_EARTH_COMMIT}/geojson/"
 NATURAL_EARTH_COASTLINE_URL = NATURAL_EARTH_URL + "ne_10m_coastline.geojson"
 NATURAL_EARTH_RIVERS_NORTH_AMERICA_URL = NATURAL_EARTH_URL + "ne_10m_rivers_north_america.geojson"
 
@@ -55,18 +58,24 @@ class GeographicFeatureFilter(ArtifactFilter):
     coastline_geojson: Path | None = None
     rivers_geojson: Path | None = None
     pixel_buffer: int = 1
+    active: bool = False
+    required: bool = False
+    reason: str = "not_configured"
+    bundle_id: str | None = None
+    manifest_path: Path | None = None
     name: str = "geographic_feature_filter"
-    ancillary_sources: tuple[dict[str, str], ...] = field(
-        default_factory=lambda: (
-            {"name": "natural_earth_10m_coastline", "url": NATURAL_EARTH_COASTLINE_URL},
-            {"name": "natural_earth_10m_rivers_north_america", "url": NATURAL_EARTH_RIVERS_NORTH_AMERICA_URL},
-        )
-    )
+    ancillary_sources: tuple[dict[str, object], ...] = field(default_factory=tuple)
 
     def apply(self, mask: np.ndarray, probabilities: np.ndarray, *, context: Mapping[str, object] | None = None) -> ArtifactFilterResult:
         pred = _as_bool_2d(mask)
         probs = _as_float_2d(probabilities)
         ctx = context or {}
+        pre_rasterized = ctx.get("geographic_feature_mask") is not None
+        filter_active = self.active or pre_rasterized
+        if self.required and not pre_rasterized and (ctx.get("longitude") is None or ctx.get("latitude") is None):
+            raise ValueError(
+                "required Geographic Feature Filter needs provider-owned longitude/latitude context"
+            )
         feature_mask = self._feature_mask_for_prediction(pred.shape, ctx)
         removed = np.logical_and(pred, feature_mask)
         filtered = np.logical_and(pred, ~removed)
@@ -78,12 +87,33 @@ class GeographicFeatureFilter(ArtifactFilter):
             removed,
             {
                 "filter": self.name,
+                "active": filter_active,
+                "available": filter_active,
+                "required": self.required,
+                "reason": "pre_rasterized_mask" if pre_rasterized else self.reason,
+                "bundle_id": self.bundle_id,
+                "manifest_path": str(self.manifest_path) if self.manifest_path is not None else None,
                 "removed_pixel_count": int(removed.sum()),
                 "feature_pixel_count": int(feature_mask.sum()),
-                "available": bool(feature_mask.any()),
-                "ancillary_sources": list(self.ancillary_sources),
+                "intersects_grid": bool(feature_mask.any()),
+                "context_source": (
+                    "pre_rasterized_mask"
+                    if pre_rasterized
+                    else "provider_longitude_latitude" if self.active else "none"
+                ),
+                "ancillary_sources": [dict(source) for source in self.ancillary_sources],
             },
         )
+
+    def provenance(self) -> dict[str, object]:
+        return {
+            "active": self.active,
+            "required": self.required,
+            "reason": self.reason,
+            "bundle_id": self.bundle_id,
+            "manifest_path": str(self.manifest_path) if self.manifest_path is not None else None,
+            "sources": [dict(source) for source in self.ancillary_sources],
+        }
 
     def _feature_mask_for_prediction(self, shape: tuple[int, int], context: Mapping[str, object]) -> np.ndarray:
         raster = context.get("geographic_feature_mask")
@@ -107,9 +137,8 @@ class GeographicFeatureFilter(ArtifactFilter):
             return np.zeros(shape, dtype=bool)
         mask = np.zeros(shape, dtype=bool)
         bbox = (float(np.nanmin(lon_grid)), float(np.nanmin(lat_grid)), float(np.nanmax(lon_grid)), float(np.nanmax(lat_grid)))
-        for path in paths:
-            for line in _iter_geojson_lines(path, bbox=bbox):
-                _burn_line_nearest(mask, line, lon_grid=lon_grid, lat_grid=lat_grid)
+        lines = [line for path in paths for line in _iter_geojson_lines(path, bbox=bbox)]
+        _burn_lines_nearest(mask, lines, lon_grid=lon_grid, lat_grid=lat_grid, bbox=bbox)
         return _dilate_bool(mask, self.pixel_buffer)
 
 
@@ -177,30 +206,50 @@ class ABIArtifactFilterPipeline:
         }
         return _result_from_arrays(current_mask, current_probabilities, total_removed, diagnostics)
 
+    def provenance(self) -> dict[str, object]:
+        geographic = next(
+            (artifact_filter for artifact_filter in self.filters if isinstance(artifact_filter, GeographicFeatureFilter)),
+            None,
+        )
+        return {
+            "geographic_feature_filter": (
+                geographic.provenance()
+                if geographic is not None
+                else {"active": False, "required": False, "reason": "not_in_pipeline", "sources": []}
+            )
+        }
+
 
 def build_default_artifact_filter_pipeline(data_config: Mapping[str, object] | None = None) -> ABIArtifactFilterPipeline:
     """Build the v0 provider-owned filter pipeline from trusted data config."""
 
     config = data_config or {}
-    coastline = _optional_path(config.get("coastline_geojson"))
-    rivers = _optional_path(config.get("rivers_geojson"))
+    bundle = resolve_geographic_ancillary(config)
     pixel_buffer = int(config.get("geographic_filter_pixel_buffer", 1))
     scanline_min = int(config.get("scanline_min_length_pixels", 128))
     scanline_std = float(config.get("scanline_max_probability_std", 0.03))
     pixel_area = float(config.get("pixel_area_km2", 4.0))
     return ABIArtifactFilterPipeline(
         filters=(
-            GeographicFeatureFilter(coastline_geojson=coastline, rivers_geojson=rivers, pixel_buffer=pixel_buffer),
+            _geographic_filter_from_bundle(bundle, pixel_buffer=pixel_buffer),
             ScanlineArtifactFilter(min_length_pixels=scanline_min, max_probability_std=scanline_std),
         ),
         pixel_area_km2=pixel_area,
     )
 
 
-def _optional_path(value: object) -> Path | None:
-    if value is None or value == "":
-        return None
-    return Path(str(value)).expanduser().resolve()
+def _geographic_filter_from_bundle(bundle: GeographicAncillaryBundle, *, pixel_buffer: int) -> GeographicFeatureFilter:
+    return GeographicFeatureFilter(
+        coastline_geojson=bundle.coastline_geojson,
+        rivers_geojson=bundle.rivers_geojson,
+        pixel_buffer=pixel_buffer,
+        active=bundle.active,
+        required=bundle.required,
+        reason=bundle.reason,
+        bundle_id=bundle.bundle_id,
+        manifest_path=bundle.manifest_path,
+        ancillary_sources=bundle.sources,
+    )
 
 
 def _result_from_arrays(filtered: np.ndarray, probabilities: np.ndarray, removed: np.ndarray, diagnostics: dict[str, object]) -> ArtifactFilterResult:
@@ -292,16 +341,50 @@ def _coordinate_line(points: Sequence[object]) -> list[tuple[float, float]]:
 
 
 def _line_intersects_bbox(line: Sequence[tuple[float, float]], bbox: tuple[float, float, float, float]) -> bool:
+    if not line:
+        return False
     min_lon, min_lat, max_lon, max_lat = bbox
-    return any(min_lon <= lon <= max_lon and min_lat <= lat <= max_lat for lon, lat in line)
+    line_lons = [point[0] for point in line]
+    line_lats = [point[1] for point in line]
+    return not (
+        max(line_lons) < min_lon
+        or min(line_lons) > max_lon
+        or max(line_lats) < min_lat
+        or min(line_lats) > max_lat
+    )
 
 
-def _burn_line_nearest(mask: np.ndarray, line: Sequence[tuple[float, float]], *, lon_grid: np.ndarray, lat_grid: np.ndarray) -> None:
-    for lon, lat in line:
-        distance = (lon_grid - lon) ** 2 + (lat_grid - lat) ** 2
-        flat_index = int(np.nanargmin(distance))
-        row, col = np.unravel_index(flat_index, mask.shape)
-        mask[row, col] = True
+def _burn_lines_nearest(
+    mask: np.ndarray,
+    lines: Sequence[Sequence[tuple[float, float]]],
+    *,
+    lon_grid: np.ndarray,
+    lat_grid: np.ndarray,
+    bbox: tuple[float, float, float, float],
+) -> None:
+    if not lines:
+        return
+    min_lon, min_lat, max_lon, max_lat = bbox
+    points = np.asarray(
+        [
+            (lon, lat)
+            for line in lines
+            for lon, lat in line
+            if min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
+        ],
+        dtype=np.float64,
+    )
+    if not points.size:
+        return
+    valid = np.logical_and(np.isfinite(lon_grid), np.isfinite(lat_grid))
+    if not valid.any():
+        return
+    grid_points = np.column_stack((lon_grid[valid], lat_grid[valid]))
+    from scipy.spatial import cKDTree
+
+    nearest = np.asarray(cKDTree(grid_points).query(points)[1], dtype=np.int64)
+    valid_flat_indices = np.flatnonzero(valid)
+    mask.flat[valid_flat_indices[nearest]] = True
 
 
 __all__ = [
