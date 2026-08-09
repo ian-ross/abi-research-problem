@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:56'
-updated_date: '2026-08-07 21:15'
+updated_date: '2026-08-09 13:33'
 labels:
   - evaluation
   - performance
@@ -55,4 +55,12 @@ Replace the current per-sample CPU/NumPy postprocessing hot path with a bounded-
 - MCAST 1.1 timing: inference 104.5s, per-sample metrics/filtering 1,653.5s, threshold sweep 1,177.1s, total about 57m22s.
 - MCAST 2.1 timing: inference 113.4s, per-sample metrics/filtering 1,670.5s, threshold sweep 1,201.4s, total about 58m03s.
 - Raw and filtered outputs are identical at the operational thresholds and all 19 sweep thresholds; no filter removed a pixel. GPU/CPU parity must therefore also use filter-hit fixtures and later ABI-023 geographic-enabled artifacts.
+
+- Implemented bounded torch CPU/CUDA postprocessing with batch size 8 and threshold tiles of 4; operational Artifact Filters, ordinary metrics, clDice/connectivity, and the 19-threshold sweep now use bounded device batches.
+- Added one-time geographic context preparation, parsed Natural Earth geometry/bbox caching, per-phase timings/provenance, and target-skeleton reuse. Diagnosed an initial geographic preparation rate near 1 Patch/s as repeated parsing/scanning of 18.8 MB of GeoJSON per Patch; caching improved the completed runs to 31-35 Patches/s.
+- Full validation: uv run --group torch pytest -q (88 passed); uv build --wheel; git diff --check.
+- Completed geographic-enabled MCAST 1.1/2.1 artifacts at /data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2. Both have 3,088 samples, torch_cuda provenance, max device batch 8, active Natural Earth filtering, and selected filter-hit diagnostics.
+- MCAST 1.1: inference 98.9s; context preparation 87.2s; GPU Artifact Filter 1.48s; ordinary metrics 0.73s; connectivity 4.88s; threshold sweep 4.54s; 35,586 geographic pixels removed across 545 Patches.
+- MCAST 2.1: inference 119.5s; context preparation 98.3s; GPU Artifact Filter 1.39s; ordinary metrics 0.88s; connectivity 4.82s; threshold sweep 4.55s; 58,315 geographic pixels removed across 1,033 Patches.
+- Accelerated raw parity against initial-20260807 is exact for both baselines: aggregate raw metrics, all per-sample raw counts/ordinary/connectivity metrics, and raw counts/metrics at all 19 thresholds have maximum absolute delta 0.0.
 <!-- SECTION:NOTES:END -->
