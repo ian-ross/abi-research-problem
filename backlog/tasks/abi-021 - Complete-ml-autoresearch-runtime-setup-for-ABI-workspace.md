@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
-updated_date: '2026-08-07 11:29'
+updated_date: '2026-08-09 13:43'
 labels:
   - harness
   - containers
@@ -27,16 +27,18 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - [ ] #3 Dataset and MCAST 1.1/2.1 weight paths are provisioned through explicit trusted host paths or links and are available at the paths expected by the provider and container runtime
 - [ ] #4 Harness setup/config validation and a bounded provider or candidate smoke run succeed without real model training
 - [ ] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
+- [ ] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
 <!-- AC:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inspect the ABI provider, current workspace config, data/weight path assumptions, and existing baseline interfaces
-2. Inspect ml-autoresearch configuration, image-build, setup, smoke, candidate-run, and trusted-artifact documentation and code
-3. Compare with the sibling gvccs workspace pattern and identify ABI-specific differences
-4. Produce an exact setup/run sequence, flag missing code or configuration, and separate this setup task from ABI-017 GPU baseline execution
-5. After approval, implement only the agreed setup changes and run bounded validation
+1. Treat the existing validated geographic-enabled MCAST 1.1/2.1 run as the source evaluation: its raw metric namespace is the unfiltered target and its filtered namespace is the approved Geographic Feature + Scanline Artifact Filter target.
+2. Add a trusted generator/validator for a machine-readable canonical baseline-target registry that records immutable artifact roots, metric namespaces, split/sample identity, model hashes, workspace/Harness provenance, and both filter settings.
+3. Configure the registry location in the local workspace config and document the portable template/operator refresh command without making tests depend on external data.
+4. Add provider-side loading and acceptance-report integration so candidate raw metrics are compared to canonical unfiltered baselines and candidate filtered metrics to canonical filtered baselines, with target IDs and source paths in the report.
+5. Generate and validate the canonical registry from the existing artifacts; verify raw parity and the recorded geographic/scanline filter state.
+6. Add fixture-based tests, run focused/full uv-managed validation, document results, and complete ABI-021 only if all original setup criteria and the new canonical-target criterion are satisfied.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
