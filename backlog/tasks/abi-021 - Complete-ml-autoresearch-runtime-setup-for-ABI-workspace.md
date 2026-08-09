@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
-updated_date: '2026-08-09 13:43'
+updated_date: '2026-08-09 20:19'
 labels:
   - harness
   - containers
@@ -22,12 +22,12 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ml-autoresearch.toml contains valid, non-secret workspace, provider, candidate execution, and agent-boundary settings
-- [ ] #2 The required runner and agent images can be built and their resulting identities are documented in the workspace configuration or setup documentation
-- [ ] #3 Dataset and MCAST 1.1/2.1 weight paths are provisioned through explicit trusted host paths or links and are available at the paths expected by the provider and container runtime
-- [ ] #4 Harness setup/config validation and a bounded provider or candidate smoke run succeed without real model training
-- [ ] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
-- [ ] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
+- [x] #1 ml-autoresearch.toml contains valid, non-secret workspace, provider, candidate execution, and agent-boundary settings
+- [x] #2 The required runner and agent images can be built and their resulting identities are documented in the workspace configuration or setup documentation
+- [x] #3 Dataset and MCAST 1.1/2.1 weight paths are provisioned through explicit trusted host paths or links and are available at the paths expected by the provider and container runtime
+- [x] #4 Harness setup/config validation and a bounded provider or candidate smoke run succeed without real model training
+- [x] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
+- [x] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -57,4 +57,29 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - Pinned the optional baseline environment to PyTorch/torchvision CUDA 12.1 versions compatible with the GPU server driver.
 - Full ABI test suite passes: uv run pytest -q (63 passed before the final logger-specific test; targeted logger tests also pass).
 - Full baseline evaluations are intentionally deferred to the operator with a 75% CPU cap.
+
+- Added canonical baseline-target registry generation/verification with atomic writes, artifact checksums, common sample/split checks, MCAST asset provenance, and effective Geographic Feature plus Scanline Artifact Filter settings.
+- Generated and verified registry /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json (id abi-mcast-working-validation-v1; SHA-256 2239879ef352182aa3769e6ea1142bb641d297032efcc57923d5afcc69756489).
+- Candidate acceptance reports now compare raw/dice against the unfiltered target and filtered/dice against the full Artifact Filter target, recording registry/run-manifest/aggregate paths.
+- Working Validation Split identity: 3,088 samples (MIT 1,232; Google 1,856), sample-id SHA-256 42982774c168d6b9f24205de66972035e6eaa3a892c4752bc83230ad95a9c290.
+- Canonical Dice targets: MCAST 1.1 raw 0.397901603 / filtered 0.384248340; MCAST 2.1 raw 0.399565414 / filtered 0.387284867. Scanline filtering was active but removed zero MCAST pixels.
+- Validation passed: 93 tests, wheel build, runtime-image validation, prepare-agent-boundary, canonical-registry verification, configured acceptance-report smoke, and bounded Docker candidate smoke (accepted; no training).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed the ABI ml-autoresearch runtime setup and canonical baseline handoff. The workspace now has validated ABI-specific runner/Agent image identities, trusted named training/ancillary/baselines roots, provisioned MCAST assets and Natural Earth data, bounded Docker smoke coverage, and reproducible baseline-evaluation documentation.
+
+Added a trusted abi-baseline-targets generator/validator and produced /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json. The registry exposes unfiltered raw/* and full Geographic Feature + Scanline Artifact Filter filtered/* MCAST 1.1/2.1 targets, with sample identity, source split, model/filter/Git provenance, artifact locations, and checksums. Candidate acceptance reports load the configured registry automatically and record both comparisons and exact source paths.
+
+Validation:
+- uv run --group torch pytest -q (93 passed)
+- uv build --wheel
+- uv run ml-autoresearch validate-runtime-images --workspace-root .
+- uv run ml-autoresearch prepare-agent-boundary --workspace-root .
+- uv run abi-baseline-targets verify --registry /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json
+- uv run python scripts/smoke_workspace.py --workspace-root . (accepted; trained=false)
+- Configured canonical acceptance-report smoke (raw and filtered deltas 0.0 for MCAST 2.1)
+- git diff --check
+<!-- SECTION:FINAL_SUMMARY:END -->
