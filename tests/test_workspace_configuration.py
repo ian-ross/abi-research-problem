@@ -11,12 +11,16 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
     assert data["research_problem"]["id"] == "goes_abi_contrail_segmentation"
     assert data["research_problem"]["provider_target"] == "abi_contrail.research_problem:build_spec"
     data_roots = data["research_problem"]["data_roots"]
-    assert set(data_roots) == {"training", "ancillary"}
+    assert set(data_roots) == {"training", "ancillary", "baselines"}
     assert data_roots["training"].endswith("contrail-detection")
     assert data_roots["ancillary"].endswith("ancillary")
+    assert data_roots["baselines"].endswith("baselines")
     data_config = data["research_problem"]["data_config"]
     assert "dataset_root" not in data_config
     assert "data_root" not in data_config
+    assert data_config["canonical_baseline_targets"] == "canonical/mcast-working-validation-v1.json"
+    assert data_config["mcast_detection_1_1_path"] == "canonical/model-assets/detection-1.1.pt"
+    assert data_config["mcast_detection_2_1_path"] == "canonical/model-assets/detection-2.1"
     assert data_config["geographic_filter_required"] is True
     assert data_config["geographic_ancillary_manifest"] == "natural-earth/manifest.json"
     assert data_config["coastline_geojson"].startswith("natural-earth/")

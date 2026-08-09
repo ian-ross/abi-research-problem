@@ -213,12 +213,28 @@ class ABIArtifactFilterPipeline:
             (artifact_filter for artifact_filter in self.filters if isinstance(artifact_filter, GeographicFeatureFilter)),
             None,
         )
+        scanline = next(
+            (artifact_filter for artifact_filter in self.filters if isinstance(artifact_filter, ScanlineArtifactFilter)),
+            None,
+        )
+        geographic_provenance = (
+            geographic.provenance()
+            if geographic is not None
+            else {"active": False, "required": False, "reason": "not_in_pipeline", "sources": []}
+        )
+        scanline_provenance = (
+            {
+                "active": True,
+                "min_length_pixels": int(scanline.min_length_pixels),
+                "max_probability_std": float(scanline.max_probability_std),
+            }
+            if scanline is not None
+            else {"active": False, "reason": "not_in_pipeline"}
+        )
         return {
-            "geographic_feature_filter": (
-                geographic.provenance()
-                if geographic is not None
-                else {"active": False, "required": False, "reason": "not_in_pipeline", "sources": []}
-            )
+            "pipeline_order": [artifact_filter.name for artifact_filter in self.filters],
+            "geographic_feature_filter": geographic_provenance,
+            "scanline_artifact_filter": scanline_provenance,
         }
 
 

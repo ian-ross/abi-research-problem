@@ -80,6 +80,10 @@ mcast_detection_1_1_path = "{asset}"
     assert manifest["sample_count"] == 1
     assert manifest["artifacts"]["aggregate_metrics"] == "aggregate_metrics.json"
     assert manifest["postprocessing"] == {"backend": "torch_cpu", "batch_size": 3}
+    assert manifest["artifact_filters"]["pipeline_order"] == [
+        "geographic_feature_filter",
+        "scanline_artifact_filter",
+    ]
     assert manifest["artifact_filters"]["geographic_feature_filter"] == {
         "active": False,
         "bundle_id": None,
@@ -87,4 +91,9 @@ mcast_detection_1_1_path = "{asset}"
         "reason": "not_configured",
         "required": False,
         "sources": [],
+    }
+    assert manifest["artifact_filters"]["scanline_artifact_filter"] == {
+        "active": True,
+        "min_length_pixels": 128,
+        "max_probability_std": 0.03,
     }

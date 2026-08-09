@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from abi_contrail.ancillary import resolve_geographic_ancillary
+from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
 from abi_contrail.baseline_segmenters import MCAST_BASELINE_METADATA, MCAST_BASELINE_NAMES, configured_mcast_baseline_assets
 
 
@@ -54,7 +54,7 @@ def run_configured_baseline_evaluations(
         raise ValueError(f"unsupported MCAST baseline name(s): {sorted(unknown)}")
 
     data_config = provider.effective_data_config()
-    geographic_ancillary = resolve_geographic_ancillary(data_config)
+    filter_provenance = build_default_artifact_filter_pipeline(data_config).provenance()
     configured_assets = configured_mcast_baseline_assets(data_config)
     missing = [name for name in names if name not in configured_assets]
     if missing:
@@ -111,9 +111,7 @@ def run_configured_baseline_evaluations(
             },
             "sample_count": len(per_sample),
             "metrics": aggregate,
-            "artifact_filters": {
-                "geographic_feature_filter": geographic_ancillary.provenance(),
-            },
+            "artifact_filters": filter_provenance,
             "postprocessing": diagnostics.get("postprocessing", {}),
             "artifacts": {
                 "aggregate_metrics": "aggregate_metrics.json",

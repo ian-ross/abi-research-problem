@@ -14,6 +14,7 @@ from pathlib import Path
 
 TRAINING_DATA_ROOT = "training"
 ANCILLARY_DATA_ROOT = "ancillary"
+BASELINES_DATA_ROOT = "baselines"
 
 
 class ABIDataConfigError(ValueError):
@@ -130,6 +131,7 @@ def _legacy_data_root(data_config: Mapping[str, object]) -> Path:
 __all__ = [
     "ABIDataConfigError",
     "ANCILLARY_DATA_ROOT",
+    "BASELINES_DATA_ROOT",
     "TRAINING_DATA_ROOT",
     "named_data_roots",
     "resolve_ancillary_data_root",

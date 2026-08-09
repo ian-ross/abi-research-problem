@@ -16,6 +16,13 @@ from typing import Any
 
 import numpy as np
 
+from abi_contrail.data_config import (
+    ABIDataConfigError,
+    BASELINES_DATA_ROOT,
+    named_data_roots,
+    resolve_root_relative_path,
+)
+
 MCAST_BASELINE_1_1 = "mcast_detection_1_1"
 MCAST_BASELINE_2_1 = "mcast_detection_2_1"
 MCAST_BASELINE_NAMES = (MCAST_BASELINE_1_1, MCAST_BASELINE_2_1)
@@ -226,12 +233,34 @@ def mcast_input_from_abi_source(abi_source: Any) -> np.ndarray:
 
 
 def configured_mcast_baseline_assets(data_config: Mapping[str, object]) -> dict[str, Path]:
-    """Return configured local MCAST baseline asset paths from provider data config."""
+    """Resolve MCAST assets beneath the named trusted baselines root.
+
+    Legacy direct callers without ``data_roots`` may still provide absolute or
+    working-directory-relative paths. Named-root configurations must keep asset
+    paths relative to ``data_roots.baselines``.
+    """
 
     assets: dict[str, Path] = {}
+    roots = named_data_roots(data_config)
+    baseline_root: Path | None = None
+    if roots is not None:
+        baseline_root = roots.get(BASELINES_DATA_ROOT)
     for name, metadata in MCAST_BASELINE_METADATA.items():
         value = data_config.get(metadata.asset_config_key)
-        if isinstance(value, str) and value:
+        if not isinstance(value, str) or not value:
+            continue
+        if roots is not None:
+            if baseline_root is None:
+                raise ABIDataConfigError(
+                    f"ABI data_config.data_roots.{BASELINES_DATA_ROOT} is required for MCAST assets"
+                )
+            assets[name] = resolve_root_relative_path(
+                baseline_root,
+                value,
+                config_key=metadata.asset_config_key,
+                named_root=BASELINES_DATA_ROOT,
+            )
+        else:
             assets[name] = Path(value).expanduser().resolve()
     return assets
 

@@ -12,6 +12,10 @@ from typing import Any
 from abi_contrail.adapters import ABITrainingAdapter
 from abi_contrail.artifact_filters import ABIArtifactFilterPipeline, build_default_artifact_filter_pipeline
 from abi_contrail.baseline_segmenters import MCAST_BASELINE_METADATA, MCASTBaselineSegmenter, configured_mcast_baseline_assets
+from abi_contrail.baseline_targets import (
+    canonical_baseline_metrics,
+    resolve_canonical_baseline_targets_path,
+)
 from abi_contrail.data_config import with_training_root_override
 
 EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS = "whole_validation_failure_analysis"
@@ -22,6 +26,7 @@ class AcceptanceGateConfig:
     """Configurable thresholds for provider-owned acceptance-gate reports."""
 
     primary_metric: str = "filtered/dice"
+    unfiltered_primary_metric: str = "raw/dice"
     filtered_recall_tolerance: float = 0.05
     contrail_connectivity_metric: str = "filtered/contrail_connectivity"
     dataset_sources: tuple[str, ...] = ("mit", "google")
@@ -64,7 +69,14 @@ def build_acceptance_gate_report(
         "baseline": baseline_primary,
         "delta": candidate_primary - baseline_primary,
         "candidate_beats_baseline": candidate_primary >= baseline_primary,
+        "baseline_name": best_name,
+        **_baseline_target_reference(best_metrics),
     }
+    unfiltered_aggregate_comparison = _best_available_aggregate_comparison(
+        candidate_metrics=candidate_metrics,
+        baselines=baselines,
+        metric=gate_config.unfiltered_primary_metric,
+    )
 
     flags: list[dict[str, object]] = []
     if candidate_primary < baseline_primary:
@@ -135,7 +147,14 @@ def build_acceptance_gate_report(
             "name": best_name,
             "selection_metric": gate_config.primary_metric,
             "selection_value": baseline_primary,
+            **_baseline_target_reference(best_metrics),
         },
+        "baseline_target_registry": _baseline_target_registry(baselines),
+        "comparison_targets": {
+            "unfiltered": unfiltered_aggregate_comparison,
+            "artifact_filtered": aggregate_comparison,
+        },
+        "unfiltered_aggregate_comparison": unfiltered_aggregate_comparison,
         "aggregate_comparison": aggregate_comparison,
         "recall_regression": recall_regression,
         "contrail_connectivity_comparison": connectivity,
@@ -322,13 +341,23 @@ class ABIEvaluationAdapter:
         self,
         *,
         candidate_metrics: Mapping[str, object],
-        baseline_metrics: Mapping[str, Mapping[str, object]] | Sequence[Mapping[str, object]],
+        baseline_metrics: Mapping[str, Mapping[str, object]] | Sequence[Mapping[str, object]] | None = None,
+        canonical_targets_path: Path | None = None,
         candidate_run_id: str | None = None,
         config: AcceptanceGateConfig | None = None,
         output_path: Path | None = None,
     ) -> dict[str, object]:
-        """Build and optionally persist the provider-owned acceptance report."""
+        """Build and optionally persist the provider-owned acceptance report.
 
+        When explicit metrics are omitted, load the configured canonical target
+        registry from the trusted named ``baselines`` data root.
+        """
+
+        if baseline_metrics is None:
+            targets_path = canonical_targets_path or resolve_canonical_baseline_targets_path(
+                self.data_config
+            )
+            baseline_metrics = canonical_baseline_metrics(targets_path)
         report = build_acceptance_gate_report(
             candidate_metrics=candidate_metrics,
             baseline_metrics=baseline_metrics,
@@ -894,6 +923,66 @@ def _normalise_baseline_metrics(
         name = metrics.get("baseline/name", metrics.get("name", f"baseline_{index}"))
         normalised.append((str(name), metrics))
     return normalised
+
+
+def _best_available_aggregate_comparison(
+    *,
+    candidate_metrics: Mapping[str, object],
+    baselines: Sequence[tuple[str, Mapping[str, object]]],
+    metric: str,
+) -> dict[str, object] | None:
+    candidate = _optional_float(candidate_metrics, metric)
+    available = [
+        (name, metrics, value)
+        for name, metrics in baselines
+        if (value := _optional_float(metrics, metric)) is not None
+    ]
+    if candidate is None or not available:
+        return None
+    best_name, best_metrics, baseline = max(available, key=lambda item: item[2])
+    return {
+        "metric": metric,
+        "candidate": candidate,
+        "baseline": baseline,
+        "delta": candidate - baseline,
+        "candidate_beats_baseline": candidate >= baseline,
+        "baseline_name": best_name,
+        **_baseline_target_reference(best_metrics),
+    }
+
+
+def _baseline_target_reference(metrics: Mapping[str, object]) -> dict[str, object]:
+    key_map = {
+        "baseline/target_registry_id": "target_registry_id",
+        "baseline/target_registry_path": "target_registry_path",
+        "baseline/run_manifest_path": "run_manifest_path",
+        "baseline/aggregate_metrics_path": "aggregate_metrics_path",
+    }
+    return {
+        output_key: metrics[input_key]
+        for input_key, output_key in key_map.items()
+        if metrics.get(input_key) is not None
+    }
+
+
+def _baseline_target_registry(
+    baselines: Sequence[tuple[str, Mapping[str, object]]],
+) -> dict[str, object] | None:
+    references = {
+        (
+            str(metrics["baseline/target_registry_id"]),
+            str(metrics["baseline/target_registry_path"]),
+        )
+        for _name, metrics in baselines
+        if metrics.get("baseline/target_registry_id") is not None
+        and metrics.get("baseline/target_registry_path") is not None
+    }
+    if not references:
+        return None
+    if len(references) != 1:
+        raise ValueError("baseline metrics reference multiple canonical target registries")
+    registry_id, registry_path = references.pop()
+    return {"id": registry_id, "path": registry_path}
 
 
 def _required_float(metrics: Mapping[str, object], key: str, owner: str) -> float:

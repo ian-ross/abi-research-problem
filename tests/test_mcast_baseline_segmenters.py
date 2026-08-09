@@ -12,6 +12,7 @@ from abi_contrail.baseline_segmenters import (
     MCAST_BASELINE_1_1,
     MCAST_BASELINE_2_1,
     MCASTBaselineSegmenter,
+    configured_mcast_baseline_assets,
     mcast_input_from_abi_source,
 )
 from abi_contrail.evaluation import ABIEvaluationAdapter
@@ -43,6 +44,40 @@ def test_mcast_input_uses_c11_c14_and_c13_minus_c15_without_lat_lon() -> None:
     assert np.all(mcast[0] == 11.0)
     assert np.all(mcast[1] == 14.0)
     assert np.all(mcast[2] == -2.0)
+
+
+def test_named_baselines_root_contains_configured_mcast_assets(tmp_path: Path) -> None:
+    baselines_root = tmp_path / "baselines"
+    assets = configured_mcast_baseline_assets(
+        {
+            "data_roots": {
+                "training": str(tmp_path / "training"),
+                "ancillary": str(tmp_path / "ancillary"),
+                "baselines": str(baselines_root),
+            },
+            "mcast_detection_1_1_path": "canonical/model-assets/detection-1.1.pt",
+            "mcast_detection_2_1_path": "canonical/model-assets/detection-2.1",
+        }
+    )
+
+    assert assets == {
+        MCAST_BASELINE_1_1: (baselines_root / "canonical/model-assets/detection-1.1.pt").resolve(),
+        MCAST_BASELINE_2_1: (baselines_root / "canonical/model-assets/detection-2.1").resolve(),
+    }
+
+
+def test_named_baselines_root_rejects_external_mcast_asset_path(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="must be relative to data_roots.baselines"):
+        configured_mcast_baseline_assets(
+            {
+                "data_roots": {
+                    "training": str(tmp_path / "training"),
+                    "ancillary": str(tmp_path / "ancillary"),
+                    "baselines": str(tmp_path / "baselines"),
+                },
+                "mcast_detection_1_1_path": "/outside/detection-1.1.pt",
+            }
+        )
 
 
 def test_mcast_v1_checkpoint_loads_offline_and_returns_class1_probability(tmp_path: Path) -> None:

@@ -28,10 +28,14 @@ expected_contract_version = "v0"
 [research_problem.data_roots]
 training = "/path/to/contrail-detection"
 ancillary = "/path/to/abi-ml-autoresearch/ancillary"
+baselines = "/path/to/abi-ml-autoresearch/baselines"
 
 [research_problem.data_config]
-mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
-mcast_detection_2_1_path = "/path/to/models/detection-2.1"
+# Generated and verified with abi-baseline-targets. The relative path remains
+# valid when the Harness maps the trusted root to /data/baselines in Docker.
+canonical_baseline_targets = "canonical/mcast-working-validation-v1.json"
+mcast_detection_1_1_path = "canonical/model-assets/detection-1.1.pt"
+mcast_detection_2_1_path = "canonical/model-assets/detection-2.1"
 # Provision with abi-provision-natural-earth before setup/evaluation. These
 # paths remain valid when the Harness maps the roots to /data/training and
 # /data/ancillary in Docker.

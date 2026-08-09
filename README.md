@@ -16,19 +16,23 @@ by Git. Start from the committed template on a new host:
 cp ml-autoresearch.toml.example ml-autoresearch.toml
 ```
 
-Update the Harness checkout, runs root, ABI dataset, and MCAST asset paths. The
+Update the Harness checkout, runs root, ABI dataset, ancillary, and baselines root paths. The
 operational data configuration uses separate logical roots for the primary
-training data and trusted ancillary bundle. Dataset Source paths are relative to
-`training`; geographic paths are relative to `ancillary`:
+training data, trusted ancillary bundle, and immutable baseline artifacts.
+Dataset Source paths are relative to `training`, geographic paths are relative
+to `ancillary`, and the canonical comparison registry and MCAST model assets
+are relative to `baselines`:
 
 ```toml
 [research_problem.data_roots]
 training = "/path/to/contrail-detection"
 ancillary = "/path/to/abi-ml-autoresearch/ancillary"
+baselines = "/path/to/abi-ml-autoresearch/baselines"
 
 [research_problem.data_config]
-mcast_detection_1_1_path = "/path/to/models/detection-1.1.pt"
-mcast_detection_2_1_path = "/path/to/models/detection-2.1"
+canonical_baseline_targets = "canonical/mcast-working-validation-v1.json"
+mcast_detection_1_1_path = "canonical/model-assets/detection-1.1.pt"
+mcast_detection_2_1_path = "canonical/model-assets/detection-2.1"
 geographic_filter_required = true
 geographic_ancillary_manifest = "natural-earth/manifest.json"
 coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
@@ -49,7 +53,7 @@ metadata_parquet = "google/metadata.parquet"
 ```
 
 The Harness validates these host directories and mounts them read-only at
-`/data/training` and `/data/ancillary` for Docker operations; it supplies the
+`/data/training`, `/data/ancillary`, and `/data/baselines` for Docker operations; it supplies the
 resolved `data_roots` mapping to the trusted provider. Native operations receive
 the resolved host paths. Legacy direct callers that provide only `dataset_root`
 or `data_root` remain supported, with ancillary paths resolved beneath that
@@ -251,6 +255,44 @@ artifacts with the required Geographic Feature Filter active under a separately
 named output root, following
 `evaluation-requests/abi-023-geographic-enabled-mcast-baselines.md`. The handoff
 uses the standalone named ancillary root and does not modify the training data.
+
+## Canonical baseline comparison targets
+
+Generate the small registry from a completed MCAST output root after validating
+both baseline manifests, aggregate/per-sample parity, common validation sample
+identity, model/filter provenance, and checksums:
+
+```bash
+BASELINES_ROOT=/path/to/abi-ml-autoresearch/baselines
+uv run abi-baseline-targets generate \
+  --source-root "$BASELINES_ROOT/completed-mcast-output" \
+  --output "$BASELINES_ROOT/canonical/mcast-working-validation-v1.json"
+uv run abi-baseline-targets verify \
+  --registry "$BASELINES_ROOT/canonical/mcast-working-validation-v1.json"
+```
+
+The copied model assets are stored at
+`canonical/model-assets/detection-1.1.pt` and
+`canonical/model-assets/detection-2.1`. Their configured paths are resolved
+beneath the named `baselines` root on both the host and in Docker.
+
+The registry exposes two candidate-comparison modes from the same validated
+predictions:
+
+- `unfiltered` maps candidate and MCAST `raw/*` metrics before Artifact Filters;
+- `artifact_filtered` maps `filtered/*` metrics after the ordered Geographic
+  Feature and Scanline Artifact Filter pipeline.
+
+Generation copies the complete MCAST evaluation directories and both required
+model assets beneath `canonical/`, then records only canonical-root-relative
+run-manifest, aggregate/per-sample, and model-asset locations. The resulting
+bundle has no runtime dependency on the source evaluation or model directories.
+It also records checksums,
+validation sample identity, MCAST asset identities, Git provenance, and
+effective filter settings. `ABIEvaluationAdapter.build_acceptance_gate_report`
+automatically loads the configured registry when explicit `baseline_metrics`
+are omitted. The resulting report records both comparisons and the exact target
+registry and source-artifact paths used.
 
 ## Development validation
 
