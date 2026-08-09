@@ -1,11 +1,11 @@
 ---
 id: ABI-021
 title: Complete ml-autoresearch runtime setup for ABI workspace
-status: Done
+status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
-updated_date: '2026-08-09 20:44'
+updated_date: '2026-08-09 20:54'
 labels:
   - harness
   - containers
@@ -29,15 +29,16 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - [x] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
 - [x] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
 - [x] #7 The canonical registry is self-contained beneath the canonical directory: all indexed MCAST artifacts are copied there and no registry artifact path depends on geographic-enabled-20260807-abi022-r2
+- [ ] #8 Canonical MCAST model assets are copied beneath the trusted baselines root; workspace configuration and canonical registry/evaluation metadata use contained relative paths and no canonical model-asset path points outside /data/iross/abi-ml-autoresearch/baselines
 <!-- AC:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Change canonical-target generation to stage complete MCAST evaluation directories beneath the registry directory and atomically replace the self-contained canonical bundle.
-2. Make registry artifact paths relative to the canonical directory and remove the external source-root reference from registry content.
-3. Update tests and documentation to prove source artifacts can be removed or changed without affecting canonical verification, while tampering with canonical copies is detected.
-4. Regenerate the production canonical bundle, verify all paths stay under canonical, run acceptance-report and full test validation, then update ABI-021.
+1. Extend canonical generation to copy and checksum-verify MCAST 1.1/2.1 model assets into canonical/model-assets.
+2. Rewrite canonical registry and copied evaluation metadata to use canonical-root-relative asset paths, then recompute artifact checksums and reject external/escaping asset paths during verification.
+3. Resolve configured MCAST asset paths relative to the named baselines root and update local/template configuration and documentation.
+4. Regenerate the canonical bundle, prove no external model paths remain, smoke-load both copied checkpoints, run full validation, and update ABI-021.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
