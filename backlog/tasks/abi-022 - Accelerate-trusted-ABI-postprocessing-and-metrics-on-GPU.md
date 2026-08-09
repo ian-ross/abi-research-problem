@@ -1,7 +1,7 @@
 ---
 id: ABI-022
 title: Accelerate trusted ABI postprocessing and metrics on GPU
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:56'
