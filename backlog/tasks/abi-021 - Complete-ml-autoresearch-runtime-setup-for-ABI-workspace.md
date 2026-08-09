@@ -1,7 +1,7 @@
 ---
 id: ABI-021
 title: Complete ml-autoresearch runtime setup for ABI workspace
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
