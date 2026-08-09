@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
-updated_date: '2026-08-09 20:54'
+updated_date: '2026-08-09 21:01'
 labels:
   - harness
   - containers
@@ -29,7 +29,7 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - [x] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
 - [x] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
 - [x] #7 The canonical registry is self-contained beneath the canonical directory: all indexed MCAST artifacts are copied there and no registry artifact path depends on geographic-enabled-20260807-abi022-r2
-- [ ] #8 Canonical MCAST model assets are copied beneath the trusted baselines root; workspace configuration and canonical registry/evaluation metadata use contained relative paths and no canonical model-asset path points outside /data/iross/abi-ml-autoresearch/baselines
+- [x] #8 Canonical MCAST model assets are copied beneath the trusted baselines root; workspace configuration and canonical registry/evaluation metadata use contained relative paths and no canonical model-asset path points outside /data/iross/abi-ml-autoresearch/baselines
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -69,21 +69,29 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - Removed source_evaluation_root from the registry schema and reject absolute or parent-escaping artifact paths during verification. The canonical bundle contains no geographic-enabled-20260807-abi022-r2 strings or runtime dependencies.
 - Canonical generation now copies and checksum-verifies full baseline directories before atomic replacement; tests prove source changes do not affect canonical verification while canonical tampering is detected.
 - Regenerated registry SHA-256: cf93781911c214f49e2086206749543163c68b592d23a6677739a9ed4925de16. Final validation: 94 tests passed, wheel build passed, registry verified.
+
+- Copied MCAST 1.1 (57,397,165 bytes; SHA-256 0feba22e59c3922dd2bfc765ffc3acdf7d472aaacd3fae9cb22075014f0d5dff) and MCAST 2.1 (86,864,010 bytes; aggregate SHA-256 4c68c7b0c119618f0b6da1dea32583e5ff4230454aed76c80419479b9981f9ca) into canonical/model-assets.
+- Named-root configuration now uses canonical/model-assets/detection-1.1.pt and canonical/model-assets/detection-2.1 relative to data_roots.baselines; absolute or parent-escaping paths are rejected.
+- Canonical generation checksum-verifies copied model assets, rewrites canonical run manifests/aggregate metadata/registry paths, recomputes artifact checksums, and registry verification validates contained assets.
+- No external model-asset paths remain in the canonical bundle or active repository configuration/documentation. Both copied models loaded successfully on CPU and were visible read-only at /data/baselines/canonical/model-assets in the runner container.
+- Regenerated canonical registry SHA-256: dc7de95ce72ffdddbd6a8a58832ed63d3a00737bdebdc29a5fa52c28c97102a1. Final validation: 97 tests passed, wheel build, runtime-image validation, registry verification, and bounded Docker candidate smoke.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Completed the ABI ml-autoresearch runtime setup and self-contained canonical baseline handoff. The workspace has validated ABI-specific runtime images, trusted named training/ancillary/baselines roots, provisioned MCAST and Natural Earth assets, bounded Docker smoke coverage, and reproducible baseline documentation.
+Completed the ABI ml-autoresearch runtime setup and fully self-contained canonical baseline handoff. The canonical registry is /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json. Complete MCAST 1.1/2.1 evaluation artifacts and both required model assets now live beneath the same canonical directory.
 
-The canonical registry is /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json. Complete MCAST 1.1 and 2.1 evaluation artifacts now live beneath the same canonical directory; all registry paths are canonical-root-relative and verification rejects external or escaping paths. The bundle exposes raw/* unfiltered and filtered/* Geographic Feature + Scanline Artifact Filter comparisons and has no runtime dependency on the original evaluation output directory. Candidate acceptance reports automatically load it and record canonical source paths.
+All active workspace configuration, canonical registry, run-manifest, and evaluation-metadata model paths are contained relative paths beneath data_roots.baselines. Provider asset resolution rejects absolute or escaping paths when named roots are configured. Canonical generation copies and checksum-verifies model assets, rewrites copied metadata, and recomputes artifact checksums; registry verification validates both evaluation artifacts and model assets. Candidate acceptance reports continue to consume raw/* and fully filtered/* targets from canonical paths.
 
 Validation:
-- uv run --group torch pytest -q (94 passed)
+- uv run --group torch pytest -q (97 passed)
 - uv build --wheel
 - uv run abi-baseline-targets verify --registry /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json
-- Confirmed no geographic-enabled-20260807-abi022-r2 references beneath canonical/
-- Confirmed all registry artifact paths remain beneath canonical/
-- Configured acceptance-report smoke resolves both comparison modes to canonical/mcast_detection_2_1/aggregate_metrics.json
+- Both copied MCAST models loaded successfully on CPU
+- Runner-container /data/baselines model-asset visibility check passed with network disabled
+- uv run ml-autoresearch validate-runtime-images --workspace-root .
+- uv run python scripts/smoke_workspace.py --workspace-root . (accepted; trained=false)
+- No external model paths in canonical bundle or active repository config/docs
 - git diff --check
 <!-- SECTION:FINAL_SUMMARY:END -->
