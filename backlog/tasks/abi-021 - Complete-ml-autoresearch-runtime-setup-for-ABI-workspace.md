@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 10:23'
-updated_date: '2026-08-09 20:39'
+updated_date: '2026-08-09 20:44'
 labels:
   - harness
   - containers
@@ -28,7 +28,7 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - [x] #4 Harness setup/config validation and a bounded provider or candidate smoke run succeed without real model training
 - [x] #5 A reproducible handoff documents commands and prerequisites for ABI-017 baseline evaluation on the GPU server
 - [x] #6 Canonical MCAST 1.1/2.1 comparison targets are available for unfiltered evaluation and the approved Geographic Feature plus Scanline Artifact Filter pipeline, with validated machine-readable artifact locations consumable by candidate acceptance comparisons
-- [ ] #7 The canonical registry is self-contained beneath the canonical directory: all indexed MCAST artifacts are copied there and no registry artifact path depends on geographic-enabled-20260807-abi022-r2
+- [x] #7 The canonical registry is self-contained beneath the canonical directory: all indexed MCAST artifacts are copied there and no registry artifact path depends on geographic-enabled-20260807-abi022-r2
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -63,22 +63,26 @@ Make the ABI research workspace runnable through the sibling ml-autoresearch har
 - Working Validation Split identity: 3,088 samples (MIT 1,232; Google 1,856), sample-id SHA-256 42982774c168d6b9f24205de66972035e6eaa3a892c4752bc83230ad95a9c290.
 - Canonical Dice targets: MCAST 1.1 raw 0.397901603 / filtered 0.384248340; MCAST 2.1 raw 0.399565414 / filtered 0.387284867. Scanline filtering was active but removed zero MCAST pixels.
 - Validation passed: 93 tests, wheel build, runtime-image validation, prepare-agent-boundary, canonical-registry verification, configured acceptance-report smoke, and bounded Docker candidate smoke (accepted; no training).
+
+- Made the canonical bundle self-contained. Complete MCAST 1.1/2.1 evaluation directories now live under /data/iross/abi-ml-autoresearch/baselines/canonical, and registry artifact paths are canonical-root-relative.
+- Removed source_evaluation_root from the registry schema and reject absolute or parent-escaping artifact paths during verification. The canonical bundle contains no geographic-enabled-20260807-abi022-r2 strings or runtime dependencies.
+- Canonical generation now copies and checksum-verifies full baseline directories before atomic replacement; tests prove source changes do not affect canonical verification while canonical tampering is detected.
+- Regenerated registry SHA-256: cf93781911c214f49e2086206749543163c68b592d23a6677739a9ed4925de16. Final validation: 94 tests passed, wheel build passed, registry verified.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Completed the ABI ml-autoresearch runtime setup and canonical baseline handoff. The workspace now has validated ABI-specific runner/Agent image identities, trusted named training/ancillary/baselines roots, provisioned MCAST assets and Natural Earth data, bounded Docker smoke coverage, and reproducible baseline-evaluation documentation.
+Completed the ABI ml-autoresearch runtime setup and self-contained canonical baseline handoff. The workspace has validated ABI-specific runtime images, trusted named training/ancillary/baselines roots, provisioned MCAST and Natural Earth assets, bounded Docker smoke coverage, and reproducible baseline documentation.
 
-Added a trusted abi-baseline-targets generator/validator and produced /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json. The registry exposes unfiltered raw/* and full Geographic Feature + Scanline Artifact Filter filtered/* MCAST 1.1/2.1 targets, with sample identity, source split, model/filter/Git provenance, artifact locations, and checksums. Candidate acceptance reports load the configured registry automatically and record both comparisons and exact source paths.
+The canonical registry is /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json. Complete MCAST 1.1 and 2.1 evaluation artifacts now live beneath the same canonical directory; all registry paths are canonical-root-relative and verification rejects external or escaping paths. The bundle exposes raw/* unfiltered and filtered/* Geographic Feature + Scanline Artifact Filter comparisons and has no runtime dependency on the original evaluation output directory. Candidate acceptance reports automatically load it and record canonical source paths.
 
 Validation:
-- uv run --group torch pytest -q (93 passed)
+- uv run --group torch pytest -q (94 passed)
 - uv build --wheel
-- uv run ml-autoresearch validate-runtime-images --workspace-root .
-- uv run ml-autoresearch prepare-agent-boundary --workspace-root .
 - uv run abi-baseline-targets verify --registry /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json
-- uv run python scripts/smoke_workspace.py --workspace-root . (accepted; trained=false)
-- Configured canonical acceptance-report smoke (raw and filtered deltas 0.0 for MCAST 2.1)
+- Confirmed no geographic-enabled-20260807-abi022-r2 references beneath canonical/
+- Confirmed all registry artifact paths remain beneath canonical/
+- Configured acceptance-report smoke resolves both comparison modes to canonical/mcast_detection_2_1/aggregate_metrics.json
 - git diff --check
 <!-- SECTION:FINAL_SUMMARY:END -->
