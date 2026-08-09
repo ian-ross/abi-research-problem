@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-07 11:56'
-updated_date: '2026-08-09 13:33'
+updated_date: '2026-08-09 13:37'
 labels:
   - evaluation
   - performance
@@ -25,13 +25,13 @@ Replace the current per-sample CPU/NumPy postprocessing hot path with a bounded-
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A bounded-batch accelerated path uses CUDA when available for scanline filtering, clDice/connectivity, ordinary segmentation metrics, and threshold-sweep work without loading the full validation split into GPU memory
-- [ ] #2 CPU fallback remains available and produces equivalent raw/filtered masks, metrics, diagnostics, and threshold artifacts within explicitly tested numerical tolerances
-- [ ] #3 Parity is validated against tiny exact fixtures and the initial MCAST 1.1/2.1 baseline artifacts, including scanline standard-deviation boundary cases
-- [ ] #4 Target skeleton work is not redundantly recomputed for raw and filtered clDice, and unavailable geographic filtering does not reread longitude/latitude source data
-- [ ] #5 Configured geographic feature masks are cached or pre-rasterized outside the per-threshold hot loop while remaining provider-owned
-- [ ] #6 Progress logs distinguish Artifact Filter, connectivity metric, ordinary metric, and threshold-sweep phases and report benchmark timings
-- [ ] #7 Accelerated evaluation retains aggregate/per-sample raw and filtered metrics, diagnostics, provenance, and candidate boundary guarantees
+- [x] #1 A bounded-batch accelerated path uses CUDA when available for scanline filtering, clDice/connectivity, ordinary segmentation metrics, and threshold-sweep work without loading the full validation split into GPU memory
+- [x] #2 CPU fallback remains available and produces equivalent raw/filtered masks, metrics, diagnostics, and threshold artifacts within explicitly tested numerical tolerances
+- [x] #3 Parity is validated against tiny exact fixtures and the initial MCAST 1.1/2.1 baseline artifacts, including scanline standard-deviation boundary cases
+- [x] #4 Target skeleton work is not redundantly recomputed for raw and filtered clDice, and unavailable geographic filtering does not reread longitude/latitude source data
+- [x] #5 Configured geographic feature masks are cached or pre-rasterized outside the per-threshold hot loop while remaining provider-owned
+- [x] #6 Progress logs distinguish Artifact Filter, connectivity metric, ordinary metric, and threshold-sweep phases and report benchmark timings
+- [x] #7 Accelerated evaluation retains aggregate/per-sample raw and filtered metrics, diagnostics, provenance, and candidate boundary guarantees
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -64,3 +64,18 @@ Replace the current per-sample CPU/NumPy postprocessing hot path with a bounded-
 - MCAST 2.1: inference 119.5s; context preparation 98.3s; GPU Artifact Filter 1.39s; ordinary metrics 0.88s; connectivity 4.82s; threshold sweep 4.55s; 58,315 geographic pixels removed across 1,033 Patches.
 - Accelerated raw parity against initial-20260807 is exact for both baselines: aggregate raw metrics, all per-sample raw counts/ordinary/connectivity metrics, and raw counts/metrics at all 19 thresholds have maximum absolute delta 0.0.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented bounded-batch trusted ABI postprocessing on torch CPU/CUDA. Added accelerated ordered Geographic and Scanline Artifact Filters, ordinary metrics, clDice/connectivity with target-skeleton reuse, and a tiled 19-threshold sweep while keeping full validation tensors off GPU. Geographic contexts and Natural Earth vectors are prepared/cached outside hot loops; phase timings, backend/batch bounds, and provenance are persisted without exposing longitude/latitude to candidates.
+
+Generated and validated immutable geographic-enabled MCAST 1.1/2.1 artifacts at /data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2. Raw aggregate, per-sample, connectivity, and all 19 threshold outputs match initial-20260807 exactly (maximum delta 0.0); active filtering removed 35,586 and 58,315 geographic pixels. End-to-end runs fell from about 57-58 minutes to about 3m35s and 3m57s.
+
+Validation:
+- uv run --group torch pytest -q (88 passed)
+- uv build --wheel
+- git diff --check
+- Full A100 MCAST 1.1/2.1 geographic-enabled evaluation and artifact inspection
+- Exact parity comparison against /data/iross/abi-ml-autoresearch/baselines/initial-20260807
+<!-- SECTION:FINAL_SUMMARY:END -->
