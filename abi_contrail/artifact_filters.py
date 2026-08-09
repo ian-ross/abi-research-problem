@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping, Sequence
+from functools import lru_cache
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -76,7 +77,7 @@ class GeographicFeatureFilter(ArtifactFilter):
             raise ValueError(
                 "required Geographic Feature Filter needs provider-owned longitude/latitude context"
             )
-        feature_mask = self._feature_mask_for_prediction(pred.shape, ctx)
+        feature_mask = self.feature_mask_for_prediction(pred.shape, ctx)
         removed = np.logical_and(pred, feature_mask)
         filtered = np.logical_and(pred, ~removed)
         filtered_probabilities = probs.copy()
@@ -115,7 +116,8 @@ class GeographicFeatureFilter(ArtifactFilter):
             "sources": [dict(source) for source in self.ancillary_sources],
         }
 
-    def _feature_mask_for_prediction(self, shape: tuple[int, int], context: Mapping[str, object]) -> np.ndarray:
+    def feature_mask_for_prediction(self, shape: tuple[int, int], context: Mapping[str, object]) -> np.ndarray:
+        """Rasterize provider-owned geographic features for one prediction grid."""
         raster = context.get("geographic_feature_mask")
         if raster is not None:
             feature_mask = _as_bool_2d(raster)
@@ -303,9 +305,27 @@ def _dilate_bool(mask: np.ndarray, pixels: int) -> np.ndarray:
     return out
 
 
-def _iter_geojson_lines(path: Path, *, bbox: tuple[float, float, float, float]) -> Iterable[list[tuple[float, float]]]:
-    payload = json.loads(path.read_text())
+def _iter_geojson_lines(path: Path, *, bbox: tuple[float, float, float, float]) -> Iterable[tuple[tuple[float, float], ...]]:
+    """Yield cached source lines intersecting one ABI Patch bounding box."""
+
+    stat = path.stat()
+    for line, line_bbox in _cached_geojson_lines(str(path.resolve()), stat.st_size, stat.st_mtime_ns):
+        if _bboxes_intersect(line_bbox, bbox):
+            yield line
+
+
+@lru_cache(maxsize=8)
+def _cached_geojson_lines(
+    resolved_path: str,
+    size_bytes: int,
+    modified_time_ns: int,
+) -> tuple[tuple[tuple[tuple[float, float], ...], tuple[float, float, float, float]], ...]:
+    """Parse immutable ancillary vectors once per process, with file-change invalidation."""
+
+    del size_bytes, modified_time_ns
+    payload = json.loads(Path(resolved_path).read_text())
     features = payload.get("features", []) if isinstance(payload, dict) else []
+    cached: list[tuple[tuple[tuple[float, float], ...], tuple[float, float, float, float]]] = []
     for feature in features:
         if not isinstance(feature, dict):
             continue
@@ -315,8 +335,10 @@ def _iter_geojson_lines(path: Path, *, bbox: tuple[float, float, float, float]) 
         geom_type = geometry.get("type")
         coordinates = geometry.get("coordinates")
         for line in _geometry_lines(geom_type, coordinates):
-            if _line_intersects_bbox(line, bbox):
-                yield line
+            if line:
+                immutable_line = tuple(line)
+                cached.append((immutable_line, _line_bbox(immutable_line)))
+    return tuple(cached)
 
 
 def _geometry_lines(geom_type: object, coordinates: object) -> Iterable[list[tuple[float, float]]]:
@@ -340,17 +362,23 @@ def _coordinate_line(points: Sequence[object]) -> list[tuple[float, float]]:
     return line
 
 
-def _line_intersects_bbox(line: Sequence[tuple[float, float]], bbox: tuple[float, float, float, float]) -> bool:
-    if not line:
-        return False
-    min_lon, min_lat, max_lon, max_lat = bbox
+def _line_bbox(line: Sequence[tuple[float, float]]) -> tuple[float, float, float, float]:
     line_lons = [point[0] for point in line]
     line_lats = [point[1] for point in line]
+    return min(line_lons), min(line_lats), max(line_lons), max(line_lats)
+
+
+def _bboxes_intersect(
+    left: tuple[float, float, float, float],
+    right: tuple[float, float, float, float],
+) -> bool:
+    left_min_lon, left_min_lat, left_max_lon, left_max_lat = left
+    right_min_lon, right_min_lat, right_max_lon, right_max_lat = right
     return not (
-        max(line_lons) < min_lon
-        or min(line_lons) > max_lon
-        or max(line_lats) < min_lat
-        or min(line_lats) > max_lat
+        left_max_lon < right_min_lon
+        or left_min_lon > right_max_lon
+        or left_max_lat < right_min_lat
+        or left_min_lat > right_max_lat
     )
 
 

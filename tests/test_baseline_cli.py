@@ -11,11 +11,17 @@ class FakeEvaluationAdapter:
     def run_baseline_validation_evaluation(self, **kwargs):
         kwargs["progress_callback"]("fake evaluator progress")
         assert kwargs["log_every"] == 7
+        assert kwargs["postprocessing_batch_size"] == 3
         evaluation_dir = kwargs["evaluation_dir"]
         evaluation_dir.mkdir(parents=True, exist_ok=True)
         (evaluation_dir / "aggregate_metrics.json").write_text('{"metrics":{"filtered/dice":0.5}}\n')
         (evaluation_dir / "per_sample_metrics.jsonl").write_text('{"sample_id":"val/000000"}\n')
-        return {"filtered/dice": 0.5}, [{"sample_id": "val/000000"}], {}, {}
+        return (
+            {"filtered/dice": 0.5},
+            [{"sample_id": "val/000000"}],
+            {},
+            {"postprocessing": {"backend": "torch_cpu", "batch_size": 3}},
+        )
 
 
 def test_progress_logger_writes_timestamped_log_file(tmp_path: Path) -> None:
@@ -58,6 +64,7 @@ mcast_detection_1_1_path = "{asset}"
         evaluator=FakeEvaluationAdapter(),
         progress=progress_messages.append,
         log_every=7,
+        postprocessing_batch_size=3,
     )
 
     assert len(results) == 1
@@ -72,6 +79,7 @@ mcast_detection_1_1_path = "{asset}"
     assert manifest["baseline"]["asset"]["sha256"]
     assert manifest["sample_count"] == 1
     assert manifest["artifacts"]["aggregate_metrics"] == "aggregate_metrics.json"
+    assert manifest["postprocessing"] == {"backend": "torch_cpu", "batch_size": 3}
     assert manifest["artifact_filters"]["geographic_feature_filter"] == {
         "active": False,
         "bundle_id": None,

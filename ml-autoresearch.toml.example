@@ -39,6 +39,8 @@ geographic_filter_required = true
 geographic_ancillary_manifest = "natural-earth/manifest.json"
 coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
 rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
+# Bounds CUDA/CPU postprocessing memory independently of validation size.
+postprocessing_batch_size = 8
 
 [[research_problem.data_config.sources]]
 layout = "mit"

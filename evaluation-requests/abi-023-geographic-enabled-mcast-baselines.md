@@ -2,15 +2,19 @@
 
 ## Status and purpose
 
+Completed by ABI-022. The immutable geographic-enabled artifacts are at
+`/data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2`;
+validation and timings are recorded in
+`campaign-reports/abi-022-accelerated-evaluation.md`.
+
 The existing MCAST 1.1/2.1 artifacts at
 `/data/iross/abi-ml-autoresearch/baselines/initial-20260807` are scanline-only.
 All 6,176 per-sample records reported geographic availability as false. Preserve
 those artifacts unchanged as ABI-022 parity targets.
 
-Generate replacement artifacts only after the ABI-022 accelerated evaluator is
-available, unless an operator explicitly accepts the current CPU postprocessing
-cost. The replacement run must require and record the verified Natural Earth
-bundle.
+The replacement run required and recorded the verified Natural Earth bundle.
+The commands below remain as the reproducible operator procedure for future
+refreshes; choose a new immutable output root each time.
 
 ## Prerequisites
 
@@ -61,6 +65,7 @@ for BASELINE in mcast_detection_1_1 mcast_detection_2_1; do
       --workspace-root . \
       --baseline "$BASELINE" \
       --device cuda \
+      --postprocessing-batch-size 8 \
       --log-every 100 \
       --output-root "$OUTPUT_ROOT"
 done
@@ -79,6 +84,8 @@ For each baseline:
 4. At least one bounded diagnostic proves a geographic filter hit, or the
    operator records an evidence-backed explanation if model predictions do not
    overlap any rasterized feature.
-5. The output root, aggregate metrics, timings, workspace commit, and Harness
+5. `run_manifest.json` records `postprocessing.backend: torch_cuda`, bounded
+   batch settings, phase timings, and target-skeleton batch counts.
+6. The output root, aggregate metrics, timings, workspace commit, and Harness
    commit are appended to ABI-022 implementation notes as geographic-enabled
    parity targets.

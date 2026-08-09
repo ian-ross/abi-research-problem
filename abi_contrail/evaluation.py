@@ -217,6 +217,7 @@ class ABIEvaluationAdapter:
         evaluation_dir: Path | None = None,
         progress_callback: Callable[[str], None] | None = None,
         log_every: int = 100,
+        postprocessing_batch_size: int = 8,
     ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
         """Evaluate one configured baseline through the same raw/filtered path.
 
@@ -274,6 +275,10 @@ class ABIEvaluationAdapter:
                     started_at=inference_started,
                     log_every=log_every,
                 )
+        if str(device).startswith("cuda"):
+            torch.cuda.synchronize(torch.device(device))
+        inference_elapsed = time.monotonic() - inference_started
+        emit(f"{baseline_name}: inference complete; elapsed={inference_elapsed:.3f}s")
         emit(f"{baseline_name}: stacking prediction tensors")
         probabilities = torch.stack(probabilities_all)
         targets = torch.stack(targets_all)
@@ -290,7 +295,12 @@ class ABIEvaluationAdapter:
             max_artifact_samples=8,
             progress_callback=emit,
             log_every=log_every,
+            postprocessing_device=device,
+            postprocessing_batch_size=postprocessing_batch_size,
         )
+        postprocessing_report = result[3].get("postprocessing")
+        if isinstance(postprocessing_report, dict):
+            postprocessing_report["inference_seconds"] = float(inference_elapsed)
         if evaluation_dir is not None:
             emit(f"{baseline_name}: writing evaluation artifacts to {evaluation_dir}")
             _write_baseline_evaluation_artifacts(
@@ -389,6 +399,8 @@ class ABIEvaluationAdapter:
             filter_pipeline=filter_pipeline,
             diagnostic_output_dir=evaluation_dir / "diagnostic_samples",
             max_artifact_samples=max_artifact_samples,
+            postprocessing_device=device,
+            postprocessing_batch_size=int(data_config.get("postprocessing_batch_size", batch_size)),
         )
 
 
@@ -404,47 +416,61 @@ def _evaluate_probability_tensor(
     max_artifact_samples: int = 0,
     progress_callback: Callable[[str], None] | None = None,
     log_every: int = 100,
+    postprocessing_device: str | Any = "cpu",
+    postprocessing_batch_size: int = 8,
 ) -> tuple[dict[str, float], list[dict[str, object]], dict[str, object], dict[str, object]]:
-    import torch
-    from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics, contrail_connectivity_metric
+    """Evaluate trusted raw/filtered masks through a bounded torch backend."""
+
+    from abi_contrail.postprocessing import (
+        BoundedBatchPostprocessor,
+        aggregate_counts,
+        mean_connectivity,
+        metrics_from_counts,
+    )
 
     if log_every <= 0:
         raise ValueError("log_every must be positive")
     emit = progress_callback or (lambda _message: None)
     probabilities = probabilities.detach().cpu()
     targets = targets.detach().cpu()
-    predictions = probabilities >= threshold
     target_masks = targets >= 0.5
-    raw_predictions: list[torch.Tensor] = []
-    filtered_predictions: list[torch.Tensor] = []
-    targets_all: list[torch.Tensor] = []
-    probabilities_all: list[torch.Tensor] = []
+    sample_count = int(probabilities.shape[0])
+    prediction_shape = (int(probabilities.shape[-2]), int(probabilities.shape[-1]))
+    processor = BoundedBatchPostprocessor(
+        filter_pipeline=filter_pipeline,
+        device=postprocessing_device,
+        batch_size=postprocessing_batch_size,
+        progress_callback=emit,
+        log_every=log_every,
+    )
+    contexts = processor.prepare_contexts(
+        dataset=dataset,
+        sample_count=sample_count,
+        prediction_shape=prediction_shape,
+    )
+    operational = processor.evaluate_operational(
+        probabilities=probabilities,
+        targets=targets,
+        threshold=threshold,
+        contexts=contexts,
+    )
+    emit(f"metrics/filtering samples: {sample_count}/{sample_count} (100.0%)")
+
     per_sample_records: list[dict[str, object]] = []
     diagnostic_candidates: list[dict[str, object]] = []
     sample_sources: list[str | None] = []
     removed_pixels_total = 0
     removed_area_total = 0.0
-    metric_sample_count = int(predictions.shape[0])
-    metrics_started = time.monotonic()
-    emit(f"metrics/filtering started; samples={metric_sample_count}")
-    for index in range(metric_sample_count):
-        probability = probabilities[index].numpy()
-        prediction = predictions[index].numpy()
-        context = _filter_context(dataset, index)
-        filtered = filter_pipeline.apply(prediction, probability, context=context)
-        filtered_prediction = torch.from_numpy(filtered.filtered_mask.astype(bool))
-        sample_prediction = predictions[index : index + 1]
-        sample_filtered_prediction = filtered_prediction.unsqueeze(0)
-        sample_target = target_masks[index : index + 1]
-        raw_metrics = binary_segmentation_metrics(sample_prediction, sample_target)
-        filtered_metrics = binary_segmentation_metrics(sample_filtered_prediction, sample_target)
-        raw_connectivity = contrail_connectivity_metric(sample_prediction, sample_target)
-        filtered_connectivity = contrail_connectivity_metric(sample_filtered_prediction, sample_target)
-        diagnostics = filtered.diagnostics
+    for index in range(sample_count):
+        diagnostics = operational.filter_diagnostics[index]
         removed_count = int(diagnostics["removed_pixel_count"])
         removed_area = float(diagnostics["removed_area_km2"])
         removed_pixels_total += removed_count
         removed_area_total += removed_area
+        raw_metrics = operational.raw_metrics[index]
+        filtered_metrics = operational.filtered_metrics[index]
+        raw_connectivity = operational.raw_connectivity[index]
+        filtered_connectivity = operational.filtered_connectivity[index]
         record = {
             "sample_id": f"val/{index:06d}",
             "dataset_index": int(index),
@@ -454,8 +480,8 @@ def _evaluate_probability_tensor(
             **{f"filtered/{key}": value for key, value in filtered_metrics.items()},
             "filtered/cldice": filtered_connectivity,
             "filtered/contrail_connectivity": filtered_connectivity,
-            **{f"raw/{key}": value for key, value in binary_confusion_counts(sample_prediction, sample_target).items()},
-            **{f"filtered/{key}": value for key, value in binary_confusion_counts(sample_filtered_prediction, sample_target).items()},
+            **{f"raw/{key}": value for key, value in operational.raw_counts[index].items()},
+            **{f"filtered/{key}": value for key, value in operational.filtered_counts[index].items()},
             "artifact_filters/removed_pixel_count": removed_count,
             "artifact_filters/removed_area_km2": removed_area,
             "artifact_filters/diagnostics": diagnostics,
@@ -469,42 +495,28 @@ def _evaluate_probability_tensor(
         diagnostic_candidates.append(
             {
                 "record": record,
-                "context": context,
-                "unfiltered_prediction": prediction,
-                "filtered_prediction": filtered.filtered_mask,
+                "context": {"prepared_georeferencing": contexts[index].diagnostic_georeferencing},
+                "unfiltered_prediction": operational.raw_predictions[index].numpy(),
+                "filtered_prediction": operational.filtered_predictions[index].numpy(),
                 "diagnostics": diagnostics,
             }
         )
-        raw_predictions.append(sample_prediction)
-        filtered_predictions.append(sample_filtered_prediction)
-        probabilities_all.append(probabilities[index : index + 1])
-        targets_all.append(sample_target)
-        _emit_periodic_progress(
-            emit,
-            phase="metrics/filtering samples",
-            completed=index + 1,
-            total=metric_sample_count,
-            started_at=metrics_started,
-            log_every=log_every,
-        )
 
-    emit("computing aggregate and per-source metrics")
-    raw_tensor = torch.cat(raw_predictions)
-    filtered_tensor = torch.cat(filtered_predictions)
-    target_tensor = torch.cat(targets_all)
-    raw_aggregate = binary_segmentation_metrics(raw_tensor, target_tensor)
-    filtered_aggregate = binary_segmentation_metrics(filtered_tensor, target_tensor)
-    raw_connectivity = contrail_connectivity_metric(raw_tensor, target_tensor)
-    filtered_connectivity = contrail_connectivity_metric(filtered_tensor, target_tensor)
+    raw_counts = aggregate_counts(operational.raw_counts)
+    filtered_counts = aggregate_counts(operational.filtered_counts)
+    raw_aggregate = metrics_from_counts(raw_counts)
+    filtered_aggregate = metrics_from_counts(filtered_counts)
+    raw_connectivity = mean_connectivity(operational.raw_connectivity)
+    filtered_connectivity = mean_connectivity(operational.filtered_connectivity)
     aggregate = {
         **{f"raw/{key}": value for key, value in raw_aggregate.items()},
         "raw/cldice": raw_connectivity,
         "raw/contrail_connectivity": raw_connectivity,
-        **{f"raw/{key}": float(value) for key, value in binary_confusion_counts(raw_tensor, target_tensor).items()},
+        **{f"raw/{key}": float(value) for key, value in raw_counts.items()},
         **{f"filtered/{key}": value for key, value in filtered_aggregate.items()},
         "filtered/cldice": filtered_connectivity,
         "filtered/contrail_connectivity": filtered_connectivity,
-        **{f"filtered/{key}": float(value) for key, value in binary_confusion_counts(filtered_tensor, target_tensor).items()},
+        **{f"filtered/{key}": float(value) for key, value in filtered_counts.items()},
         "artifact_filters/removed_pixel_count": float(removed_pixels_total),
         "artifact_filters/removed_area_km2": float(removed_area_total),
     }
@@ -512,14 +524,14 @@ def _evaluate_probability_tensor(
         indices = [index for index, sample_source in enumerate(sample_sources) if sample_source == source]
         if not indices:
             continue
-        source_index = torch.as_tensor(indices, dtype=torch.long)
-        source_raw = raw_tensor.index_select(0, source_index)
-        source_filtered = filtered_tensor.index_select(0, source_index)
-        source_target = target_tensor.index_select(0, source_index)
-        source_raw_metrics = binary_segmentation_metrics(source_raw, source_target)
-        source_filtered_metrics = binary_segmentation_metrics(source_filtered, source_target)
-        source_raw_connectivity = contrail_connectivity_metric(source_raw, source_target)
-        source_filtered_connectivity = contrail_connectivity_metric(source_filtered, source_target)
+        source_raw_counts = aggregate_counts([operational.raw_counts[index] for index in indices])
+        source_filtered_counts = aggregate_counts([operational.filtered_counts[index] for index in indices])
+        source_raw_metrics = metrics_from_counts(source_raw_counts)
+        source_filtered_metrics = metrics_from_counts(source_filtered_counts)
+        source_raw_connectivity = mean_connectivity([operational.raw_connectivity[index] for index in indices])
+        source_filtered_connectivity = mean_connectivity(
+            [operational.filtered_connectivity[index] for index in indices]
+        )
         aggregate.update(
             {
                 **{f"source/{source}/raw/{key}": value for key, value in source_raw_metrics.items()},
@@ -530,6 +542,7 @@ def _evaluate_probability_tensor(
                 f"source/{source}/filtered/contrail_connectivity": source_filtered_connectivity,
             }
         )
+
     threshold_sweep = _build_threshold_curve_artifact(
         dataset=dataset,
         probabilities=probabilities,
@@ -538,6 +551,8 @@ def _evaluate_probability_tensor(
         default_threshold=threshold,
         progress_callback=emit,
         log_every=log_every,
+        postprocessor=processor,
+        prepared_contexts=contexts,
     )
     emit("building diagnostic sample artifacts")
     diagnostic_manifest = _build_diagnostic_geotiff_manifest(
@@ -545,6 +560,10 @@ def _evaluate_probability_tensor(
         diagnostic_output_dir=diagnostic_output_dir,
         max_artifact_samples=max_artifact_samples,
     )
+    timings = processor.report.get("timings_seconds", {})
+    if isinstance(timings, Mapping):
+        processor.report["total_postprocessing_seconds"] = float(sum(float(value) for value in timings.values()))
+    diagnostic_manifest["postprocessing"] = dict(processor.report)
     emit("metrics, threshold sweep, and diagnostics complete")
     return aggregate, per_sample_records, threshold_sweep, diagnostic_manifest
 
@@ -559,74 +578,82 @@ def _build_threshold_curve_artifact(
     threshold_grid: Sequence[float] | None = None,
     progress_callback: Callable[[str], None] | None = None,
     log_every: int = 100,
+    postprocessing_device: str | Any = "cpu",
+    postprocessing_batch_size: int = 8,
+    postprocessor: Any | None = None,
+    prepared_contexts: Sequence[Any] | None = None,
 ) -> dict[str, object]:
-    """Build provider-owned raw/filtered threshold-curve artifacts.
+    """Build the existing threshold artifact through bounded torch batches."""
 
-    The primary evaluation metrics are computed elsewhere at the caller-provided
-    threshold.  This artifact is diagnostic only: it sweeps an explicit grid
-    over probability maps and records aggregate precision/recall/Dice for raw
-    thresholded masks and for masks after provider Artifact Filters.
-    """
-
-    import torch
+    from abi_contrail.postprocessing import BoundedBatchPostprocessor, metrics_from_counts
 
     if log_every <= 0:
         raise ValueError("log_every must be positive")
     emit = progress_callback or (lambda _message: None)
-    probs = torch.nan_to_num(probabilities.detach().cpu().float(), nan=float("-inf"), posinf=1.0, neginf=float("-inf"))
-    target_masks = targets.detach().cpu() >= 0.5
+    probs = probabilities.detach().cpu()
+    target_values = targets.detach().cpu()
     thresholds = tuple(float(value) for value in (threshold_grid or _default_threshold_grid()))
+    processor = postprocessor or BoundedBatchPostprocessor(
+        filter_pipeline=filter_pipeline,
+        device=postprocessing_device,
+        batch_size=postprocessing_batch_size,
+        progress_callback=emit,
+        log_every=log_every,
+    )
+    contexts = prepared_contexts
+    if contexts is None:
+        contexts = processor.prepare_contexts(
+            dataset=dataset,
+            sample_count=int(probs.shape[0]),
+            prediction_shape=(int(probs.shape[-2]), int(probs.shape[-1])),
+        )
+    raw_counts, filtered_counts = processor.threshold_sweep_counts(
+        probabilities=probs,
+        targets=target_values,
+        thresholds=thresholds,
+        contexts=contexts,
+    )
+    sample_count = int(probs.shape[0])
     raw_curve: list[dict[str, object]] = []
     filtered_curve: list[dict[str, object]] = []
-    sweep_started = time.monotonic()
-    emit(f"threshold sweep started; thresholds={len(thresholds)} samples={int(probs.shape[0])}")
-
     for threshold_index, threshold in enumerate(thresholds, start=1):
-        raw_predictions = probs >= threshold
-        raw_curve.append(_threshold_curve_record(threshold=threshold, predictions=raw_predictions, targets=target_masks))
-
-        filtered_predictions: list[torch.Tensor] = []
-        threshold_sample_count = int(raw_predictions.shape[0])
-        threshold_started = time.monotonic()
-        for index in range(threshold_sample_count):
-            probability = probs[index].numpy()
-            prediction = raw_predictions[index].numpy()
-            filtered = filter_pipeline.apply(prediction, probability, context=_filter_context(dataset, index))
-            filtered_predictions.append(torch.from_numpy(filtered.filtered_mask.astype(bool)).unsqueeze(0))
-            _emit_periodic_progress(
-                emit,
-                phase=f"threshold sweep {threshold_index}/{len(thresholds)} samples",
-                completed=index + 1,
-                total=threshold_sample_count,
-                started_at=threshold_started,
-                log_every=log_every,
-            )
-        filtered_tensor = torch.cat(filtered_predictions) if filtered_predictions else raw_predictions.clone()
-        filtered_curve.append(_threshold_curve_record(threshold=threshold, predictions=filtered_tensor, targets=target_masks))
-        _emit_periodic_progress(
-            emit,
-            phase="threshold sweep",
-            completed=threshold_index,
-            total=len(thresholds),
-            started_at=sweep_started,
-            log_every=1,
+        raw_record_counts = dict(raw_counts[threshold_index - 1])
+        filtered_record_counts = dict(filtered_counts[threshold_index - 1])
+        raw_curve.append(
+            {
+                "threshold": threshold,
+                "sample_count": sample_count,
+                "metrics": metrics_from_counts(raw_record_counts) if sample_count else _empty_threshold_metrics(),
+                "counts": raw_record_counts,
+            }
         )
+        filtered_curve.append(
+            {
+                "threshold": threshold,
+                "sample_count": sample_count,
+                "metrics": (
+                    metrics_from_counts(filtered_record_counts) if sample_count else _empty_threshold_metrics()
+                ),
+                "counts": filtered_record_counts,
+            }
+        )
+        emit(f"threshold sweep: {threshold_index}/{len(thresholds)}")
 
-    best_filtered = _best_threshold_by_metric(filtered_curve, metric="dice")
-    best_raw = _best_threshold_by_metric(raw_curve, metric="dice")
-    equal_pr_filtered = _precision_recall_equal_threshold(filtered_curve)
-    equal_pr_raw = _precision_recall_equal_threshold(raw_curve)
     return {
         "artifact_type": "abi_threshold_curve_evaluation",
         "default_threshold": float(default_threshold),
         "thresholds": list(thresholds),
         "curves": {"raw": raw_curve, "filtered": filtered_curve},
-        "best_threshold_by_filtered_dice": best_filtered,
-        "best_threshold_by_raw_dice": best_raw,
-        "precision_recall_equal_threshold": equal_pr_filtered,
-        "precision_recall_equal_threshold_raw": equal_pr_raw,
+        "best_threshold_by_filtered_dice": _best_threshold_by_metric(filtered_curve, metric="dice"),
+        "best_threshold_by_raw_dice": _best_threshold_by_metric(raw_curve, metric="dice"),
+        "precision_recall_equal_threshold": _precision_recall_equal_threshold(filtered_curve),
+        "precision_recall_equal_threshold_raw": _precision_recall_equal_threshold(raw_curve),
         "primary_metric_note": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
     }
+
+
+def _empty_threshold_metrics() -> dict[str, object]:
+    return {"dice": None, "iou": None, "precision": None, "recall": None}
 
 
 def _emit_periodic_progress(
@@ -653,25 +680,6 @@ def _emit_periodic_progress(
 
 def _default_threshold_grid() -> tuple[float, ...]:
     return tuple(round(index * 0.05, 2) for index in range(1, 20))
-
-
-def _threshold_curve_record(*, threshold: float, predictions: Any, targets: Any) -> dict[str, object]:
-    from ml_autoresearch.problem_support.segmentation import binary_confusion_counts, binary_segmentation_metrics
-
-    sample_count = int(targets.shape[0])
-    if sample_count == 0:
-        metrics: dict[str, object] = {"dice": None, "iou": None, "precision": None, "recall": None}
-        counts: dict[str, object] = {
-            "positive_pixel_count": 0,
-            "predicted_positive_pixel_count": 0,
-            "true_positive_pixels": 0,
-            "false_positive_pixels": 0,
-            "false_negative_pixels": 0,
-        }
-    else:
-        metrics = binary_segmentation_metrics(predictions, targets)
-        counts = {key: int(value) for key, value in binary_confusion_counts(predictions, targets).items()}
-    return {"threshold": float(threshold), "sample_count": sample_count, "metrics": metrics, "counts": counts}
 
 
 def _best_threshold_by_metric(curve: Sequence[Mapping[str, object]], *, metric: str) -> dict[str, object] | None:
@@ -824,6 +832,9 @@ def _georeferencing_from_context(context: object, mask: object) -> dict[str, obj
         array = array[0]
     height, width = array.shape[-2:]
     ctx = context if isinstance(context, Mapping) else {}
+    prepared = ctx.get("prepared_georeferencing")
+    if isinstance(prepared, Mapping):
+        return dict(prepared)
     lon = ctx.get("longitude")
     lat = ctx.get("latitude")
     if lon is not None and lat is not None:
@@ -1031,6 +1042,7 @@ def _write_baseline_evaluation_artifacts(
                 "status": "completed",
                 "baseline": {"name": baseline_name, "version": baseline_version, "asset_path": str(asset_path)},
                 "artifact_filters": dict(artifact_filter_provenance or {}),
+                "postprocessing": dict(diagnostic_manifest.get("postprocessing", {})),
                 "artifacts": {
                     "aggregate_metrics": "aggregate_metrics.json",
                     "per_sample_metrics": "per_sample_metrics.jsonl",
@@ -1077,6 +1089,7 @@ def _evaluation_data_config(
                 "scanline_min_length_pixels",
                 "scanline_max_probability_std",
                 "pixel_area_km2",
+                "postprocessing_batch_size",
                 "sources",
             }:
                 if key in dataset:
@@ -1089,13 +1102,6 @@ def _baseline_source(dataset: object, index: int, fallback_inputs: Any) -> Any:
     if callable(getter):
         return getter(index)
     return fallback_inputs
-
-
-def _filter_context(dataset: object, index: int) -> dict[str, object]:
-    getter = getattr(dataset, "filter_context", None)
-    if callable(getter):
-        return dict(getter(index))
-    return {}
 
 
 def _sample_metadata(dataset: object, index: int) -> dict[str, object]:

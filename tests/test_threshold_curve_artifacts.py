@@ -110,6 +110,15 @@ def test_evaluation_returns_serializable_threshold_curve_without_changing_aggreg
     assert aggregate["filtered/dice"] == pytest.approx(1.0)
     assert aggregate["raw/dice"] == pytest.approx(2 / 3)
     assert threshold_sweep["artifact_type"] == "abi_threshold_curve_evaluation"
+    assert diagnostic_manifest["postprocessing"]["backend"] == "torch_cpu"
+    assert diagnostic_manifest["postprocessing"]["max_device_batch_samples"] == 1
+    assert set(diagnostic_manifest["postprocessing"]["timings_seconds"]) == {
+        "artifact_filter_context_preparation",
+        "artifact_filter",
+        "ordinary_metric",
+        "connectivity_metric",
+        "threshold_sweep",
+    }
 
     _write_baseline_evaluation_artifacts(
         evaluation_dir=tmp_path,
@@ -122,3 +131,5 @@ def test_evaluation_returns_serializable_threshold_curve_without_changing_aggreg
     payload = json.loads((tmp_path / "threshold_sweep.json").read_text())
     assert payload["best_threshold_by_filtered_dice"]["threshold"] == pytest.approx(0.05)
     assert json.loads((tmp_path / "aggregate_metrics.json").read_text())["metrics"]["filtered/dice"] == pytest.approx(1.0)
+    metadata = json.loads((tmp_path / "baseline_evaluation_metadata.json").read_text())
+    assert metadata["postprocessing"]["backend"] == "torch_cpu"

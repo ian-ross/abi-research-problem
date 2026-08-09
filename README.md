@@ -33,6 +33,7 @@ geographic_filter_required = true
 geographic_ancillary_manifest = "natural-earth/manifest.json"
 coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
 rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
+postprocessing_batch_size = 8
 
 [[research_problem.data_config.sources]]
 layout = "mit"
@@ -189,6 +190,7 @@ taskset -c "$CPUSET" env \
     --workspace-root . \
     --baseline mcast_detection_1_1 \
     --device cuda \
+    --postprocessing-batch-size 8 \
     --log-every 100 \
     --output-root "$OUTPUT_ROOT"
 
@@ -203,14 +205,24 @@ taskset -c "$CPUSET" env \
     --workspace-root . \
     --baseline mcast_detection_2_1 \
     --device cuda \
+    --postprocessing-batch-size 8 \
     --log-every 100 \
     --output-root "$OUTPUT_ROOT"
 ```
 
+Only the configured number of ABI Patches is resident on the postprocessing
+device at once. CUDA is used when selected and available; the same trusted torch
+backend runs on CPU as the fallback. Geographic masks are prepared once per ABI
+Patch, target skeletons are reused for raw and Filtered Contrail Mask clDice,
+and the threshold sweep reuses those prepared masks.
+
 Progress is timestamped to the terminal and appended to
 `$OUTPUT_ROOT/baseline_evaluation.log`. It covers dataset construction, model
-loading, inference sample count/rate/ETA, metric filtering, every threshold
-sweep stage, artifact writing, and completion. Monitor it from another shell:
+loading, inference sample count/rate/ETA, distinct Artifact Filter, ordinary
+metric, Contrail Connectivity Metric, and threshold-sweep phases, artifact
+writing, and completion. Phase timings, selected backend/device, batch bounds,
+and target-skeleton batch counts are persisted as postprocessing provenance in
+the baseline metadata, diagnostic manifest, and run manifest. Monitor it from another shell:
 
 ```bash
 tail -f "$OUTPUT_ROOT/baseline_evaluation.log"

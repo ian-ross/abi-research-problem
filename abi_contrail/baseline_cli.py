@@ -28,6 +28,7 @@ def run_configured_baseline_evaluations(
     evaluator: Any | None = None,
     progress: Callable[[str], None] | None = None,
     log_every: int = 100,
+    postprocessing_batch_size: int = 8,
 ) -> tuple[dict[str, object], ...]:
     """Run configured trusted baselines and persist reproducibility manifests."""
 
@@ -72,6 +73,7 @@ def run_configured_baseline_evaluations(
 
     emit(
         f"configured evaluation: baselines={','.join(names)} device={device} "
+        f"postprocessing_batch_size={postprocessing_batch_size} "
         f"output_root={destination} log_every={log_every}"
     )
     results: list[dict[str, object]] = []
@@ -79,13 +81,14 @@ def run_configured_baseline_evaluations(
         evaluation_dir = destination / name
         evaluation_dir.mkdir(parents=True, exist_ok=True)
         emit(f"starting baseline {ordinal}/{len(names)}: {name}; output={evaluation_dir}")
-        aggregate, per_sample, _threshold_sweep, _diagnostics = evaluator.run_baseline_validation_evaluation(
+        aggregate, per_sample, _threshold_sweep, diagnostics = evaluator.run_baseline_validation_evaluation(
             baseline_name=name,
             data_config=data_config,
             device=device,
             evaluation_dir=evaluation_dir,
             progress_callback=emit,
             log_every=log_every,
+            postprocessing_batch_size=postprocessing_batch_size,
         )
         emit(f"collecting asset and Git provenance for {name}")
         manifest = {
@@ -111,6 +114,7 @@ def run_configured_baseline_evaluations(
             "artifact_filters": {
                 "geographic_feature_filter": geographic_ancillary.provenance(),
             },
+            "postprocessing": diagnostics.get("postprocessing", {}),
             "artifacts": {
                 "aggregate_metrics": "aggregate_metrics.json",
                 "per_sample_metrics": "per_sample_metrics.jsonl",
@@ -224,9 +228,17 @@ def main(argv: list[str] | None = None) -> int:
         default=100,
         help="Emit sample-level progress every N samples (default: 100).",
     )
+    parser.add_argument(
+        "--postprocessing-batch-size",
+        type=int,
+        default=8,
+        help="Maximum ABI Patches transferred to the postprocessing device at once (default: 8).",
+    )
     args = parser.parse_args(argv)
     if args.log_every <= 0:
         parser.error("--log-every must be positive")
+    if args.postprocessing_batch_size <= 0:
+        parser.error("--postprocessing-batch-size must be positive")
     requested = tuple(args.baseline or ("all",))
     names = MCAST_BASELINE_NAMES if "all" in requested else requested
     output_root = args.output_root.expanduser().resolve()
@@ -253,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
             device=args.device,
             progress=logger.info,
             log_every=args.log_every,
+            postprocessing_batch_size=args.postprocessing_batch_size,
         )
     except Exception:
         logger.exception("baseline evaluation failed")
