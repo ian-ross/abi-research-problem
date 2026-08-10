@@ -17,14 +17,14 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-ABI-025 Gate 4 launched Pi non-interactively without approving project-local resources, so Pi ignored agent-work/.pi/settings.json and did not load pi-fort. Apply only the repository-local launch fix and verify it manually; do not change the shared Harness or pi-fort implementation.
+ABI-025 Gate 4 launched Pi non-interactively while the ABI repository lacked a saved Pi trust decision, so Pi ignored agent-work/.pi/settings.json and did not load pi-fort. Match the existing GVCCS setup by trusting the ABI repository in the main Pi trust file; do not change the shared Harness, pi-fort, or repository command configuration.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 A no-training smoke confirms `/reference` is visible inside the guest while host `/net` and the ml-autoresearch repository sibling are unavailable.
 - [x] #2 No shared ml-autoresearch or pi-fort source changes are part of the fix.
-- [ ] #3 The saved Pi trust configuration includes the ABI repository, so the default non-interactive Pi command loads project-local pi-fort without a repository command override.
+- [x] #3 The saved Pi trust configuration includes the ABI repository, so the default non-interactive Pi command loads project-local pi-fort without a repository command override.
 <!-- AC:END -->
 
 ## Implementation Plan
