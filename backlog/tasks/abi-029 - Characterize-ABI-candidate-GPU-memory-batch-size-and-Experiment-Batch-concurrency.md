@@ -3,11 +3,11 @@ id: ABI-029
 title: >-
   Characterize ABI candidate GPU memory, batch size, and Experiment Batch
   concurrency
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-10 19:07'
-updated_date: '2026-08-10 20:04'
+updated_date: '2026-08-10 20:15'
 labels:
   - harness
   - candidates
@@ -29,9 +29,9 @@ Measure representative ABI Candidate training memory and throughput on the appro
 - [x] #1 A reviewed, bounded profiling protocol defines representative candidate size classes, batch sizes, sample/epoch caps, GPU environment metadata, measurements, and explicit human execution gates
 - [x] #2 Approved GPU profiling records peak allocated and reserved memory, throughput, runtime, and OOM/resource-retry behavior for representative ABI Candidate training configurations
 - [x] #3 A conservative batch-size and simultaneous-candidate recommendation is derived per model size class with explicit GPU-memory headroom and assumptions
-- [ ] #4 Harness-owned Experiment Batch concurrency is configured or capped from measured evidence and validated with a bounded batch canary without allowing candidate-owned execution policy
+- [x] #4 Harness-owned Experiment Batch concurrency is configured or capped from measured evidence and validated with a bounded batch canary without allowing candidate-owned execution policy
 - [x] #5 Trusted Agent-visible campaign guidance explains when to prefer an Experiment Batch, its candidate/count/concurrency limits, and when sequential submissions are required
-- [ ] #6 Durable profiling results, commands, artifacts, and residual risks are recorded without making tests or runtime behavior depend on planning-inputs or local-only data
+- [x] #6 Durable profiling results, commands, artifacts, and residual risks are recorded without making tests or runtime behavior depend on planning-inputs or local-only data
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -67,4 +67,35 @@ Measure representative ABI Candidate training memory and throughput on the appro
 - Selected batch size 8 for the profiled 2,539,889-parameter high-resolution residual scout class: it had best throughput and about 8.3% A100 reserved-memory use. Batch 16 doubled memory and reduced throughput by about 9.6%. Batch 4 is the conservative fallback; materially different/unprofiled families remain sequential.
 - Initial simultaneous-candidate recommendation is two at batch size 8, contingent on the separate concurrency canary. Two isolated envelopes sum to 6,808 MiB (16.6% of A100); actual parallel memory/throughput and CPU/postprocessing contention remain unproven. Harness cap stays 1. Recorded full results and assumptions in `docs/abi-gpu-resource-profiling.md`.
 - Added and tested `scripts/prepare_abi029_concurrency_canary.py`; prepared `/tmp/abi029-concurrency-canary` with two byte-identical batch-size-8 replicas and validated the Batch against the configured ABI contract. No concurrency Run has started; explicit Human Review/Execution Gate remains required.
+
+- Human concurrency gate approved. Experiment Batch `batch_20260810_200944_ba10a4` executed exactly two byte-identical batch-size-8 replicas concurrently on pinned GPU 0/A100, one epoch and 32 samples per Dataset Source. Runs `run_20260810_200944_8efa2f` and `run_20260810_200944_599e67` both completed independently on their first attempt with no Resource Failure retry or artifact collision.
+- Each concurrent Run reserved 3,404 MiB, exactly matching the isolated envelope. External 1-second monitoring recorded 93 samples, maximum memory use 7,830 MiB (19.1%), minimum free memory 32,508 MiB (79.4% / 31.7 GiB), and 67 samples above 6,000 MiB confirming sustained overlap.
+- End-to-end aggregate processed-sample throughput was 3.71 samples/s versus 1.89 isolated, a 1.96x ratio that passes the reviewed 1.5x batch criterion. The short training-only aggregate ratio was 1.42x; retained as a residual risk for longer training-dominated Runs.
+- Approved scoped policy: preferred batch size 8 and Harness `max_parallel_runs=2` only for comparable 2.54M-parameter, 16-channel, 256x256 spectral residual U-Nets on the A100 at batch size <=8. Concurrency 3/4, larger batches, materially different architectures, and T4 Runs remain unapproved/sequential.
+- Persisted batch metadata, monitor CSV, machine-readable analysis, result tables, exact commands, and policy in `batches/batch_20260810_200944_ba10a4/`, `docs/abi-gpu-resource-profiling.md`, and `EXPERIMENT_INDEX.md`. Updated local Harness config to cap parallel Runs at 2, validated runtime images, and refreshed Agent Boundary; generated `agent-work/AGENTS.md` now exposes cap 2 and sequential rules for unprofiled families. ABI-025 pending Candidate remains open and unexecuted.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented trusted ABI GPU resource characterization and conservative Experiment Batch concurrency policy.
+
+Harness:
+- Added `training_resource_profile.v1` success/failure artifacts with CUDA identity, peak allocated/reserved memory, timing, throughput, and failure evidence.
+- Added Harness-owned Docker GPU pinning and configurable Experiment Batch concurrency (default 1, hard cap 4), plus Agent-visible campaign guidance and batch-authoring support.
+- Committed in sibling Harness as `2eec8fa`.
+
+ABI evidence and policy:
+- Profiled the 2.54M-parameter spectral residual U-Net at batch sizes 1/2/4/8/16 on the pinned A100 with reviewed one-epoch, 32-per-source bounds. All completed without OOM/retry; batch 8 delivered best training throughput at 52.45 samples/s with 3,404 MiB peak reserved.
+- Ran approved concurrency-2 canary `batch_20260810_200944_ba10a4`; both Runs completed independently, max external GPU memory was 7,830 MiB, minimum free memory 32,508 MiB, and end-to-end throughput was 1.96x isolated.
+- Set local Harness cap to 2 for reviewed comparable A100 workloads and refreshed Agent Boundary. Unprofiled/different architectures, batch sizes above 8, concurrency above 2, and T4 Runs remain sequential/unapproved.
+- Recorded protocol, commands, Runs, monitor data, machine-readable analysis, residual risks, and Experiment Index entries durably.
+
+Validation:
+- `uv run pytest -q` — 103 passed
+- Harness focused suites — passed
+- Harness full suite — 525 passed, 2 skipped, 3 unrelated existing external workspace/provider fixture failures
+- `uv run ml-autoresearch validate-runtime-images --workspace-root .` — passed against clean Harness `2eec8fa`
+- Agent Boundary refresh confirms configured parallel Run cap 2
+- `uv run ml-autoresearch execute-open-actions --workspace-root . --dry-run` — ABI-025 Candidate remains the only open action and was not executed
+<!-- SECTION:FINAL_SUMMARY:END -->
