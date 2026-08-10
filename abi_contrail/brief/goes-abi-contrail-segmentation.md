@@ -62,6 +62,12 @@ Dataset Source is part of trusted sample metadata. Google patch membership follo
 
 ABI projection and geolocation are important for interpreting diagnostics, but not for candidate inputs. Pixel size and viewing geometry vary across the GOES disk; profile artifacts should record projection caveats and source-specific count summaries for the local mounted snapshot.
 
+## Candidate resource and Experiment Batch policy
+
+Read the generated Agent Workspace `AGENTS.md` for the current Harness-owned parallel Run cap and `/docs/abi-gpu-resource-profiling.md` for the reviewed ABI profiling protocol. Experiment Batches are appropriate only for two to four related, controlled variants whose architecture family, input shape, trusted loss, and effective batch size have comparable measured resource profiles. New or materially different architecture families must run sequentially until profiled.
+
+Candidate code and Agent handoffs must not select GPUs, launch workers, set effective concurrency, or implement resource measurement/retry. The Harness currently pins reviewed ABI Candidate execution to the A100 profiling device and keeps batch execution sequential until an operator records safe concurrency evidence. If a hypothesis needs unavailable scheduling or concurrency, create a Capability Request rather than a Candidate-owned workaround.
+
 ## Baselines and evaluation context
 
 Read `/research-problem/abi_contrail/profile/agent-campaign-context.v1.json` for the current curated ABI snapshot, canonical MCAST 1.1/2.1, threshold, Artifact Filter, and ABI-025 manual-canary summaries. It is trusted summary context, not raw data, an unrestricted artifact root, or a new authoritative Run Result.
