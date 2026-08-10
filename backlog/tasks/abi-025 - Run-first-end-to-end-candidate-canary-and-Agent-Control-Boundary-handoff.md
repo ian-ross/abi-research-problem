@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 10:43'
+updated_date: '2026-08-10 10:47'
 labels:
   - harness
   - candidates
@@ -58,3 +58,13 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 14. **Agent:** Inspect the resulting Run and validate the same artifact, metric, baseline-provenance, boundary, and ledger checks used for the manual canary. Produce a concise final campaign report with residual risks.
 15. **Human Final Gate 7:** Record a go/no-go decision on attempting a future fully automatic autonomy iteration. A go decision does not itself launch that iteration.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Phase 0 review completed; no candidate code was created and no training/evaluation was run.
+- Verified canonical registry abi-mcast-working-validation-v1 at /data/iross/abi-ml-autoresearch/baselines/canonical/mcast-working-validation-v1.json; both MCAST targets and referenced artifacts/assets passed checksum verification.
+- Refreshed Runtime Image validation for runner ml-autoresearch-runner:abi-research-problem-fa7d66587648b241-13b99524f1 (Harness commit 2698af8).
+- Proposed Gate 0 bound: abi_16ch tiny convolutional canary, sequential/no augmentation, bce_dice/AdamW, batch size 2, one epoch, --max-samples 8 (8 per source, 16 combined for each train and validation), two prediction samples; then one full 3,088-sample Docker/GPU post-run evaluation with four bounded diagnostic samples.
+- Gate 0 caveats: run-candidate/evaluate-run CLI execution options must explicitly repeat configured Docker image/GPU/rootless policy; evaluate-run must explicitly target the workspace ledger because external runs_root inference would choose the wrong ledger; acceptance-report generation exists only as a trusted provider API, not a CLI/integrated evaluation artifact; direct run-candidate does not update EXPERIMENT_INDEX.md; and actual per-run mount flags are not persisted as a command-level attestation beyond Harness policy plus run metadata.
+<!-- SECTION:NOTES:END -->
