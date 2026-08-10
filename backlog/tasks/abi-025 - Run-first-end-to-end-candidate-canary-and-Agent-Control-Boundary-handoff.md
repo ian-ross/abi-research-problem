@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 10:47'
+updated_date: '2026-08-10 10:53'
 labels:
   - harness
   - candidates
@@ -67,4 +67,8 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Refreshed Runtime Image validation for runner ml-autoresearch-runner:abi-research-problem-fa7d66587648b241-13b99524f1 (Harness commit 2698af8).
 - Proposed Gate 0 bound: abi_16ch tiny convolutional canary, sequential/no augmentation, bce_dice/AdamW, batch size 2, one epoch, --max-samples 8 (8 per source, 16 combined for each train and validation), two prediction samples; then one full 3,088-sample Docker/GPU post-run evaluation with four bounded diagnostic samples.
 - Gate 0 caveats: run-candidate/evaluate-run CLI execution options must explicitly repeat configured Docker image/GPU/rootless policy; evaluate-run must explicitly target the workspace ledger because external runs_root inference would choose the wrong ledger; acceptance-report generation exists only as a trusted provider API, not a CLI/integrated evaluation artifact; direct run-candidate does not update EXPERIMENT_INDEX.md; and actual per-run mount flags are not persisted as a command-level attestation beyond Harness policy plus run metadata.
+
+- Human Review Gate 0 approved.
+- Created the manually authored canary at candidates/abi025_manual_canary_v1 with manifest.yaml, model.py, PROPOSAL.md, and README.md; added the pending candidate to EXPERIMENT_INDEX.md.
+- Candidate model is architecture-only (approximately 1,169 parameters) and selects only trusted manifest options. No static Candidate validation, model import/smoke test, Docker execution, or training has been run. Awaiting Human Review Gate 1 approval for static validation only.
 <!-- SECTION:NOTES:END -->
