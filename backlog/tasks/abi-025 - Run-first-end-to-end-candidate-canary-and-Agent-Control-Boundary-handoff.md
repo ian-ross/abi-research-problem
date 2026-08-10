@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 15:47'
+updated_date: '2026-08-10 15:58'
 labels:
   - harness
   - candidates
@@ -108,4 +108,9 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Preflight passed: prepare-agent-boundary refreshed snapshots/config; no un-ingested primary handoff existed; no autonomy command override was configured; plain `pi list` discovered project-local pi-fort.
 - Invoked `uv run ml-autoresearch autonomy-step --workspace-root .` once without `--execute-next-action`. Pi session 2026-08-10T15-45-22-476Z_019fec59-982b-7067-8930-e55100dc11b6 recorded `Fort active` and used intended `/reference`, `/history`, `/research-problem`, and Agent Workspace paths.
 - Retry produced `status=no_handoff`, no ledger events, and `next_action=stop_for_human`: the Agent correctly saw the previously ingested `abi_spectral_resunet_scout_v1` with no Run and refused to create a second artifact while that action remains pending. No Candidate execution or training occurred. AC #5 remains open pending a human decision on how to retire or handle the quarantined open action.
+
+- Human authorized destructive cleanup of invalid test state. Removed the first Gate 4 `abi_spectral_resunet_scout_v1` canonical Candidate, immutable queue entry, EXPERIMENT_INDEX row, and `agent_handoff_ingested` ledger event, plus stale runtime/draft/scratch state; refreshed the boundary from an empty primary handoff queue.
+- Clean retry invoked `uv run ml-autoresearch autonomy-step --workspace-root .` once without `--execute-next-action`. Pi session 2026-08-10T15-53-12-047Z_019fec60-c26f-7155-bae3-168a5ac72977 recorded `Fort active`; transcript audit found no direct tool paths or commands referencing `/net` or `/data`.
+- Retry produced and ingested exactly one primary handoff: Capability Request `capreq_agent_boundary_typed_data_config_v1`; no Candidate Submission, execution, or training occurred. The request is valid and asks the Harness to preserve typed `research_problem.data_config` values in generated Agent Workspace TOML. Current generation stringifies boolean `true`, integer `8`, and the `sources` array, causing static Candidate validation to fail with `data_config.geographic_filter_required must be a boolean`.
+- Candidate draft `agent-work/drafts/candidates/abi_spectral_resunet_scout_v1` remains unsubmitted. Gate 5 now requires human approval/rejection/revision of the Capability Request; implementation is not authorized by ingestion.
 <!-- SECTION:NOTES:END -->
