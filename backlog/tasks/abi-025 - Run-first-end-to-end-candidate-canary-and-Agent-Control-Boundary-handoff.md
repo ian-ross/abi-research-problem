@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 11:00'
+updated_date: '2026-08-10 11:13'
 labels:
   - harness
   - candidates
@@ -26,9 +26,9 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 A manually authored canary Candidate Experiment has a reviewed PROPOSAL.md and valid candidate contract without candidate-owned data loading, losses, metrics, filters, sampling, or augmentation
-- [ ] #2 Static validation and a human-approved bounded Docker training/evaluation run succeed on the GPU/cluster environment
-- [ ] #3 The canary Run produces expected Run artifacts, Research Ledger/index records, provider-owned metrics, and an acceptance report tied to the canonical MCAST registry
-- [ ] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
+- [x] #2 Static validation and a human-approved bounded Docker training/evaluation run succeed on the GPU/cluster environment
+- [x] #3 The canary Run produces expected Run artifacts, Research Ledger/index records, provider-owned metrics, and an acceptance report tied to the canonical MCAST registry
+- [x] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
 - [ ] #5 One Agent Control Boundary autonomy step is run without automatic next-action execution, and its single handoff is inspected and approved before any candidate execution
 - [ ] #6 The approved Agent-generated handoff is executed separately and its Run artifacts and acceptance report are validated
 - [ ] #7 A final human go/no-go decision is recorded before enabling or attempting a fully automatic autonomy iteration
@@ -77,4 +77,12 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Static source audit passed: exactly four allowed files, only torch imports, and no filesystem, network, data-loader, longitude, or latitude identifiers. The first audit helper invocation incorrectly classified from torch import nn as a top-level nn module; the corrected audit passed and no candidate change was needed.
 - Focused trusted-boundary validation passed: 21 tests covering provider spec, Candidate longitude/latitude boundary, workspace configuration, canonical baseline targets, and acceptance-gate reporting. Canonical MCAST registry verification passed again.
 - No Candidate model import, smoke test, Docker candidate execution, evaluation, or training has been run. Awaiting Human Execution Gate 2.
+
+- Human Execution Gate 2 authorized Agent launch. Docker/GPU Run run_20260810_110532_b465cf completed in one attempt on CUDA with 16 training and 16 bounded validation samples, one epoch, batch size 2, two prediction samples, and no resource retry.
+- Controlled smoke accepted the 1,169-parameter [2,16,256,256] -> [2,1,256,256] model. Run source copy matches the reviewed canonical candidate; expected validation/smoke/training logs, metrics history, final/best metrics, checkpoint, and qualitative artifacts exist.
+- Docker/GPU Post-Run Evaluation eval_20260810_110644_c0d61d completed without retraining on all 3,088 Working Validation samples (MIT 1,232; Google 1,856), with 19 raw/filtered thresholds and four diagnostic samples/eight GeoTIFFs.
+- Trusted provider API wrote acceptance_report.json tied to verified registry abi-mcast-working-validation-v1 and canonical MCAST 2.1 aggregate/run-manifest paths. The deliberately weak canary predicted no positive pixels and correctly received aggregate, recall, and both Dataset Source failure flags; promotion remains human_review_required.
+- Run model_summary records only ABI channels 1-16, explicitly forbids longitude/latitude and source indices 16/17, and the copied candidate contains no coordinate access. run_metadata records training, ancillary, and baselines mounts at /data/<name> with readonly=true and Harness-owned Docker/GPU/resource policy.
+- Research Ledger contains proposal_created, candidate_created, candidate_submitted, run_started, run_completed, evaluation_requested, and evaluation_completed events. EXPERIMENT_INDEX.md now records the Run and Evaluation.
+- Gate 3 residuals for human review: evaluation_metadata.json says backend=native because the Docker container dispatches the native evaluator internally, despite the outer CLI recording backend=docker; acceptance_report.json is provider-owned but is not listed in evaluation_metadata.json or separately ledger-recorded; Run provider Git provenance is dirty because the reviewed candidate/index are uncommitted; per-run Docker argv/mount flags are not durably attested beyond Harness policy and run_metadata; and the connectivity metric is high for the all-negative canary, so it is not meaningful as standalone quality evidence.
 <!-- SECTION:NOTES:END -->
