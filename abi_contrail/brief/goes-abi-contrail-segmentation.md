@@ -66,7 +66,7 @@ ABI projection and geolocation are important for interpreting diagnostics, but n
 
 Read the generated Agent Workspace `AGENTS.md` for the current Harness-owned parallel Run cap and `/docs/abi-gpu-resource-profiling.md` for the reviewed ABI profiling protocol. Experiment Batches are appropriate only for two to four related, controlled variants whose architecture family, input shape, trusted loss, and effective batch size have comparable measured resource profiles. New or materially different architecture families must run sequentially until profiled.
 
-Candidate code and Agent handoffs must not select GPUs, launch workers, set effective concurrency, or implement resource measurement/retry. The Harness currently pins reviewed ABI Candidate execution to the A100 profiling device and keeps batch execution sequential until an operator records safe concurrency evidence. If a hypothesis needs unavailable scheduling or concurrency, create a Capability Request rather than a Candidate-owned workaround.
+Candidate code and Agent handoffs must not select GPUs, launch workers, set effective concurrency, or implement resource measurement/retry. The Harness pins reviewed ABI Candidate execution to the A100 profiling device. ABI-029 measured a safe Harness concurrency cap of two for comparable 2.54M-parameter, 16-channel, 256×256 spectral residual U-Net variants at effective batch size 8 or lower. This is a ceiling, not a target: unprofiled or materially different architectures, larger effective batches, and T4 execution remain sequential until separately profiled. If a hypothesis needs unavailable scheduling or concurrency, create a Capability Request rather than a Candidate-owned workaround.
 
 ## Baselines and evaluation context
 

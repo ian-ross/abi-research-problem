@@ -33,3 +33,17 @@
 {"candidate_id":"abi_spectral_resunet_scout_v1_profile_bs16","created_at":"2026-08-10T20:00:34Z","event_type":"candidate_submitted","run_id":"run_20260810_200027_cf7110"}
 {"candidate_id":"abi_spectral_resunet_scout_v1_profile_bs16","created_at":"2026-08-10T20:00:34Z","event_type":"run_started","run_id":"run_20260810_200027_cf7110"}
 {"created_at":"2026-08-10T20:01:52Z","event_type":"run_completed","metrics_path":"/data/iross/abi-ml-autoresearch/runs/run_20260810_200027_cf7110/outputs/final_metrics.json","run_id":"run_20260810_200027_cf7110"}
+{"batch_id":"batch_20260810_200944_ba10a4","batch_path":"batches/batch_20260810_200944_ba10a4","candidate_count":2,"created_at":"2026-08-10T20:09:44Z","event_type":"experiment_batch_created","proposal_path":"batches/batch_20260810_200944_ba10a4/BATCH_PROPOSAL.md"}
+{"batch_id":"batch_20260810_200944_ba10a4","candidate_id":"abi_spectral_resunet_scout_v1_concurrency_a","candidate_path":"/tmp/abi029-concurrency-canary/candidates/abi_spectral_resunet_scout_v1_concurrency_a","created_at":"2026-08-10T20:09:44Z","event_type":"batch_candidate_created"}
+{"batch_id":"batch_20260810_200944_ba10a4","candidate_id":"abi_spectral_resunet_scout_v1_concurrency_b","candidate_path":"/tmp/abi029-concurrency-canary/candidates/abi_spectral_resunet_scout_v1_concurrency_b","created_at":"2026-08-10T20:09:44Z","event_type":"batch_candidate_created"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_a","candidate_path":"/tmp/abi029-concurrency-canary/candidates/abi_spectral_resunet_scout_v1_concurrency_a","created_at":"2026-08-10T20:09:44Z","event_type":"candidate_created"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_b","candidate_path":"/tmp/abi029-concurrency-canary/candidates/abi_spectral_resunet_scout_v1_concurrency_b","created_at":"2026-08-10T20:09:44Z","event_type":"candidate_created"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_a","created_at":"2026-08-10T20:09:58Z","event_type":"candidate_submitted","run_id":"run_20260810_200944_8efa2f"}
+{"batch_id":"batch_20260810_200944_ba10a4","candidate_id":"abi_spectral_resunet_scout_v1_concurrency_a","created_at":"2026-08-10T20:09:58Z","event_type":"batch_run_started","run_id":"run_20260810_200944_8efa2f"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_a","created_at":"2026-08-10T20:09:58Z","event_type":"run_started","run_id":"run_20260810_200944_8efa2f"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_b","created_at":"2026-08-10T20:09:58Z","event_type":"candidate_submitted","run_id":"run_20260810_200944_599e67"}
+{"batch_id":"batch_20260810_200944_ba10a4","candidate_id":"abi_spectral_resunet_scout_v1_concurrency_b","created_at":"2026-08-10T20:09:58Z","event_type":"batch_run_started","run_id":"run_20260810_200944_599e67"}
+{"candidate_id":"abi_spectral_resunet_scout_v1_concurrency_b","created_at":"2026-08-10T20:09:58Z","event_type":"run_started","run_id":"run_20260810_200944_599e67"}
+{"created_at":"2026-08-10T20:11:15Z","event_type":"run_completed","metrics_path":"/data/iross/abi-ml-autoresearch/runs/run_20260810_200944_8efa2f/outputs/final_metrics.json","run_id":"run_20260810_200944_8efa2f"}
+{"created_at":"2026-08-10T20:11:16Z","event_type":"run_completed","metrics_path":"/data/iross/abi-ml-autoresearch/runs/run_20260810_200944_599e67/outputs/final_metrics.json","run_id":"run_20260810_200944_599e67"}
+{"batch_id":"batch_20260810_200944_ba10a4","created_at":"2026-08-10T20:11:16Z","event_type":"experiment_batch_completed","run_count":2,"status":"completed"}

@@ -104,6 +104,21 @@ Concurrency 2 is eligible only if:
 
 Test concurrency 3 only after separate human approval and only if the two-Run canary remains below 55% aggregate GPU memory while satisfying the throughput criterion. The hard Harness cap remains 4; this protocol does not approve concurrency 4.
 
+### Stage C results — 2026-08-10
+
+Human-approved Experiment Batch `batch_20260810_200944_ba10a4` ran two byte-identical batch-size-8 replicas concurrently on GPU 0:
+
+| Candidate | Run | Peak allocated | Peak reserved | Train samples/s | Validation samples/s | Run seconds | Retry |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| concurrency A | `run_20260810_200944_8efa2f` | 2,873.3 MiB | 3,404.0 MiB | 37.04 | 0.977 | 68.59 | none |
+| concurrency B | `run_20260810_200944_599e67` | 2,873.3 MiB | 3,404.0 MiB | 37.51 | 0.970 | 69.06 | none |
+
+Both Runs completed independently in one attempt with isolated artifacts. Neither exceeded the isolated batch-size-8 reserved-memory envelope. The one-second external monitor captured 93 samples, a maximum 7,830 MiB process/device memory use (19.1% of 40,960 MiB), and a minimum 32,508 MiB free (79.4%, or 31.7 GiB). Memory remained above 6,000 MiB for 67 samples, confirming sustained overlap. No GPU OOM, host/container Resource Failure, retry, or artifact collision occurred.
+
+For the batch-level throughput criterion, end-to-end processed-sample throughput increased from 128 samples / 67.80 seconds = 1.89 samples/s in the isolated batch-size-8 Run to 256 samples / 69.06 seconds = 3.71 samples/s concurrently, a 1.96× ratio. The short training phase showed contention—aggregate training throughput was 74.55 samples/s versus 52.45 isolated, or 1.42×—but validation throughput per Run was essentially unchanged and end-to-end overlap exceeded the reviewed 1.5× criterion. This distinction is retained as a residual risk for longer, training-dominated Runs.
+
+**Approved policy:** Harness concurrency is capped at two on the A100 for controlled Experiment Batches of comparable 2.54M-parameter, 16-channel, 256×256 spectral residual U-Net candidates at batch size 8 or lower. Batch size 8 is preferred; batch size 4 is the conservative fallback. This evidence does not approve concurrency three or four, batch sizes above 8, materially different architectures, or any T4 execution. Such workloads remain sequential pending separate profiling and human review.
+
 ## Preparation and execution commands
 
 Prepare immutable profiling derivatives without importing Candidate code or reading data:

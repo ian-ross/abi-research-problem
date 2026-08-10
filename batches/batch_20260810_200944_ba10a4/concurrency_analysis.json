@@ -1,0 +1,65 @@
+{
+  "batch_id": "batch_20260810_200944_ba10a4",
+  "concurrent_runs": [
+    {
+      "peak_reserved_memory_mib": 3404.0,
+      "resource_retry_count": 0,
+      "run_id": "run_20260810_200944_8efa2f",
+      "run_wall_seconds": 68.589824,
+      "training_samples_per_second": 37.042885,
+      "validation_samples_per_second": 0.977482
+    },
+    {
+      "peak_reserved_memory_mib": 3404.0,
+      "resource_retry_count": 0,
+      "run_id": "run_20260810_200944_599e67",
+      "run_wall_seconds": 69.056839,
+      "training_samples_per_second": 37.506449,
+      "validation_samples_per_second": 0.970186
+    }
+  ],
+  "decision": {
+    "excluded": [
+      "concurrency above 2",
+      "batch size above 8",
+      "materially different or unprofiled architectures",
+      "Tesla T4 execution"
+    ],
+    "max_parallel_runs": 2,
+    "preferred_batch_size": 8,
+    "scope": "Comparable 2.54M-parameter, 16-channel, 256x256 spectral residual U-Net candidates on GPU 0/A100 at batch size 8 or lower.",
+    "status": "approved_with_scope"
+  },
+  "external_monitor": {
+    "max_memory_used_fraction": 0.191162109375,
+    "max_memory_used_mib": 7830,
+    "min_memory_free_fraction": 0.79365234375,
+    "min_memory_free_mib": 32508,
+    "path": "nvidia-smi.csv",
+    "sample_count": 93,
+    "sample_interval_seconds": 1,
+    "samples_memory_over_6000_mib": 67
+  },
+  "gpu": {
+    "index": 0,
+    "name": "NVIDIA A100-PCIE-40GB",
+    "total_memory_mib": 40960
+  },
+  "isolated_reference": {
+    "batch_size": 8,
+    "peak_reserved_memory_mib": 3404.0,
+    "run_id": "run_20260810_195845_df2123",
+    "run_wall_seconds": 67.796671,
+    "training_samples_per_second": 52.449845,
+    "validation_samples_per_second": 0.979529
+  },
+  "schema_version": "abi_gpu_concurrency_analysis.v1",
+  "throughput": {
+    "aggregate_training_ratio": 1.421345172707374,
+    "concurrent_aggregate_training_samples_per_second": 74.549334,
+    "concurrent_end_to_end_samples_per_second": 3.7070911977306116,
+    "end_to_end_ratio": 1.9635034554651423,
+    "isolated_end_to_end_samples_per_second": 1.88799830599352,
+    "isolated_training_samples_per_second": 52.449845
+  }
+}
