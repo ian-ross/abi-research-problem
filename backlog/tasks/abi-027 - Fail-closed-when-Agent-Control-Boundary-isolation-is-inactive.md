@@ -1,11 +1,11 @@
 ---
 id: ABI-027
 title: Enable pi-fort for the repository-local autonomy launch
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-10 13:50'
-updated_date: '2026-08-10 15:02'
+updated_date: '2026-08-10 15:03'
 labels:
   - harness
   - agent-boundary
@@ -22,9 +22,9 @@ ABI-025 Gate 4 launched Pi non-interactively without approving project-local res
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The repository-local autonomy command is `pi --approve --session-dir ../agent-sessions` so non-interactive Pi loads project pi-fort.
-- [ ] #2 A no-training smoke confirms `/reference` is visible inside the guest while host `/net` and the ml-autoresearch repository sibling are unavailable.
-- [ ] #3 No shared ml-autoresearch or pi-fort source changes are part of the fix.
+- [x] #1 The repository-local autonomy command is `pi --approve --session-dir ../agent-sessions` so non-interactive Pi loads project pi-fort.
+- [x] #2 A no-training smoke confirms `/reference` is visible inside the guest while host `/net` and the ml-autoresearch repository sibling are unavailable.
+- [x] #3 No shared ml-autoresearch or pi-fort source changes are part of the fix.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -38,15 +38,15 @@ ABI-025 Gate 4 launched Pi non-interactively without approving project-local res
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-- Reproduced ABI-025 launch failure: non-interactive `pi --session-dir ../agent-sessions` ignored project `.pi/settings.json` because the workspace was not approved; `pi list` omitted pi-fort while `pi list --approve` loaded it. The prior session therefore used host built-in tools.
-- Live read-only probe with `pi --approve` loaded pi-fort and booted Gondolin: `/reference`, `/history`, `/docs`, and `/research-problem` were visible; host repository siblings and `/net` were absent; write attempts to declared read-only mounts failed while Agent Workspace writes succeeded.
-- Chosen fix is same-process, pre-model attestation rather than static config checks or a separate preflight VM: production Pi will explicitly load only the resolved pi-fort extension, run a pi-fort guest/VFS preflight before the model sees the prompt, and require a nonce-bound read-only attestation before handoff ingestion.
-
-- Implemented same-process pre-model pi-fort preflight and nonce-bound protected attestation. Harness now permits only literal `pi`, resolves the trusted PATH executable, adds `--approve --no-extensions --extension <pi-fort> --fort-preflight <spec>`, validates exact mount evidence, returns `isolation_failed`, and skips ingestion on failure.
-- Hardened pi-fort so enabled/preflighted QEMU, image, config, and VM failures never fall back to host read/write/edit/bash tools. Added required/forbidden guest path checks, read-only write probes, sole writable workspace proof, and protected attestation.
-- Live success smoke proved required guest mounts, absent host repository/data roots, and exactly one writable host-backed Agent Workspace. Live negative smoke exited 27 before model invocation; the sentinel remained absent.
-- Independent security review found and then confirmed fixes for executable impersonation and incomplete mount-evidence validation; no blockers remain.
-- Validation: ABI repository 100 tests passed; ml-autoresearch 72 focused tests passed; pi-fort 123 tests plus build/lint passed. Full ml-autoresearch suite had 521 pass, 2 skip, and 4 unrelated environment/neighbor failures documented in the campaign report.
-
-- Correction: the earlier Harness/pi-fort hardening implementation was over-scoped and has been fully reverted. ABI-027 is reopened. The only retained diagnosis is that Pi print mode ignored project-local pi-fort because the launch omitted `--approve`.
+- Root cause: Pi print mode ignored project-local resources because the ABI-025 launch omitted `--approve`; `pi list` omitted pi-fort while `pi list --approve` loaded it.
+- Reverted the over-scoped Harness and pi-fort implementation completely. `../ml-autoresearch` is clean; pi-fort retains only its unrelated pre-existing Dockerfile modification.
+- Added repository-local `[autonomy_step] agent_command = "pi --approve --session-dir ../agent-sessions"` to `ml-autoresearch.toml`.
+- No-training smoke result: `cwd=/home/iross/code/abi-research-problem/agent-work reference=yes host_net=no harness_sibling=no`.
+- No shared Harness or pi-fort source change is part of the final fix.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fixed the ABI repository locally by adding `--approve` to its configured non-interactive Pi autonomy command. This makes Pi load the existing project-local pi-fort package/configuration. A minimal no-training smoke confirmed `/reference` is visible inside the guest and host `/net` plus the Harness repository sibling are unavailable. All over-scoped shared Harness/pi-fort changes were reverted.
+<!-- SECTION:FINAL_SUMMARY:END -->
