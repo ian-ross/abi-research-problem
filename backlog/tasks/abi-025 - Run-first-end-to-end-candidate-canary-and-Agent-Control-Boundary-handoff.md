@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 18:56'
+updated_date: '2026-08-10 19:07'
 labels:
   - harness
   - candidates
@@ -30,7 +30,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - [x] #2 Static validation and a human-approved bounded Docker training/evaluation run succeed on the GPU/cluster environment
 - [x] #3 The canary Run produces expected Run artifacts, Research Ledger/index records, provider-owned metrics, and an acceptance report tied to the canonical MCAST registry
 - [x] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
-- [ ] #5 One Agent Control Boundary autonomy step is run without automatic next-action execution, and its single handoff is inspected and approved before any candidate execution
+- [x] #5 One Agent Control Boundary autonomy step is run without automatic next-action execution, and its single handoff is inspected and approved before any candidate execution
 - [ ] #6 The approved Agent-generated handoff is executed separately and its Run artifacts and acceptance report are validated
 - [ ] #7 A final human go/no-go decision is recorded before enabling or attempting a fully automatic autonomy iteration
 <!-- AC:END -->
@@ -119,4 +119,6 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Fresh Human Execution Gate 4 autonomy step invoked once with `uv run ml-autoresearch autonomy-step --workspace-root .`, without `--execute-next-action`. Fort session `2026-08-10T18-50-24-737Z_019fed03-0061-71af-84d9-ee6f24c2ca5a` was active and used intended `/reference`, `/history`, `/docs`, and `/research-problem` inputs; tool-call audit found no direct `/data` or `/net` access.
 - Exactly one Candidate Submission, `abi_spectral_resunet_scout_v1`, was ingested. Canonical and submitted candidate files match byte-for-byte; Harness static validation passes; source inspection finds architecture-only Torch/provider support imports with no longitude/latitude or candidate-owned data, loss, metric, filter, sampling, augmentation, network, or persistence behavior. One `agent_handoff_ingested` ledger event and one pending `run_candidate` action exist; no Run or training was started.
 - Gate 5 review concern: the proposal requests at most 1,024 training samples per Dataset Source, but `execute-next-action` has no bound option and current `[candidate_execution]` has no `max_samples`, so execution would not enforce the reviewed sample cap. Human approval is pending a decision on enforcing the bound before Gate 6.
+
+- Human approved the `abi_spectral_resunet_scout_v1` handoff conditionally on enforcing its requested sample cap. Added trusted `[candidate_execution] max_samples = 1024`; config loading confirms the cap, Candidate static validation remains valid, and `execute-open-actions --dry-run` shows exactly one pending `run_candidate` action. No execution or training occurred; Gate 6 remains a separate human execution decision.
 <!-- SECTION:NOTES:END -->
