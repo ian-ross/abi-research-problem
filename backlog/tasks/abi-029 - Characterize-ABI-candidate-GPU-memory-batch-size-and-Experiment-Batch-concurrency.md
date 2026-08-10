@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-10 19:07'
-updated_date: '2026-08-10 19:07'
+updated_date: '2026-08-10 19:10'
 labels:
   - harness
   - candidates
@@ -46,3 +46,13 @@ Measure representative ABI Candidate training memory and throughput on the appro
 7. Human Review/Execution Gate: approve and run one bounded Experiment Batch canary; validate concurrency enforcement, artifact isolation, and independent failure handling.
 8. Record durable results, tests, commands, assumptions, and residual risks; update acceptance criteria and final summary.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Initial non-training preflight: host exposes NVIDIA A100-PCIE-40GB (40,960 MiB) as GPU 0 and Tesla T4 (15,360 MiB) as GPU 1; no compute processes were active. Runner image sees both GPUs.
+- Current DockerBackend uses `--gpus all`, while training selects unqualified `cuda`, so every Run uses container GPU 0. Concurrent Experiment Batch workers therefore pile onto the A100; the T4 is not scheduled.
+- Ingested Experiment Batch execution hardcodes `max_parallel_runs=4`, and CandidateExecutionConfig has no batch-concurrency or GPU-device policy. Existing training artifacts record only device type, not CUDA device identity, peak allocated/reserved memory, throughput, or timing.
+- Agent Workspace exposes `batch-submissions/` and batch history, but the one-step autonomy prompt omits Experiment Batch Submission from its allowed primary outcomes and no dedicated batch-authoring skill/guidance is present.
+- Until ABI-029 establishes measured policy, do not approve autonomous parallel Candidate execution. Proposed profiling should begin with synthetic backward/resource probes and bounded one-epoch real-data confirmation, then test concurrency 2 before considering higher values; retain explicit human GPU gates.
+<!-- SECTION:NOTES:END -->
