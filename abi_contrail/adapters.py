@@ -75,6 +75,29 @@ SOURCE_BALANCED_SAMPLING_POLICIES = {
     SAMPLING_POLICY_COMBINED_SOURCE_BALANCED,
 }
 DEFAULT_SOURCE_MIXTURE = {"mit": 0.5, "google": 0.5}
+_GEOGRAPHIC_ANCILLARY_CONFIG_KEYS = (
+    "coastline_geojson",
+    "geographic_ancillary_manifest",
+    "rivers_geojson",
+)
+
+
+def _artifact_filter_initialization_config(data_config: Mapping[str, object] | None) -> dict[str, object]:
+    """Return a contract-loadable filter config when data roots are intentionally absent.
+
+    Agent-side static Candidate validation loads the trusted provider contract without
+    mounting operational data roots. Execution still calls ``validate_data_root`` and
+    fails closed before training when those roots are absent.
+    """
+
+    config = dict(data_config or {})
+    has_data_roots = "data_roots" in config or "dataset_root" in config or "data_root" in config
+    if has_data_roots:
+        return config
+    for key in _GEOGRAPHIC_ANCILLARY_CONFIG_KEYS:
+        config.pop(key, None)
+    config["geographic_filter_required"] = False
+    return config
 
 
 @dataclass(frozen=True)
@@ -157,7 +180,9 @@ class ABITrainingAdapter:
         from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
 
         self.data_config = dict(data_config or {})
-        self.filter_pipeline = build_default_artifact_filter_pipeline(data_config)
+        self.filter_pipeline = build_default_artifact_filter_pipeline(
+            _artifact_filter_initialization_config(data_config)
+        )
         self._sampling_config = _sampling_config(data_config or {})
 
     def validate_data_root(self, data_config: Mapping[str, object]) -> Path:
@@ -873,6 +898,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
     """
 
     filter_config = dict(data_config or {})
+    initialized_filter_config = _artifact_filter_initialization_config(filter_config)
 
     from ml_autoresearch.research_problems import ResearchProblemSpec
     from abi_contrail.artifact_filters import build_default_artifact_filter_pipeline
@@ -881,7 +907,7 @@ def build_spec(data_config: Mapping[str, object] | None = None):
     training_adapter = ABITrainingAdapter(filter_config)
     evaluation_adapter = ABIEvaluationAdapter(
         training_adapter=training_adapter,
-        filter_pipeline=build_default_artifact_filter_pipeline(filter_config),
+        filter_pipeline=build_default_artifact_filter_pipeline(initialized_filter_config),
     )
     return ResearchProblemSpec(
         id=RESEARCH_PROBLEM_ID,

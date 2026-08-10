@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import pytest
+
+from ml_autoresearch.errors import ResearchProblemDataError
 from ml_autoresearch.research_problems import (
     ResearchProblemProviderConfig,
     ResearchProblemSpecRegistry,
@@ -61,6 +64,29 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     for artifact in spec.dataset_profile_artifacts:
         assert Path(str(artifact.path)).is_file()
         assert artifact.role == "operator_generated_dataset_profile_or_generator"
+
+
+def test_build_spec_allows_static_contract_loading_without_unmounted_data_roots() -> None:
+    data_config = {
+        "geographic_filter_required": True,
+        "geographic_ancillary_manifest": "natural-earth/manifest.json",
+        "postprocessing_batch_size": 8,
+        "sources": [
+            {"layout": "mit", "patch_size": 256},
+            {"layout": "google", "patch_size": 256},
+        ],
+    }
+
+    spec = build_spec(data_config=data_config)
+
+    assert spec.id == "goes_abi_contrail_segmentation"
+    geographic_filter = spec.training_adapter.filter_pipeline.provenance()["geographic_feature_filter"]
+    assert geographic_filter["active"] is False
+    assert geographic_filter["required"] is False
+    assert geographic_filter["reason"] == "not_configured"
+    assert geographic_filter["sources"] == []
+    with pytest.raises(ResearchProblemDataError, match="requires data_roots or legacy dataset_root/data_root"):
+        spec.training_adapter.validate_data_root(data_config)
 
 
 def test_named_roots_do_not_change_candidate_longitude_latitude_boundary(tmp_path: Path) -> None:
