@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 16:17'
+updated_date: '2026-08-10 16:27'
 labels:
   - harness
   - candidates
@@ -113,4 +113,6 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Clean retry invoked `uv run ml-autoresearch autonomy-step --workspace-root .` once without `--execute-next-action`. Pi session 2026-08-10T15-53-12-047Z_019fec60-c26f-7155-bae3-168a5ac72977 recorded `Fort active`; transcript audit found no direct tool paths or commands referencing `/net` or `/data`.
 - Retry produced and ingested exactly one primary handoff: Capability Request `capreq_agent_boundary_typed_data_config_v1`; no Candidate Submission, execution, or training occurred. The request is valid and asks the Harness to preserve typed `research_problem.data_config` values in generated Agent Workspace TOML. Current generation stringifies boolean `true`, integer `8`, and the `sources` array, causing static Candidate validation to fail with `data_config.geographic_filter_required must be a boolean`.
 - Candidate draft `agent-work/drafts/candidates/abi_spectral_resunet_scout_v1` remains unsubmitted. Gate 5 now requires human approval/rejection/revision of the Capability Request; implementation is not authorized by ingestion.
+
+- ABI-028 completed and GitHub Harness issue #123 closed. Agent Boundary TOML now preserves typed provider data config. ABI provider static contract loading works without operational data-root mounts, while execution remains fail-closed through `validate_data_root`. Fort candidate validation of the retained `abi_spectral_resunet_scout_v1` draft now passes. No Candidate Submission, Run, or training was performed; a fresh autonomy-step still requires the next explicit human gate.
 <!-- SECTION:NOTES:END -->
