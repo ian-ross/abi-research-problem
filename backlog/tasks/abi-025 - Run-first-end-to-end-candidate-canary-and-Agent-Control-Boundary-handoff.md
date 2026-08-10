@@ -1,10 +1,11 @@
 ---
 id: ABI-025
 title: Run first end-to-end candidate canary and Agent Control Boundary handoff
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-09 21:13'
+updated_date: '2026-08-10 10:43'
 labels:
   - harness
   - candidates
