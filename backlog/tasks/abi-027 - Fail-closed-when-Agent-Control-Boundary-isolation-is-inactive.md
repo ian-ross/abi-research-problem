@@ -20,6 +20,13 @@ priority: high
 ABI-025 Gate 4 launched Pi non-interactively without approving project-local resources, so Pi ignored agent-work/.pi/settings.json and did not load pi-fort. Apply only the repository-local launch fix and verify it manually; do not change the shared Harness or pi-fort implementation.
 <!-- SECTION:DESCRIPTION:END -->
 
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 The repository-local autonomy command is `pi --approve --session-dir ../agent-sessions` so non-interactive Pi loads project pi-fort.
+- [ ] #2 A no-training smoke confirms `/reference` is visible inside the guest while host `/net` and the ml-autoresearch repository sibling are unavailable.
+- [ ] #3 No shared ml-autoresearch or pi-fort source changes are part of the fix.
+<!-- AC:END -->
+
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
