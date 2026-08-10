@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 20:49'
+updated_date: '2026-08-10 22:50'
 labels:
   - harness
   - candidates
@@ -123,4 +123,6 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Human approved the `abi_spectral_resunet_scout_v1` handoff conditionally on enforcing its requested sample cap. Added trusted `[candidate_execution] max_samples = 1024`; config loading confirms the cap, Candidate static validation remains valid, and `execute-open-actions --dry-run` shows exactly one pending `run_candidate` action. No execution or training occurred; Gate 6 remains a separate human execution decision.
 
 - Human Execution Gate 6 authorized execution of the single approved `abi_spectral_resunet_scout_v1` handoff. Proceeding with `execute-open-actions --max-actions 1` under the enforced 1,024-samples-per-source bound.
+
+- Gate 6 execution created Run `run_20260810_204928_ab0218` with the approved 1,024-samples-per-source bound and read-only trusted mounts. The foreground client timed out after two hours while Docker remained active in epoch 3/12; no duplicate Run was launched. Interim inspection found training loss had become NaN in epoch 3. Final outcome and Harness reconciliation remain pending container completion.
 <!-- SECTION:NOTES:END -->
