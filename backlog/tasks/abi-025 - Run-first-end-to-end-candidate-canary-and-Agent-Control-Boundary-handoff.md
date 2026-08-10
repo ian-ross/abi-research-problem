@@ -5,14 +5,14 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 15:58'
+updated_date: '2026-08-10 16:17'
 labels:
   - harness
   - candidates
   - agent-boundary
   - canary
 dependencies:
-  - ABI-027
+  - ABI-028
 priority: high
 ---
 
