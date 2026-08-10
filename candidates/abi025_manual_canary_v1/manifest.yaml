@@ -1,0 +1,15 @@
+name: abi025_manual_canary_v1
+description: Minimal manually authored ABI Candidate Execution lifecycle canary.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+data:
+  sampling_policy: sequential
+  frame_selection_policy: all_target_frames
+  augmentation_policy: none
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.001
+  batch_size: 2
+  max_epochs: 1

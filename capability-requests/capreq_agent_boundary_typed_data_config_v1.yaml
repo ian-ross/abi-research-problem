@@ -1,0 +1,32 @@
+request_id: capreq_agent_boundary_typed_data_config_v1
+capability_type: contract_surface
+blocked_hypothesis: A source-balanced spectral residual U-Net using approved ABI channels,
+  trusted bce_dice_cldice loss, and random mirroring can produce non-degenerate thin-contrail
+  segmentation and establish the first scientific architecture-family scout.
+current_contract_insufficiency: 'The generated Agent Control Boundary ml-autoresearch.toml
+  stringifies typed research_problem.data_config values: geographic_filter_required
+  is written as the string ''True'', postprocessing_batch_size as the string ''8'',
+  and sources as a stringified Python list. ml-autoresearch-agent validate-candidate
+  therefore fails before candidate validation with ''data_config.geographic_filter_required
+  must be a boolean''. Candidate submission preparation uses the same provider configuration,
+  so no safe Candidate Submission can be finalized.'
+expected_research_value: Restoring typed provider configuration unblocks static validation
+  and submission of contract-compliant ABI Candidate Experiments, beginning with the
+  prepared spectral residual U-Net family scout, without expanding candidate authority.
+safety_reproducibility_risks: A naive parser workaround could silently coerce ambiguous
+  strings, diverge from the trusted outer Workspace Configuration, or weaken required
+  Artifact Filter and named-data-root checks. The regenerated boundary snapshot must
+  preserve booleans, integers, arrays, nested mappings, relative provider resource
+  identities, and the existing read-only mount policy exactly.
+minimal_harness_change: Fix prepare-agent-boundary serialization so research_problem.data_config
+  is emitted as type-preserving TOML, regenerate this Agent Workspace ml-autoresearch.toml,
+  and add a boundary smoke test that builds the declared provider and runs ml-autoresearch-agent
+  validate-candidate against a tiny known-valid candidate without accessing or training
+  on raw data.
+candidate_authority_requested: none
+example_follow_up_experiments:
+- Validate and submit drafts/candidates/abi_spectral_resunet_scout_v1 unchanged under
+  the regenerated trusted boundary configuration.
+- Run a known-valid minimal ABI candidate through static validation to confirm required
+  Artifact Filter configuration and typed multi-source data_config round-trip correctly.
+priority: high
