@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 11:13'
+updated_date: '2026-08-10 11:24'
 labels:
   - harness
   - candidates
@@ -85,4 +85,10 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Run model_summary records only ABI channels 1-16, explicitly forbids longitude/latitude and source indices 16/17, and the copied candidate contains no coordinate access. run_metadata records training, ancillary, and baselines mounts at /data/<name> with readonly=true and Harness-owned Docker/GPU/resource policy.
 - Research Ledger contains proposal_created, candidate_created, candidate_submitted, run_started, run_completed, evaluation_requested, and evaluation_completed events. EXPERIMENT_INDEX.md now records the Run and Evaluation.
 - Gate 3 residuals for human review: evaluation_metadata.json says backend=native because the Docker container dispatches the native evaluator internally, despite the outer CLI recording backend=docker; acceptance_report.json is provider-owned but is not listed in evaluation_metadata.json or separately ledger-recorded; Run provider Git provenance is dirty because the reviewed candidate/index are uncommitted; per-run Docker argv/mount flags are not durably attested beyond Harness policy and run_metadata; and the connectivity metric is high for the all-negative canary, so it is not meaningful as standalone quality evidence.
+
+- Human Review Gate 3 approved proceeding to the Agent Control Boundary test.
+- Re-ran prepare-agent-boundary successfully and refreshed reference/history/provider snapshots. Manual canary Candidate, index record, ledger events, Run, Evaluation, and acceptance report are visible through read-only history/reference mounts.
+- Boundary preflight found no queued primary handoff files, no stale autonomy result/prompt files, and no open executable Harness actions. Default Pi command and ML_AUTORESEARCH_PI_FORT=/home/iross/code/pi-fort are available.
+- Agent Control Boundary has allow_egress=true, no /data mounts, and read-only /reference, /history (including external Runs root), /docs, /research-problem, and Harness package mounts. Only the Agent Workspace draft/submission/note/request/report/scratch locations are writable.
+- Gate 4 command is uv run ml-autoresearch autonomy-step --workspace-root . --agent-command "pi --session-dir ../agent-sessions" with no --execute-next-action. Expected safe outcome is exactly one ingested handoff; a Candidate Submission should leave next_action=run_candidate outstanding and unexecuted for Gate 5 review.
 <!-- SECTION:NOTES:END -->
