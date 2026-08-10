@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 11:34'
+updated_date: '2026-08-10 12:19'
 labels:
   - harness
   - candidates
@@ -96,4 +96,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - PAUSED before Human Execution Gate 4 by human decision. The autonomy-step command has not been invoked and no Agent-generated handoff exists.
 - Boundary review found that Agent-visible context is only partial: the manual canary Run exposes split counts, bounded qualitative samples, full-validation metrics, and selected MCAST 2.1 acceptance values, but the declared Dataset Profile Artifact is mostly generation instructions and the Agent cannot see complete curated MCAST 1.1/2.1 summaries, threshold/filter behavior, or canonical provenance.
 - Created blocking task ABI-026 to add a trusted, read-only Agent-visible ABI dataset and MCAST campaign context artifact without mounting raw training data, coordinates, model weights, or the baselines root. Resume ABI-025 Phase 2 preparation only after ABI-026 is complete and the refreshed boundary context is reviewed.
+
+- ABI-026 completed: the refreshed Agent Control Boundary now exposes required curated artifact /research-problem/abi_contrail/profile/agent-campaign-context.v1.json with ABI snapshot, canonical MCAST 1.1/2.1, threshold/Artifact Filter, and manual-canary context. Boundary validation confirmed read-only index exposure with no training, ancillary, or baselines roots mounted.
+- ABI-025 remains paused before Human Execution Gate 4. The autonomy-step command has not been invoked; explicit human review/approval of the refreshed pre-Gate-4 boundary context is required before proceeding.
 <!-- SECTION:NOTES:END -->
