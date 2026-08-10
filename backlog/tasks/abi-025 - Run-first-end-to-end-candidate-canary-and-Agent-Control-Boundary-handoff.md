@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 16:27'
+updated_date: '2026-08-10 18:56'
 labels:
   - harness
   - candidates
@@ -115,4 +115,8 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Candidate draft `agent-work/drafts/candidates/abi_spectral_resunet_scout_v1` remains unsubmitted. Gate 5 now requires human approval/rejection/revision of the Capability Request; implementation is not authorized by ingestion.
 
 - ABI-028 completed and GitHub Harness issue #123 closed. Agent Boundary TOML now preserves typed provider data config. ABI provider static contract loading works without operational data-root mounts, while execution remains fail-closed through `validate_data_root`. Fort candidate validation of the retained `abi_spectral_resunet_scout_v1` draft now passes. No Candidate Submission, Run, or training was performed; a fresh autonomy-step still requires the next explicit human gate.
+
+- Fresh Human Execution Gate 4 autonomy step invoked once with `uv run ml-autoresearch autonomy-step --workspace-root .`, without `--execute-next-action`. Fort session `2026-08-10T18-50-24-737Z_019fed03-0061-71af-84d9-ee6f24c2ca5a` was active and used intended `/reference`, `/history`, `/docs`, and `/research-problem` inputs; tool-call audit found no direct `/data` or `/net` access.
+- Exactly one Candidate Submission, `abi_spectral_resunet_scout_v1`, was ingested. Canonical and submitted candidate files match byte-for-byte; Harness static validation passes; source inspection finds architecture-only Torch/provider support imports with no longitude/latitude or candidate-owned data, loss, metric, filter, sampling, augmentation, network, or persistence behavior. One `agent_handoff_ingested` ledger event and one pending `run_candidate` action exist; no Run or training was started.
+- Gate 5 review concern: the proposal requests at most 1,024 training samples per Dataset Source, but `execute-next-action` has no bound option and current `[candidate_execution]` has no `max_samples`, so execution would not enforce the reviewed sample cap. Human approval is pending a decision on enforcing the bound before Gate 6.
 <!-- SECTION:NOTES:END -->
