@@ -1,7 +1,7 @@
 ---
 id: ABI-028
 title: Preserve typed Research Problem data config in Agent Boundary
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-10 16:17'
