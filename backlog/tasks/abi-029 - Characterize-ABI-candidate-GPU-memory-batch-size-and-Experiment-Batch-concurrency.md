@@ -3,9 +3,11 @@ id: ABI-029
 title: >-
   Characterize ABI candidate GPU memory, batch size, and Experiment Batch
   concurrency
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-10 19:07'
+updated_date: '2026-08-10 19:07'
 labels:
   - harness
   - candidates
