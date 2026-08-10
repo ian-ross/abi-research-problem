@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 13:51'
+updated_date: '2026-08-10 15:47'
 labels:
   - harness
   - candidates
@@ -103,4 +103,9 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Human Execution Gate 4 authorized and invoked exactly once with no --execute-next-action. The step ingested one Candidate Submission, abi_spectral_resunet_scout_v1, and left next_action=run_candidate unexecuted; no Run was created.
 - Gate 5 candidate inspection: canonical and submitted Candidate copies match byte-for-byte; static validation with required proposal/README passes; manifest uses abi_16ch plus trusted combined_source_balanced/random_mirroring/focal_tversky/AdamW policies; model source is architecture-only and contains no longitude/latitude, data loading, loss, metric, filter, sampling, network, or persistence ownership. Exactly one primary handoff exists, with one agent_handoff_ingested ledger event and a pending run_candidate action.
 - Gate 5 boundary inspection found a blocking isolation failure: the Agent session had no /reference guest mount and executed tools against the host root, where /data, /net, and host repository paths were visible. It directly read only intended history/reference/provider snapshot content and the approved Runs root, and transcript review found no raw training/baselines/ancillary reads or unexpected writes, but the Agent Control Boundary was not actually enforced. Handoff execution is not approved; ABI-027 created as a blocker to make autonomy-step fail closed and prove isolation before retry.
+
+- After ABI-027, human authorized cleanup and one Gate 4 retry using the current Pi setup with no additional isolation changes. Preserved the first attempt's immutable submission, canonical Candidate, ledger event, and Pi session as audit evidence; marked the Candidate quarantined/do-not-execute in EXPERIMENT_INDEX.md; cleared only mutable draft, scratch, stale prompt, and stale result state.
+- Preflight passed: prepare-agent-boundary refreshed snapshots/config; no un-ingested primary handoff existed; no autonomy command override was configured; plain `pi list` discovered project-local pi-fort.
+- Invoked `uv run ml-autoresearch autonomy-step --workspace-root .` once without `--execute-next-action`. Pi session 2026-08-10T15-45-22-476Z_019fec59-982b-7067-8930-e55100dc11b6 recorded `Fort active` and used intended `/reference`, `/history`, `/research-problem`, and Agent Workspace paths.
+- Retry produced `status=no_handoff`, no ledger events, and `next_action=stop_for_human`: the Agent correctly saw the previously ingested `abi_spectral_resunet_scout_v1` with no Run and refused to create a second artifact while that action remains pending. No Candidate execution or training occurred. AC #5 remains open pending a human decision on how to retire or handle the quarantined open action.
 <!-- SECTION:NOTES:END -->
