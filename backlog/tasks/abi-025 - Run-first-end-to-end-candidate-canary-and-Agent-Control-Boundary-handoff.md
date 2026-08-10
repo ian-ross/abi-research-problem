@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 19:07'
+updated_date: '2026-08-10 20:49'
 labels:
   - harness
   - candidates
@@ -121,4 +121,6 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Gate 5 review concern: the proposal requests at most 1,024 training samples per Dataset Source, but `execute-next-action` has no bound option and current `[candidate_execution]` has no `max_samples`, so execution would not enforce the reviewed sample cap. Human approval is pending a decision on enforcing the bound before Gate 6.
 
 - Human approved the `abi_spectral_resunet_scout_v1` handoff conditionally on enforcing its requested sample cap. Added trusted `[candidate_execution] max_samples = 1024`; config loading confirms the cap, Candidate static validation remains valid, and `execute-open-actions --dry-run` shows exactly one pending `run_candidate` action. No execution or training occurred; Gate 6 remains a separate human execution decision.
+
+- Human Execution Gate 6 authorized execution of the single approved `abi_spectral_resunet_scout_v1` handoff. Proceeding with `execute-open-actions --max-actions 1` under the enforced 1,024-samples-per-source bound.
 <!-- SECTION:NOTES:END -->
