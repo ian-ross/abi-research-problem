@@ -5,14 +5,14 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 12:19'
+updated_date: '2026-08-10 13:51'
 labels:
   - harness
   - candidates
   - agent-boundary
   - canary
 dependencies:
-  - ABI-026
+  - ABI-027
 priority: high
 ---
 
@@ -99,4 +99,8 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 
 - ABI-026 completed: the refreshed Agent Control Boundary now exposes required curated artifact /research-problem/abi_contrail/profile/agent-campaign-context.v1.json with ABI snapshot, canonical MCAST 1.1/2.1, threshold/Artifact Filter, and manual-canary context. Boundary validation confirmed read-only index exposure with no training, ancillary, or baselines roots mounted.
 - ABI-025 remains paused before Human Execution Gate 4. The autonomy-step command has not been invoked; explicit human review/approval of the refreshed pre-Gate-4 boundary context is required before proceeding.
+
+- Human Execution Gate 4 authorized and invoked exactly once with no --execute-next-action. The step ingested one Candidate Submission, abi_spectral_resunet_scout_v1, and left next_action=run_candidate unexecuted; no Run was created.
+- Gate 5 candidate inspection: canonical and submitted Candidate copies match byte-for-byte; static validation with required proposal/README passes; manifest uses abi_16ch plus trusted combined_source_balanced/random_mirroring/focal_tversky/AdamW policies; model source is architecture-only and contains no longitude/latitude, data loading, loss, metric, filter, sampling, network, or persistence ownership. Exactly one primary handoff exists, with one agent_handoff_ingested ledger event and a pending run_candidate action.
+- Gate 5 boundary inspection found a blocking isolation failure: the Agent session had no /reference guest mount and executed tools against the host root, where /data, /net, and host repository paths were visible. It directly read only intended history/reference/provider snapshot content and the approved Runs root, and transcript review found no raw training/baselines/ancillary reads or unexpected writes, but the Agent Control Boundary was not actually enforced. Handoff execution is not approved; ABI-027 created as a blocker to make autonomy-step fail closed and prove isolation before retry.
 <!-- SECTION:NOTES:END -->
