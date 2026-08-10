@@ -72,6 +72,24 @@ Select the largest batch size that:
 
 Confirm that size with one epoch and 32 samples per Dataset Source before using it for a longer scientific Run. ABI-025 Gate 6 remains separately bounded to 1,024 samples per Dataset Source and 12 epochs.
 
+### Stage A/B results — 2026-08-10
+
+All five representative high-resolution residual scout profiles completed on the pinned A100 without GPU OOM or Resource Failure retry. Each Run used 64 combined training samples and 64 combined validation samples (32 per Dataset Source), one epoch, the validated runner `ml-autoresearch-runner:abi-research-problem-4ea195c26918b493-13b99524f1`, and the 2,539,889-parameter source model.
+
+| Batch | Run | Peak allocated | Peak reserved | Train samples/s | Train seconds | Validation samples/s | Run seconds | Retry |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | `run_20260810_195338_853320` | 386.1 MiB | 494.0 MiB | 20.20 | 3.168 | 0.968 | 70.49 | none |
+| 2 | `run_20260810_195523_8326f6` | 745.3 MiB | 936.0 MiB | 35.36 | 1.810 | 0.967 | 69.23 | none |
+| 4 | `run_20260810_195710_c261ae` | 1,454.3 MiB | 1,714.0 MiB | 46.27 | 1.383 | 0.978 | 68.07 | none |
+| 8 | `run_20260810_195845_df2123` | 2,873.3 MiB | 3,404.0 MiB | 52.45 | 1.220 | 0.980 | 67.80 | none |
+| 16 | `run_20260810_200027_cf7110` | 5,717.3 MiB | 7,042.0 MiB | 47.44 | 1.349 | 0.974 | 68.30 | none |
+
+**Isolated recommendation:** use batch size 8 for this profiled architecture class. It delivered the highest observed training throughput and reserved about 8.3% of the 40 GiB A100. Batch size 16 doubled reserved memory while reducing throughput by about 9.6%, so it is not preferred. Batch size 4 remains a conservative fallback for longer Runs or candidates with modestly larger activation envelopes.
+
+Validation/postprocessing dominated wall time at roughly 65–66 seconds and about 0.97 samples/s for every batch size. Consequently, isolated GPU memory arithmetic alone cannot justify parallel execution: the concurrency canary must also test CPU/DataLoader and provider-postprocessing contention. No OOM boundary was observed within the approved matrix; larger batch sizes are not authorized because batch 16 was already throughput-negative.
+
+At batch size 8, two isolated reserved-memory envelopes sum to 6,808 MiB (16.6% of A100 memory), and four sum to 13,616 MiB (33.2%). These are planning estimates only. The initial simultaneous-candidate recommendation remains **two**, contingent on the Stage C concurrent canary, with the Harness cap kept at one until that canary passes. Unknown or materially different architectures remain sequential.
+
 ### Stage C — concurrency characterization
 
 Run a two-candidate Experiment Batch containing closely comparable, one-epoch profiling candidates, with 32 samples per Dataset Source and the Stage B batch size. Keep both Runs pinned to GPU 0. Capture per-Run profiles plus external aggregate `nvidia-smi` memory/utilization at one-second intervals.
@@ -113,6 +131,40 @@ uv run ml-autoresearch run-candidate \
 ```
 
 Stop after the first GPU OOM. Do not invoke ABI-025 `execute-next-action` as part of the profile sweep; its separately approved 1,024-per-source scientific Run remains a later gate.
+
+After isolated-result review and the separate concurrency execution gate, prepare and execute the two-Run canary:
+
+```bash
+CANARY_ROOT=/tmp/abi029-concurrency-canary
+uv run python scripts/prepare_abi029_concurrency_canary.py \
+  --source candidates/abi_spectral_resunet_scout_v1 \
+  --output "$CANARY_ROOT" \
+  --batch-size 8 \
+  --candidate-count 2
+
+nvidia-smi \
+  --query-gpu=timestamp,index,name,memory.used,memory.free,utilization.gpu \
+  --format=csv -l 1 > /tmp/abi029-concurrency-nvidia-smi.csv &
+MONITOR_PID=$!
+
+uv run ml-autoresearch run-experiment-batch \
+  --batch "$CANARY_ROOT" \
+  --batches-root batches \
+  --runs-root /data/iross/abi-ml-autoresearch/runs \
+  --workspace-root . \
+  --max-samples 32 \
+  --max-parallel-runs 2 \
+  --max-prediction-samples 2 \
+  --backend docker \
+  --docker-image ml-autoresearch-runner:abi-research-problem-4ea195c26918b493-13b99524f1 \
+  --docker-enable-gpu \
+  --docker-gpu-device 0 \
+  --docker-rootless-container-root
+
+kill "$MONITOR_PID"
+```
+
+The monitor must be stopped on command failure as well; an operator shell should use a trap when launching the approved canary.
 
 ## Agent Experiment Batch policy
 
