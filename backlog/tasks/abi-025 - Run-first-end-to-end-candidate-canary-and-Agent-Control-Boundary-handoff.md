@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 10:53'
+updated_date: '2026-08-10 11:00'
 labels:
   - harness
   - candidates
@@ -25,7 +25,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A manually authored canary Candidate Experiment has a reviewed PROPOSAL.md and valid candidate contract without candidate-owned data loading, losses, metrics, filters, sampling, or augmentation
+- [x] #1 A manually authored canary Candidate Experiment has a reviewed PROPOSAL.md and valid candidate contract without candidate-owned data loading, losses, metrics, filters, sampling, or augmentation
 - [ ] #2 Static validation and a human-approved bounded Docker training/evaluation run succeed on the GPU/cluster environment
 - [ ] #3 The canary Run produces expected Run artifacts, Research Ledger/index records, provider-owned metrics, and an acceptance report tied to the canonical MCAST registry
 - [ ] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
@@ -71,4 +71,10 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Human Review Gate 0 approved.
 - Created the manually authored canary at candidates/abi025_manual_canary_v1 with manifest.yaml, model.py, PROPOSAL.md, and README.md; added the pending candidate to EXPERIMENT_INDEX.md.
 - Candidate model is architecture-only (approximately 1,169 parameters) and selects only trusted manifest options. No static Candidate validation, model import/smoke test, Docker execution, or training has been run. Awaiting Human Review Gate 1 approval for static validation only.
+
+- Human Review Gate 1 approved static validation.
+- Static Candidate validation passed with required PROPOSAL.md and README.md; the resolved manifest selects only goes_abi_contrail_segmentation allowlisted values.
+- Static source audit passed: exactly four allowed files, only torch imports, and no filesystem, network, data-loader, longitude, or latitude identifiers. The first audit helper invocation incorrectly classified from torch import nn as a top-level nn module; the corrected audit passed and no candidate change was needed.
+- Focused trusted-boundary validation passed: 21 tests covering provider spec, Candidate longitude/latitude boundary, workspace configuration, canonical baseline targets, and acceptance-gate reporting. Canonical MCAST registry verification passed again.
+- No Candidate model import, smoke test, Docker candidate execution, evaluation, or training has been run. Awaiting Human Execution Gate 2.
 <!-- SECTION:NOTES:END -->
