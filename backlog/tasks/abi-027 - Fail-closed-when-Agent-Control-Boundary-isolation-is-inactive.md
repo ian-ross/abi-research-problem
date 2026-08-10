@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-10 13:50'
-updated_date: '2026-08-10 14:00'
+updated_date: '2026-08-10 14:19'
 labels:
   - harness
   - agent-boundary
@@ -35,3 +35,11 @@ ABI-025 Gate 4 showed that the autonomy-step Pi process executed against the hos
 3. Add regression coverage for the exact ABI-025 agent-command launch shape, including proof that preflight failure prevents Agent invocation or handoff ingestion and that the isolated path exposes only declared mounts with exactly one writable handoff surface.
 4. Run focused uv-managed tests and a lightweight isolated smoke test (no training), update durable task notes/documentation as needed, and report residual risks before completing ABI-027.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Reproduced ABI-025 launch failure: non-interactive `pi --session-dir ../agent-sessions` ignored project `.pi/settings.json` because the workspace was not approved; `pi list` omitted pi-fort while `pi list --approve` loaded it. The prior session therefore used host built-in tools.
+- Live read-only probe with `pi --approve` loaded pi-fort and booted Gondolin: `/reference`, `/history`, `/docs`, and `/research-problem` were visible; host repository siblings and `/net` were absent; write attempts to declared read-only mounts failed while Agent Workspace writes succeeded.
+- Chosen fix is same-process, pre-model attestation rather than static config checks or a separate preflight VM: production Pi will explicitly load only the resolved pi-fort extension, run a pi-fort guest/VFS preflight before the model sees the prompt, and require a nonce-bound read-only attestation before handoff ingestion.
+<!-- SECTION:NOTES:END -->
