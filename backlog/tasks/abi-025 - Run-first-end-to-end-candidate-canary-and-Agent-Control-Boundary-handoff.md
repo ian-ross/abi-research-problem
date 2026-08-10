@@ -5,13 +5,14 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 11:24'
+updated_date: '2026-08-10 11:34'
 labels:
   - harness
   - candidates
   - agent-boundary
   - canary
-dependencies: []
+dependencies:
+  - ABI-026
 priority: high
 ---
 
@@ -91,4 +92,8 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Boundary preflight found no queued primary handoff files, no stale autonomy result/prompt files, and no open executable Harness actions. Default Pi command and ML_AUTORESEARCH_PI_FORT=/home/iross/code/pi-fort are available.
 - Agent Control Boundary has allow_egress=true, no /data mounts, and read-only /reference, /history (including external Runs root), /docs, /research-problem, and Harness package mounts. Only the Agent Workspace draft/submission/note/request/report/scratch locations are writable.
 - Gate 4 command is uv run ml-autoresearch autonomy-step --workspace-root . --agent-command "pi --session-dir ../agent-sessions" with no --execute-next-action. Expected safe outcome is exactly one ingested handoff; a Candidate Submission should leave next_action=run_candidate outstanding and unexecuted for Gate 5 review.
+
+- PAUSED before Human Execution Gate 4 by human decision. The autonomy-step command has not been invoked and no Agent-generated handoff exists.
+- Boundary review found that Agent-visible context is only partial: the manual canary Run exposes split counts, bounded qualitative samples, full-validation metrics, and selected MCAST 2.1 acceptance values, but the declared Dataset Profile Artifact is mostly generation instructions and the Agent cannot see complete curated MCAST 1.1/2.1 summaries, threshold/filter behavior, or canonical provenance.
+- Created blocking task ABI-026 to add a trusted, read-only Agent-visible ABI dataset and MCAST campaign context artifact without mounting raw training data, coordinates, model weights, or the baselines root. Resume ABI-025 Phase 2 preparation only after ABI-026 is complete and the refreshed boundary context is reviewed.
 <!-- SECTION:NOTES:END -->
