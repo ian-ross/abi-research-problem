@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 abi-baseline-evaluate = "abi_contrail.baseline_cli:main"
+abi-campaign-context = "abi_contrail.campaign_context:main"
 abi-baseline-targets = "abi_contrail.baseline_targets:main"
 abi-geographic-filter-smoke = "abi_contrail.ancillary_cli:smoke_main"
 abi-provision-natural-earth = "abi_contrail.ancillary_cli:provision_main"

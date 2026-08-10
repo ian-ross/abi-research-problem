@@ -66,6 +66,20 @@ def test_generate_dataset_profile_summarizes_mit_and_google_counts(tmp_path: Pat
     assert {source["dataset_source"] for source in profile["source_profiles"]} == {"mit", "google"}
     assert profile["combined_counts"]["split_counts"]["total"] == 4
     assert profile["combined_counts"]["positive_patch_count"] == 2
+    assert profile["schema_version"] == "dataset-profile.v1"
+    assert profile["abi_channels"]["source_channel_indices_included"] == list(range(16))
+    assert profile["abi_channels"]["source_channel_indices_excluded"] == [16, 17]
+    assert len(profile["abi_channels"]["semantics"]) == 16
+    assert profile["abi_channels"]["semantics"][0]["unit"] == "reflectance_factor"
+    assert profile["abi_channels"]["semantics"][6]["unit"] == "kelvin"
+    for source in profile["source_profiles"]:
+        assert set(source["mask_area_distribution"]["by_split"]) == {"train", "validation"}
+        assert "safe_channel_statistics" not in source
+        assert "inputs_zarr" not in source
+        assert "labels_zarr" not in source
+    for statistics in profile["abi_channels"]["safe_range_statistics_by_source"].values():
+        assert len(statistics["channels"]) == 16
+    assert str(tmp_path) not in json.dumps(profile)
     assert profile["split_policy"]["google_split_policy"] == "respect_google_scene_name_train_validation_provenance"
     assert profile["split_policy"]["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
     assert any("Longitude and latitude" in caveat for caveat in profile["projection_caveats"])

@@ -54,6 +54,10 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.evaluation_adapter is not None
     for document in spec.brief_documents:
         assert Path(str(document.path)).is_file()
+    assert {artifact.name for artifact in spec.dataset_profile_artifacts} == {
+        "goes_abi_initial_dataset_profile",
+        "goes_abi_agent_campaign_context_v1",
+    }
     for artifact in spec.dataset_profile_artifacts:
         assert Path(str(artifact.path)).is_file()
         assert artifact.role == "operator_generated_dataset_profile_or_generator"

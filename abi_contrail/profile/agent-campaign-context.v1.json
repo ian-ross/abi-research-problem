@@ -1,0 +1,1500 @@
+{
+  "abi_025_manual_canary": {
+    "acceptance_context": {
+      "aggregate_comparison": {
+        "baseline": 0.387284866824332,
+        "baseline_name": "mcast_detection_2_1",
+        "candidate": 1.4097154771250531e-13,
+        "candidate_beats_baseline": false,
+        "delta": -0.387284866824191,
+        "metric": "filtered/dice",
+        "target_registry_id": "abi-mcast-working-validation-v1"
+      },
+      "artifact_filter_dependence": {
+        "filtered_minus_raw_limit": 0.2,
+        "filtered_minus_raw_primary": 0.0,
+        "filtered_primary": 1.4097154771250531e-13,
+        "flagged": false,
+        "raw_metric": "raw/dice",
+        "raw_predicted_positive_pixels": 0.0,
+        "raw_primary": 1.4097154771250531e-13,
+        "reasons": [],
+        "removed_fraction": null,
+        "removed_fraction_limit": 0.5,
+        "removed_pixels": 0.0
+      },
+      "best_baseline": {
+        "name": "mcast_detection_2_1",
+        "selection_metric": "filtered/dice",
+        "selection_value": 0.387284866824332,
+        "target_registry_id": "abi-mcast-working-validation-v1"
+      },
+      "canonical_registry_id": "abi-mcast-working-validation-v1",
+      "connectivity_comparison": {
+        "baseline": 0.19251833856105804,
+        "candidate": 0.6486399173736572,
+        "delta": 0.4561215788125992,
+        "metric": "filtered/contrail_connectivity"
+      },
+      "dataset_source_failures": [
+        {
+          "absolute_floor": 0.1,
+          "baseline": 0.4161361411632246,
+          "candidate": 2.0453369385801586e-13,
+          "metric": "source/mit/filtered/dice",
+          "relative_floor": 0.2080680705816123,
+          "severity": "fail",
+          "source": "mit"
+        },
+        {
+          "absolute_floor": 0.1,
+          "baseline": 0.34367893760867146,
+          "candidate": 4.5362583126913e-13,
+          "metric": "source/google/filtered/dice",
+          "relative_floor": 0.17183946880433573,
+          "severity": "fail",
+          "source": "google"
+        }
+      ],
+      "flags": [
+        {
+          "baseline": 0.387284866824332,
+          "candidate": 1.4097154771250531e-13,
+          "id": "aggregate_below_best_baseline",
+          "message": "candidate filtered/dice is below the best available Baseline Segmenter",
+          "severity": "fail"
+        },
+        {
+          "baseline": 0.4443817904233172,
+          "candidate": 1.4097154771250531e-13,
+          "delta": -0.4443817904231762,
+          "id": "filtered_recall_regression",
+          "message": "candidate filtered recall regressed beyond configured tolerance",
+          "metric": "filtered/recall",
+          "severity": "fail"
+        },
+        {
+          "baseline": 0.4161361411632246,
+          "candidate": 2.0453369385801586e-13,
+          "id": "dataset_source_catastrophic_failure",
+          "message": "candidate has a Dataset Source-specific catastrophic failure on mit",
+          "metric": "source/mit/filtered/dice",
+          "severity": "fail",
+          "source": "mit"
+        },
+        {
+          "baseline": 0.34367893760867146,
+          "candidate": 4.5362583126913e-13,
+          "id": "dataset_source_catastrophic_failure",
+          "message": "candidate has a Dataset Source-specific catastrophic failure on google",
+          "metric": "source/google/filtered/dice",
+          "severity": "fail",
+          "source": "google"
+        }
+      ],
+      "human_review_note": "This report is an acceptance-gate input only; final candidate promotion remains a human-reviewed decision.",
+      "human_review_required": true,
+      "overall_status": "gate_flags_present",
+      "promotion_decision": "human_review_required",
+      "recall_regression": {
+        "allowed_floor": 0.3943817904233172,
+        "baseline": 0.4443817904233172,
+        "candidate": 1.4097154771250531e-13,
+        "delta": -0.4443817904231762,
+        "flagged": true,
+        "metric": "filtered/recall",
+        "tolerance": 0.05
+      }
+    },
+    "candidate_name": "abi025_manual_canary_v1",
+    "post_run_evaluation": {
+      "aggregate_metrics": {
+        "artifact_filtered": {
+          "contrail_connectivity": 0.6486399173736572,
+          "dice": 1.4097154771250531e-13,
+          "precision": 1.0,
+          "recall": 1.4097154771250531e-13
+        },
+        "by_dataset_source": {
+          "google": {
+            "artifact_filtered": {
+              "contrail_connectivity": 0.7025862336158752,
+              "dice": 4.5362583126913e-13,
+              "precision": 1.0,
+              "recall": 4.5362583126913e-13
+            },
+            "raw": {
+              "contrail_connectivity": 0.7025862336158752,
+              "dice": 4.5362583126913e-13,
+              "precision": 1.0,
+              "recall": 4.5362583126913e-13
+            }
+          },
+          "mit": {
+            "artifact_filtered": {
+              "contrail_connectivity": 0.5673701167106628,
+              "dice": 2.0453369385801586e-13,
+              "precision": 1.0,
+              "recall": 2.0453369385801586e-13
+            },
+            "raw": {
+              "contrail_connectivity": 0.5673701167106628,
+              "dice": 2.0453369385801586e-13,
+              "precision": 1.0,
+              "recall": 2.0453369385801586e-13
+            }
+          }
+        },
+        "raw": {
+          "contrail_connectivity": 0.6486399173736572,
+          "dice": 1.4097154771250531e-13,
+          "precision": 1.0,
+          "recall": 1.4097154771250531e-13
+        }
+      },
+      "completed_at": "2026-08-10T11:11:19.570075Z",
+      "id": "eval_20260810_110644_c0d61d",
+      "mode": "whole_validation_failure_analysis",
+      "sample_count": 3088,
+      "status": "completed",
+      "threshold": 0.5,
+      "threshold_behavior": {
+        "best_by_artifact_filtered_dice": {
+          "dice": 1.4097154771250531e-13,
+          "threshold": 0.05
+        },
+        "best_by_raw_dice": {
+          "dice": 1.4097154771250531e-13,
+          "threshold": 0.05
+        },
+        "evaluated_threshold_count": 19,
+        "evaluated_threshold_max": 0.95,
+        "evaluated_threshold_min": 0.05,
+        "interpretation": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
+        "precision_recall_balance_artifact_filtered": {
+          "absolute_precision_recall_gap": 0.999999999999859,
+          "precision": 1.0,
+          "recall": 1.4097154771250531e-13,
+          "threshold": 0.05
+        },
+        "precision_recall_balance_raw": {
+          "absolute_precision_recall_gap": 0.999999999999859,
+          "precision": 1.0,
+          "recall": 1.4097154771250531e-13,
+          "threshold": 0.05
+        }
+      }
+    },
+    "purpose": "manual end-to-end lifecycle canary; scientific quality was not the success criterion",
+    "run": {
+      "bounded_sample_counts": {
+        "train": 16,
+        "validation": 16
+      },
+      "created_at": "2026-08-10T11:05:32.079089Z",
+      "id": "run_20260810_110532_b465cf",
+      "input_mode": "abi_16ch",
+      "status": "completed",
+      "training_policy": {
+        "early_stopping": {
+          "enabled": false,
+          "epochs_completed": 1,
+          "min_delta": 0.0,
+          "patience": 10,
+          "restore_best_checkpoint": true,
+          "restored_best_checkpoint": false,
+          "selection_metric": "val/filtered_dice",
+          "selection_mode": "max",
+          "stop_reason": "max_epochs_reached",
+          "stopped_early": false
+        },
+        "scheduler": {
+          "factor": 0.5,
+          "min_lr": 1e-06,
+          "patience": 3,
+          "policy": "constant_lr"
+        }
+      },
+      "updated_at": "2026-08-10T11:06:02.758013Z"
+    },
+    "task_id": "ABI-025"
+  },
+  "artifact_type": "agent_campaign_context",
+  "canonical_mcast": {
+    "baselines": {
+      "mcast_detection_1_1": {
+        "aggregate_metrics": {
+          "artifact_filtered": {
+            "contrail_connectivity": 0.5421006083488464,
+            "dice": 0.3842483398516495,
+            "precision": 0.45305607462331265,
+            "recall": 0.3335852024986737
+          },
+          "by_dataset_source": {
+            "google": {
+              "artifact_filtered": {
+                "contrail_connectivity": 0.5331937670707703,
+                "dice": 0.41001050086236884,
+                "precision": 0.4370500826669831,
+                "recall": 0.3861217713184244
+              },
+              "raw": {
+                "contrail_connectivity": 0.5325483679771423,
+                "dice": 0.4170362084193307,
+                "precision": 0.43364890610717377,
+                "recall": 0.40164938352276675
+              }
+            },
+            "mit": {
+              "artifact_filtered": {
+                "contrail_connectivity": 0.5555186867713928,
+                "dice": 0.3711472534579802,
+                "precision": 0.46257319582609385,
+                "recall": 0.3098971809122387
+              },
+              "raw": {
+                "contrail_connectivity": 0.5586241483688354,
+                "dice": 0.3882591131555813,
+                "precision": 0.46246511982961724,
+                "recall": 0.3345741710762083
+              }
+            }
+          },
+          "raw": {
+            "contrail_connectivity": 0.5429516434669495,
+            "dice": 0.39790160291596094,
+            "precision": 0.4519188370468279,
+            "recall": 0.3554188758083865
+          }
+        },
+        "artifact_checksums": {
+          "aggregate_metrics_sha256": "1931764c5cceff663c2ba1fd7156d502cc2ca6a2b5df37a50aa59dd31e3375a3",
+          "aggregate_metrics_size_bytes": 2615,
+          "threshold_sweep_sha256": "e55defe26f5345a30f0c915bcc2fa5a7b58e86eca2080066ff0b6d98fd83c4b3",
+          "threshold_sweep_size_bytes": 20651
+        },
+        "artifact_filter_effect": {
+          "filtered_minus_raw": {
+            "contrail_connectivity": -0.0008510351181030273,
+            "dice": -0.013653263064311416,
+            "precision": 0.001137237576484762,
+            "recall": -0.02183367330971281
+          },
+          "removed_area_km2": 142344.0,
+          "removed_pixel_counts": {
+            "geographic_feature_filter": 35586,
+            "scanline_artifact_filter": 0
+          }
+        },
+        "completed_at": "2026-08-09T13:27:44.543912Z",
+        "default_threshold": 0.42,
+        "name": "mcast_detection_1_1",
+        "sample_count": 3088,
+        "threshold_behavior": {
+          "best_by_artifact_filtered_dice": {
+            "dice": 0.388889746933333,
+            "threshold": 0.15
+          },
+          "best_by_raw_dice": {
+            "dice": 0.4014609265743011,
+            "threshold": 0.2
+          },
+          "evaluated_threshold_count": 19,
+          "evaluated_threshold_max": 0.95,
+          "evaluated_threshold_min": 0.05,
+          "interpretation": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
+          "precision_recall_balance_artifact_filtered": {
+            "absolute_precision_recall_gap": 0.00571934895494991,
+            "precision": 0.3913470177226491,
+            "recall": 0.3856276687676992,
+            "threshold": 0.1
+          },
+          "precision_recall_balance_raw": {
+            "absolute_precision_recall_gap": 0.008076713837326277,
+            "precision": 0.40550088171760795,
+            "recall": 0.3974241678802817,
+            "threshold": 0.15
+          }
+        },
+        "version": "1.1"
+      },
+      "mcast_detection_2_1": {
+        "aggregate_metrics": {
+          "artifact_filtered": {
+            "contrail_connectivity": 0.19251833856105804,
+            "dice": 0.387284866824332,
+            "precision": 0.3431897261258995,
+            "recall": 0.4443817904233172
+          },
+          "by_dataset_source": {
+            "google": {
+              "artifact_filtered": {
+                "contrail_connectivity": 0.15441294014453888,
+                "dice": 0.34367893760867146,
+                "precision": 0.26039854869193824,
+                "recall": 0.5052756684178868
+              },
+              "raw": {
+                "contrail_connectivity": 0.15648886561393738,
+                "dice": 0.34898543047164743,
+                "precision": 0.26112386070107607,
+                "recall": 0.5259564700654464
+              }
+            },
+            "mit": {
+              "artifact_filtered": {
+                "contrail_connectivity": 0.24992382526397705,
+                "dice": 0.4161361411632246,
+                "precision": 0.4153496939516893,
+                "recall": 0.41692557223426124
+              },
+              "raw": {
+                "contrail_connectivity": 0.25643810629844666,
+                "dice": 0.43245936071366664,
+                "precision": 0.4146440797574745,
+                "recall": 0.45187424450378044
+              }
+            }
+          },
+          "raw": {
+            "contrail_connectivity": 0.19636498391628265,
+            "dice": 0.3995654138709716,
+            "precision": 0.3448613333415901,
+            "recall": 0.4748964916411661
+          }
+        },
+        "artifact_checksums": {
+          "aggregate_metrics_sha256": "364ebff994ab3577bcc27e0e6197adc21f103ca5040600a584b46719d3c91ff9",
+          "aggregate_metrics_size_bytes": 2623,
+          "threshold_sweep_sha256": "ecaabce37aa257242bfa7bb23046fba26ac476d64aa04fed9e092779bdbad87e",
+          "threshold_sweep_size_bytes": 20651
+        },
+        "artifact_filter_effect": {
+          "filtered_minus_raw": {
+            "contrail_connectivity": -0.0038466453552246094,
+            "dice": -0.012280547046639612,
+            "precision": -0.001671607215690596,
+            "recall": -0.030514701217848883
+          },
+          "removed_area_km2": 233260.0,
+          "removed_pixel_counts": {
+            "geographic_feature_filter": 58315,
+            "scanline_artifact_filter": 0
+          }
+        },
+        "completed_at": "2026-08-09T13:31:40.941330Z",
+        "default_threshold": 0.314,
+        "name": "mcast_detection_2_1",
+        "sample_count": 3088,
+        "threshold_behavior": {
+          "best_by_artifact_filtered_dice": {
+            "dice": 0.388031153383798,
+            "threshold": 0.5
+          },
+          "best_by_raw_dice": {
+            "dice": 0.40071537797029205,
+            "threshold": 0.55
+          },
+          "evaluated_threshold_count": 19,
+          "evaluated_threshold_max": 0.95,
+          "evaluated_threshold_min": 0.05,
+          "interpretation": "Diagnostic artifact only; val/filtered_dice and aggregate filtered/dice selection remain unchanged.",
+          "precision_recall_balance_artifact_filtered": {
+            "absolute_precision_recall_gap": 0.006188928664225268,
+            "precision": 0.3843295985329134,
+            "recall": 0.3781406698686881,
+            "threshold": 0.8
+          },
+          "precision_recall_balance_raw": {
+            "absolute_precision_recall_gap": 0.007888498800432298,
+            "precision": 0.3927986223902749,
+            "recall": 0.3849101235898426,
+            "threshold": 0.85
+          }
+        },
+        "version": "2.1"
+      }
+    },
+    "comparison_modes": {
+      "artifact_filtered": {
+        "artifact_filters": [
+          {
+            "active": true,
+            "bundle_id": "natural-earth-vector-v5.1.2-abi-geographic-filter",
+            "name": "geographic_feature_filter",
+            "required": true,
+            "sources": [
+              {
+                "id": "natural_earth_10m_coastline",
+                "sha256": "6f75ae0e0de157b14946e2255eb1f5486d9a13819032e26d4610852d296788f6",
+                "size_bytes": 10110735,
+                "version": "5.1.2"
+              },
+              {
+                "id": "natural_earth_10m_rivers_north_america",
+                "sha256": "dcd2348655a5f3d0ea7be35024073ab24f09115d2e4efb77e7bc0a33567db682",
+                "size_bytes": 8734704,
+                "version": "5.1.2"
+              }
+            ]
+          },
+          {
+            "active": true,
+            "max_probability_std": 0.03,
+            "min_length_pixels": 128,
+            "name": "scanline_artifact_filter"
+          }
+        ],
+        "description": "Provider metrics after the ordered Geographic Feature and Scanline Artifact Filter pipeline.",
+        "metric_namespace": "filtered"
+      },
+      "unfiltered": {
+        "artifact_filters": [],
+        "description": "Provider metrics before Geographic Feature and Scanline Artifact Filters.",
+        "metric_namespace": "raw"
+      }
+    },
+    "provenance": {
+      "harness_git": {
+        "commit": "2698af8dde4401a5b1e2fa60331ec52f55c45430",
+        "dirty": false
+      },
+      "workspace_git": {
+        "commit": "85c48e72160dc40c5b6597abbc43ec7d571b8349",
+        "dirty": true
+      }
+    },
+    "registry": {
+      "generated_at": "2026-08-09T20:58:06.543328Z",
+      "id": "abi-mcast-working-validation-v1",
+      "schema": "abi_canonical_baseline_targets/v1",
+      "sha256": "dc7de95ce72ffdddbd6a8a58832ed63d3a00737bdebdc29a5fa52c28c97102a1"
+    },
+    "sample_set": {
+      "dataset_source_counts": {
+        "google": 1856,
+        "mit": 1232
+      },
+      "sample_count": 3088,
+      "sample_ids_sha256": "42982774c168d6b9f24205de66972035e6eaa3a892c4752bc83230ad95a9c290"
+    }
+  },
+  "dataset_profile": {
+    "abi_channels": {
+      "safe_range_statistics_by_source": {
+        "google": {
+          "channels": [
+            {
+              "abi_channel": 1,
+              "finite_value_count": 32768,
+              "max": 1.019046664237976,
+              "mean": 0.12353438138961792,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.6673009395599365,
+              "sampled_value_count": 32768,
+              "source_channel_index": 0
+            },
+            {
+              "abi_channel": 2,
+              "finite_value_count": 32768,
+              "max": 0.9101578593254089,
+              "mean": 0.09342138469219208,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.6060311794281006,
+              "sampled_value_count": 32768,
+              "source_channel_index": 1
+            },
+            {
+              "abi_channel": 3,
+              "finite_value_count": 32768,
+              "max": 0.9793641567230225,
+              "mean": 0.12747645378112793,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.6882532835006714,
+              "sampled_value_count": 32768,
+              "source_channel_index": 2
+            },
+            {
+              "abi_channel": 4,
+              "finite_value_count": 32768,
+              "max": 0.5542851686477661,
+              "mean": 0.022221330553293228,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.3015870153903961,
+              "sampled_value_count": 32768,
+              "source_channel_index": 3
+            },
+            {
+              "abi_channel": 5,
+              "finite_value_count": 32768,
+              "max": 0.5625391602516174,
+              "mean": 0.06958791613578796,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.43301546573638916,
+              "sampled_value_count": 32768,
+              "source_channel_index": 4
+            },
+            {
+              "abi_channel": 6,
+              "finite_value_count": 32768,
+              "max": 0.4558725655078888,
+              "mean": 0.05630333721637726,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.32793620228767395,
+              "sampled_value_count": 32768,
+              "source_channel_index": 5
+            },
+            {
+              "abi_channel": 7,
+              "finite_value_count": 32768,
+              "max": 316.4066467285156,
+              "mean": 281.43896484375,
+              "min": 197.30999755859375,
+              "nonfinite_value_count": 0,
+              "p01": 220.66049194335938,
+              "p99": 306.5714111328125,
+              "sampled_value_count": 32768,
+              "source_channel_index": 6
+            },
+            {
+              "abi_channel": 8,
+              "finite_value_count": 32768,
+              "max": 248.23764038085938,
+              "mean": 232.48602294921875,
+              "min": 198.72079467773438,
+              "nonfinite_value_count": 0,
+              "p01": 207.67776489257812,
+              "p99": 245.49139404296875,
+              "sampled_value_count": 32768,
+              "source_channel_index": 7
+            },
+            {
+              "abi_channel": 9,
+              "finite_value_count": 32768,
+              "max": 258.74749755859375,
+              "mean": 240.39935302734375,
+              "min": 198.32960510253906,
+              "nonfinite_value_count": 0,
+              "p01": 207.8982391357422,
+              "p99": 255.61441040039062,
+              "sampled_value_count": 32768,
+              "source_channel_index": 8
+            },
+            {
+              "abi_channel": 10,
+              "finite_value_count": 32768,
+              "max": 266.5997314453125,
+              "mean": 248.3890838623047,
+              "min": 198.30142211914062,
+              "nonfinite_value_count": 0,
+              "p01": 208.3296661376953,
+              "p99": 264.6041564941406,
+              "sampled_value_count": 32768,
+              "source_channel_index": 9
+            },
+            {
+              "abi_channel": 11,
+              "finite_value_count": 32768,
+              "max": 304.8922119140625,
+              "mean": 269.68988037109375,
+              "min": 198.00750732421875,
+              "nonfinite_value_count": 0,
+              "p01": 209.06634521484375,
+              "p99": 294.5286865234375,
+              "sampled_value_count": 32768,
+              "source_channel_index": 10
+            },
+            {
+              "abi_channel": 12,
+              "finite_value_count": 32768,
+              "max": 279.1072998046875,
+              "mean": 253.91018676757812,
+              "min": 212.59793090820312,
+              "nonfinite_value_count": 0,
+              "p01": 218.1285400390625,
+              "p99": 273.7184753417969,
+              "sampled_value_count": 32768,
+              "source_channel_index": 11
+            },
+            {
+              "abi_channel": 13,
+              "finite_value_count": 32768,
+              "max": 310.7290344238281,
+              "mean": 271.47100830078125,
+              "min": 199.12982177734375,
+              "nonfinite_value_count": 0,
+              "p01": 209.33106994628906,
+              "p99": 298.2540283203125,
+              "sampled_value_count": 32768,
+              "source_channel_index": 12
+            },
+            {
+              "abi_channel": 14,
+              "finite_value_count": 32768,
+              "max": 311.35345458984375,
+              "mean": 270.0129089355469,
+              "min": 198.11582946777344,
+              "nonfinite_value_count": 0,
+              "p01": 208.11090087890625,
+              "p99": 297.5279235839844,
+              "sampled_value_count": 32768,
+              "source_channel_index": 13
+            },
+            {
+              "abi_channel": 15,
+              "finite_value_count": 32768,
+              "max": 306.2002258300781,
+              "mean": 267.27215576171875,
+              "min": 197.620849609375,
+              "nonfinite_value_count": 0,
+              "p01": 207.3292694091797,
+              "p99": 294.1689453125,
+              "sampled_value_count": 32768,
+              "source_channel_index": 14
+            },
+            {
+              "abi_channel": 16,
+              "finite_value_count": 32768,
+              "max": 278.37982177734375,
+              "mean": 256.85333251953125,
+              "min": 198.18112182617188,
+              "nonfinite_value_count": 0,
+              "p01": 207.93055725097656,
+              "p99": 276.89263916015625,
+              "sampled_value_count": 32768,
+              "source_channel_index": 15
+            }
+          ],
+          "sampled_pixel_count": 32768,
+          "sampled_values_sha256": "c474289db596638c83d0ff6238ab9b4cb02f529f219b18d322aeff100d0e8154",
+          "selected_records_sha256": "36073cf5bb81a5dbdc6a5e74897b84587b0257c38f553b8796075ee2eafcd292",
+          "selection_record_count": 32
+        },
+        "mit": {
+          "channels": [
+            {
+              "abi_channel": 1,
+              "finite_value_count": 32768,
+              "max": 1.1009513139724731,
+              "mean": 0.1908954381942749,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.7435059547424316,
+              "sampled_value_count": 32768,
+              "source_channel_index": 0
+            },
+            {
+              "abi_channel": 2,
+              "finite_value_count": 32768,
+              "max": 1.0644434690475464,
+              "mean": 0.16271470487117767,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.714121401309967,
+              "sampled_value_count": 32768,
+              "source_channel_index": 1
+            },
+            {
+              "abi_channel": 3,
+              "finite_value_count": 32768,
+              "max": 1.029205322265625,
+              "mean": 0.18562981486320496,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.7262241840362549,
+              "sampled_value_count": 32768,
+              "source_channel_index": 2
+            },
+            {
+              "abi_channel": 4,
+              "finite_value_count": 32768,
+              "max": 0.5809518098831177,
+              "mean": 0.03145676851272583,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.28742340207099915,
+              "sampled_value_count": 32768,
+              "source_channel_index": 3
+            },
+            {
+              "abi_channel": 5,
+              "finite_value_count": 32768,
+              "max": 0.5680091977119446,
+              "mean": 0.10705041885375977,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.43565988540649414,
+              "sampled_value_count": 32768,
+              "source_channel_index": 4
+            },
+            {
+              "abi_channel": 6,
+              "finite_value_count": 32768,
+              "max": 0.4457138478755951,
+              "mean": 0.09425989538431168,
+              "min": 0.0,
+              "nonfinite_value_count": 0,
+              "p01": 0.0,
+              "p99": 0.3501583933830261,
+              "sampled_value_count": 32768,
+              "source_channel_index": 5
+            },
+            {
+              "abi_channel": 7,
+              "finite_value_count": 32768,
+              "max": 313.69573974609375,
+              "mean": 277.4609680175781,
+              "min": 197.30999755859375,
+              "nonfinite_value_count": 0,
+              "p01": 228.04673767089844,
+              "p99": 305.4975280761719,
+              "sampled_value_count": 32768,
+              "source_channel_index": 6
+            },
+            {
+              "abi_channel": 8,
+              "finite_value_count": 32768,
+              "max": 255.37786865234375,
+              "mean": 233.86199951171875,
+              "min": 200.36854553222656,
+              "nonfinite_value_count": 0,
+              "p01": 214.73348999023438,
+              "p99": 251.70211791992188,
+              "sampled_value_count": 32768,
+              "source_channel_index": 7
+            },
+            {
+              "abi_channel": 9,
+              "finite_value_count": 32768,
+              "max": 266.3685302734375,
+              "mean": 241.71310424804688,
+              "min": 199.93849182128906,
+              "nonfinite_value_count": 0,
+              "p01": 215.1978759765625,
+              "p99": 262.896728515625,
+              "sampled_value_count": 32768,
+              "source_channel_index": 8
+            },
+            {
+              "abi_channel": 10,
+              "finite_value_count": 32768,
+              "max": 271.83807373046875,
+              "mean": 248.48129272460938,
+              "min": 199.79811096191406,
+              "nonfinite_value_count": 0,
+              "p01": 215.77215576171875,
+              "p99": 269.24383544921875,
+              "sampled_value_count": 32768,
+              "source_channel_index": 9
+            },
+            {
+              "abi_channel": 11,
+              "finite_value_count": 32768,
+              "max": 301.0841979980469,
+              "mean": 265.46112060546875,
+              "min": 199.833251953125,
+              "nonfinite_value_count": 0,
+              "p01": 216.68234252929688,
+              "p99": 294.3028564453125,
+              "sampled_value_count": 32768,
+              "source_channel_index": 10
+            },
+            {
+              "abi_channel": 12,
+              "finite_value_count": 32768,
+              "max": 275.56201171875,
+              "mean": 246.65151977539062,
+              "min": 212.88153076171875,
+              "nonfinite_value_count": 0,
+              "p01": 220.36631774902344,
+              "p99": 271.59130859375,
+              "sampled_value_count": 32768,
+              "source_channel_index": 11
+            },
+            {
+              "abi_channel": 13,
+              "finite_value_count": 32768,
+              "max": 304.8909912109375,
+              "mean": 267.16455078125,
+              "min": 200.29742431640625,
+              "nonfinite_value_count": 0,
+              "p01": 216.8831787109375,
+              "p99": 297.1982116699219,
+              "sampled_value_count": 32768,
+              "source_channel_index": 12
+            },
+            {
+              "abi_channel": 14,
+              "finite_value_count": 32768,
+              "max": 303.5728454589844,
+              "mean": 266.453857421875,
+              "min": 199.61209106445312,
+              "nonfinite_value_count": 0,
+              "p01": 216.06211853027344,
+              "p99": 297.04913330078125,
+              "sampled_value_count": 32768,
+              "source_channel_index": 13
+            },
+            {
+              "abi_channel": 15,
+              "finite_value_count": 32768,
+              "max": 299.11248779296875,
+              "mean": 264.6114501953125,
+              "min": 199.05032348632812,
+              "nonfinite_value_count": 0,
+              "p01": 215.13973999023438,
+              "p99": 294.4268493652344,
+              "sampled_value_count": 32768,
+              "source_channel_index": 14
+            },
+            {
+              "abi_channel": 16,
+              "finite_value_count": 32768,
+              "max": 279.7017822265625,
+              "mean": 254.37353515625,
+              "min": 200.21914672851562,
+              "nonfinite_value_count": 0,
+              "p01": 215.28359985351562,
+              "p99": 278.37982177734375,
+              "sampled_value_count": 32768,
+              "source_channel_index": 15
+            }
+          ],
+          "sampled_pixel_count": 32768,
+          "sampled_values_sha256": "248ddf2bf40f149d2228361eeb2a77eda68a1b57cf866184717dfebb2e03ffb3",
+          "selected_records_sha256": "229265f489683fc96fa9071db6490a4319db799af4f805feab5f13f6f9812eea",
+          "selection_record_count": 32
+        }
+      },
+      "semantics": [
+        {
+          "abi_channel": 1,
+          "central_wavelength_micrometers": 0.47,
+          "common_name": "Blue",
+          "source_channel_index": 0,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 2,
+          "central_wavelength_micrometers": 0.64,
+          "common_name": "Red",
+          "source_channel_index": 1,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 3,
+          "central_wavelength_micrometers": 0.865,
+          "common_name": "Veggie",
+          "source_channel_index": 2,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 4,
+          "central_wavelength_micrometers": 1.378,
+          "common_name": "Cirrus",
+          "source_channel_index": 3,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 5,
+          "central_wavelength_micrometers": 1.61,
+          "common_name": "Snow/Ice",
+          "source_channel_index": 4,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 6,
+          "central_wavelength_micrometers": 2.25,
+          "common_name": "Cloud Particle Size",
+          "source_channel_index": 5,
+          "unit": "reflectance_factor"
+        },
+        {
+          "abi_channel": 7,
+          "central_wavelength_micrometers": 3.9,
+          "common_name": "Shortwave Window",
+          "source_channel_index": 6,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 8,
+          "central_wavelength_micrometers": 6.19,
+          "common_name": "Upper-level Water Vapor",
+          "source_channel_index": 7,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 9,
+          "central_wavelength_micrometers": 6.95,
+          "common_name": "Mid-level Water Vapor",
+          "source_channel_index": 8,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 10,
+          "central_wavelength_micrometers": 7.34,
+          "common_name": "Lower-level Water Vapor",
+          "source_channel_index": 9,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 11,
+          "central_wavelength_micrometers": 8.5,
+          "common_name": "Cloud-top Phase",
+          "source_channel_index": 10,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 12,
+          "central_wavelength_micrometers": 9.61,
+          "common_name": "Ozone",
+          "source_channel_index": 11,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 13,
+          "central_wavelength_micrometers": 10.35,
+          "common_name": "Clean Longwave Window",
+          "source_channel_index": 12,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 14,
+          "central_wavelength_micrometers": 11.2,
+          "common_name": "Longwave Window",
+          "source_channel_index": 13,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 15,
+          "central_wavelength_micrometers": 12.3,
+          "common_name": "Dirty Longwave Window",
+          "source_channel_index": 14,
+          "unit": "kelvin"
+        },
+        {
+          "abi_channel": 16,
+          "central_wavelength_micrometers": 13.3,
+          "common_name": "CO2 Longwave Infrared",
+          "source_channel_index": 15,
+          "unit": "kelvin"
+        }
+      ],
+      "source_channel_indices_excluded": [
+        16,
+        17
+      ],
+      "source_channel_indices_included": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "statistics_scope": {
+        "max_pixels_per_record": 1024,
+        "max_records_per_split": 16,
+        "nonfinite_values_excluded_from_ranges": true,
+        "selection": "deterministic evenly-spaced records within each split"
+      }
+    },
+    "artifact_type": "dataset_profile",
+    "combined_counts": {
+      "negative_patch_count": 16078,
+      "positive_patch_count": 12467,
+      "positive_patch_prevalence": 0.436748992818357,
+      "split_counts": {
+        "total": 28545,
+        "train": 25457,
+        "validation": 3088
+      }
+    },
+    "known_caveats": [
+      "Counts summarize the local mounted dataset snapshot and may differ from later downloaded or regenerated snapshots.",
+      "MIT full-scene arrays are split by whole scene before 256x256 windowing to avoid scene leakage.",
+      "Google patch train/validation membership is treated as provenance encoded in scene/file names, not reshuffled.",
+      "Projection metadata is not candidate input; candidate models receive only provider-approved ABI channels and optional solar geometry input."
+    ],
+    "positivity": {
+      "by_source": {
+        "google": {
+          "by_split": {
+            "train": {
+              "negative_patch_count": 11270,
+              "positive_patch_count": 9259,
+              "positive_patch_prevalence": 0.4510205075746505,
+              "sample_count": 20529
+            },
+            "validation": {
+              "negative_patch_count": 1304,
+              "positive_patch_count": 552,
+              "positive_patch_prevalence": 0.2974137931034483,
+              "sample_count": 1856
+            }
+          },
+          "negative_patch_count": 12574,
+          "positive_patch_count": 9811,
+          "positive_patch_prevalence": 0.43828456555729284,
+          "sample_count": 22385
+        },
+        "mit": {
+          "by_split": {
+            "train": {
+              "negative_patch_count": 2805,
+              "positive_patch_count": 2123,
+              "positive_patch_prevalence": 0.43080357142857145,
+              "sample_count": 4928
+            },
+            "validation": {
+              "negative_patch_count": 699,
+              "positive_patch_count": 533,
+              "positive_patch_prevalence": 0.43262987012987014,
+              "sample_count": 1232
+            }
+          },
+          "negative_patch_count": 3504,
+          "positive_patch_count": 2656,
+          "positive_patch_prevalence": 0.43116883116883115,
+          "sample_count": 6160
+        }
+      },
+      "definition": "positive ABI Patch has any nonzero Contrail Mask pixel"
+    },
+    "projection_caveats": [
+      "GOES ABI source pixels are geostationary satellite observations; pixel size and viewing geometry vary across the disk.",
+      "MIT full-scene sources may be reprojected/windowed before ABI Patch indexing; profile counts should record the local generation snapshot.",
+      "Google 256x256 patches are already patch products; train/validation provenance is encoded by source names rather than recomputed from map geometry.",
+      "Longitude and latitude, when present in source arrays, are trusted-provider context only for diagnostics/Artifact Filters and are forbidden candidate inputs."
+    ],
+    "provenance": {
+      "data_config_scope": {
+        "logical_data_root": "training",
+        "sources": [
+          {
+            "inputs": "mit/inputs.zarr",
+            "labels": "mit/labels.zarr",
+            "layout": "mit",
+            "metadata": "mit/metadata.parquet",
+            "patch_size": 256,
+            "split_seed": 20260712,
+            "stride": 256,
+            "val_fraction": 0.2
+          },
+          {
+            "inputs": "google/inputs.zarr",
+            "labels": "google/labels.zarr",
+            "layout": "google",
+            "metadata": "google/metadata.parquet"
+          }
+        ]
+      },
+      "dataset_identity": "GOES ABI Contrail Segmentation on ABI Patches from MIT and Google Dataset Sources",
+      "generation_command": "uv run python -m abi_contrail.profile --data-config <CONFIG_JSON> --output <OUTPUT_JSON>",
+      "generation_timestamp": "2026-08-10T12:18:27.231479Z",
+      "generation_version": "abi_contrail.profile.v1",
+      "research_problem_id": "goes_abi_contrail_segmentation",
+      "research_problem_version": "v0",
+      "source_policy": "trusted Research Problem package-generated",
+      "split_scope": "Google source provenance plus MIT deterministic whole-scene split before windowing"
+    },
+    "schema_version": "dataset-profile.v1",
+    "source_profiles": [
+      {
+        "dataset_source": "mit",
+        "input_chunks": [
+          1,
+          256,
+          256,
+          19
+        ],
+        "input_dtype": "float32",
+        "input_shape": [
+          80,
+          2000,
+          3000,
+          19
+        ],
+        "label_chunks": [
+          1,
+          256,
+          256
+        ],
+        "label_dtype": "uint8",
+        "label_shape": [
+          80,
+          2000,
+          3000
+        ],
+        "mask_area_distribution": {
+          "by_split": {
+            "train": {
+              "fractions_sha256": "98221ca58b1a53cbb19ae94517897f06a2d68ee54f6719535af493af6d8d7df4",
+              "histogram_bins_fraction": [
+                0.0,
+                0.0001,
+                0.001,
+                0.005,
+                0.01,
+                0.05,
+                0.1,
+                1.0
+              ],
+              "histogram_counts": [
+                2828,
+                287,
+                750,
+                341,
+                620,
+                82,
+                20
+              ],
+              "max_fraction": 0.2307586669921875,
+              "mean_fraction": 0.005319229968182453,
+              "min_fraction": 0.0,
+              "positive_mean_fraction": 0.01234722811267222,
+              "sample_count": 4928
+            },
+            "validation": {
+              "fractions_sha256": "915af2ac332f9b2a83cb2b3fe97d0bf433fedc4a36cd38d32c6a08cb716e00c7",
+              "histogram_bins_fraction": [
+                0.0,
+                0.0001,
+                0.001,
+                0.005,
+                0.01,
+                0.05,
+                0.1,
+                1.0
+              ],
+              "histogram_counts": [
+                703,
+                74,
+                168,
+                78,
+                177,
+                26,
+                6
+              ],
+              "max_fraction": 0.1312408447265625,
+              "mean_fraction": 0.006055423191615513,
+              "min_fraction": 0.0,
+              "positive_mean_fraction": 0.013996775557355182,
+              "sample_count": 1232
+            }
+          },
+          "fractions_sha256": "d61a512cc30cc26a86a15a8e9258bc6d287ef22ea40434cd58888d5bf72fc266",
+          "histogram_bins_fraction": [
+            0.0,
+            0.0001,
+            0.001,
+            0.005,
+            0.01,
+            0.05,
+            0.1,
+            1.0
+          ],
+          "histogram_counts": [
+            3531,
+            361,
+            918,
+            419,
+            797,
+            108,
+            26
+          ],
+          "max_fraction": 0.2307586669921875,
+          "mean_fraction": 0.005466468612869065,
+          "min_fraction": 0.0,
+          "positive_mean_fraction": 0.012678255517798734,
+          "sample_count": 6160
+        },
+        "positivity": {
+          "by_split": {
+            "train": {
+              "negative_patch_count": 2805,
+              "positive_patch_count": 2123,
+              "positive_patch_prevalence": 0.43080357142857145,
+              "sample_count": 4928
+            },
+            "validation": {
+              "negative_patch_count": 699,
+              "positive_patch_count": 533,
+              "positive_patch_prevalence": 0.43262987012987014,
+              "sample_count": 1232
+            }
+          },
+          "negative_patch_count": 3504,
+          "positive_patch_count": 2656,
+          "positive_patch_prevalence": 0.43116883116883115,
+          "sample_count": 6160
+        },
+        "record_index_sha256": "49cd72c271a9442d0bc1bd7cafd6ae0da96d230320f708625defe9bcfcd330ae",
+        "source_artifacts": {
+          "inputs": "mit/inputs.zarr",
+          "labels": "mit/labels.zarr",
+          "metadata": "mit/metadata.parquet"
+        },
+        "split_counts": {
+          "total": 6160,
+          "train": 4928,
+          "validation": 1232
+        },
+        "split_policy": {
+          "dataset_source": "mit",
+          "patch_size": 256,
+          "split_policy": "deterministic_whole_scene_train_validation_split_before_windowing",
+          "split_seed": 20260712,
+          "stride": 256,
+          "train_count": 4928,
+          "train_scene_count": 64,
+          "train_scene_ids_sha256": "555b6c0a30af9642dbd526050e7c25d50cd5238bc8eb08316cfd8445e943ef1f",
+          "validation_count": 1232,
+          "validation_fraction": 0.2,
+          "validation_scene_count": 16,
+          "validation_scene_ids_sha256": "365f5d58730e043aaa6f3222b08e344e41219b4c64fd6f40c1c14d98e70a47d9"
+        }
+      },
+      {
+        "dataset_source": "google",
+        "input_chunks": [
+          1,
+          256,
+          256,
+          19
+        ],
+        "input_dtype": "float32",
+        "input_shape": [
+          22385,
+          256,
+          256,
+          19
+        ],
+        "label_chunks": [
+          1,
+          256,
+          256
+        ],
+        "label_dtype": "uint8",
+        "label_shape": [
+          22385,
+          256,
+          256
+        ],
+        "mask_area_distribution": {
+          "by_split": {
+            "train": {
+              "fractions_sha256": "e2a109a67329b29874c9d0f48a3410e8b35db858ce1546846172d0d834542ca9",
+              "histogram_bins_fraction": [
+                0.0,
+                0.0001,
+                0.001,
+                0.005,
+                0.01,
+                0.05,
+                0.1,
+                1.0
+              ],
+              "histogram_counts": [
+                11285,
+                900,
+                3198,
+                1755,
+                3113,
+                250,
+                28
+              ],
+              "max_fraction": 0.1639404296875,
+              "mean_fraction": 0.005336166293385652,
+              "min_fraction": 0.0,
+              "positive_mean_fraction": 0.01183131632324377,
+              "sample_count": 20529
+            },
+            "validation": {
+              "fractions_sha256": "1d662230f2d397c50740b3f900a9fec9048875d726bc7d9d663f13816a4111c0",
+              "histogram_bins_fraction": [
+                0.0,
+                0.0001,
+                0.001,
+                0.005,
+                0.01,
+                0.05,
+                0.1,
+                1.0
+              ],
+              "histogram_counts": [
+                1304,
+                100,
+                264,
+                89,
+                96,
+                3,
+                0
+              ],
+              "max_fraction": 0.075714111328125,
+              "mean_fraction": 0.001812359382366312,
+              "min_fraction": 0.0,
+              "positive_mean_fraction": 0.006093730097231658,
+              "sample_count": 1856
+            }
+          },
+          "fractions_sha256": "8fc0e5ac25a4091834be81ddb36ca06c3625255f420e632f1d891e1f927114aa",
+          "histogram_bins_fraction": [
+            0.0,
+            0.0001,
+            0.001,
+            0.005,
+            0.01,
+            0.05,
+            0.1,
+            1.0
+          ],
+          "histogram_counts": [
+            12589,
+            1000,
+            3462,
+            1844,
+            3209,
+            253,
+            28
+          ],
+          "max_fraction": 0.1639404296875,
+          "mean_fraction": 0.005043998072396066,
+          "min_fraction": 0.0,
+          "positive_mean_fraction": 0.011508500341513192,
+          "sample_count": 22385
+        },
+        "positivity": {
+          "by_split": {
+            "train": {
+              "negative_patch_count": 11270,
+              "positive_patch_count": 9259,
+              "positive_patch_prevalence": 0.4510205075746505,
+              "sample_count": 20529
+            },
+            "validation": {
+              "negative_patch_count": 1304,
+              "positive_patch_count": 552,
+              "positive_patch_prevalence": 0.2974137931034483,
+              "sample_count": 1856
+            }
+          },
+          "negative_patch_count": 12574,
+          "positive_patch_count": 9811,
+          "positive_patch_prevalence": 0.43828456555729284,
+          "sample_count": 22385
+        },
+        "record_index_sha256": "4726068155baa479449834bc3701672c33535c66c3ef8cf3231c37f3cd2906ec",
+        "source_artifacts": {
+          "inputs": "google/inputs.zarr",
+          "labels": "google/labels.zarr",
+          "metadata": "google/metadata.parquet"
+        },
+        "split_counts": {
+          "total": 22385,
+          "train": 20529,
+          "validation": 1856
+        },
+        "split_policy": {
+          "dataset_source": "google",
+          "record_count": 22385,
+          "split_policy": "respect_google_scene_name_train_validation_provenance",
+          "train_count": 20529,
+          "validation_count": 1856
+        }
+      }
+    ],
+    "split_policy": {
+      "google_split_policy": "respect_google_scene_name_train_validation_provenance",
+      "mit_split_policy": "deterministic_whole_scene_train_validation_split_before_windowing",
+      "mit_window_shape": [
+        256,
+        256
+      ],
+      "positive_patch_preference_metadata_key": "positive_patch_preference",
+      "records_include": [
+        "dataset_source",
+        "scene_name",
+        "scene_index",
+        "goes_time",
+        "row",
+        "col",
+        "split",
+        "positive"
+      ],
+      "sampling_policies": [
+        "sequential",
+        "deterministic_shuffle",
+        "mit_only",
+        "google_only",
+        "combined_source_balanced"
+      ],
+      "sampling_policy_owner": "provider/harness",
+      "source_mixture_metadata_key": "source_mixture"
+    },
+    "task": {
+      "candidate_input_guardrail": "longitude and latitude source channels are never exposed as candidate inputs",
+      "name": "binary GOES ABI Contrail Segmentation",
+      "sample_unit": "ABI Patch",
+      "target": "Contrail Mask, labels != 0"
+    }
+  },
+  "provenance": {
+    "dataset_profile_generator_source_sha256": "d54daa20d7278147e969d62ec5ff7c4fcd3e935322f9a862c68d4a38ddd91948",
+    "generation_command": "uv run abi-campaign-context --workspace-config ml-autoresearch.toml --run <ABI-025_RUN_DIR> --evaluation <ABI-025_EVALUATION_DIR> --output abi_contrail/profile/agent-campaign-context.v1.json",
+    "generation_timestamp": "2026-08-10T12:18:27.231538Z",
+    "generation_version": "abi_contrail.campaign_context.v1",
+    "generator_source_sha256": "0a86b482c1c11356af7c91c3254761d76f5d90120014c0e15ab8c99ce662a25b",
+    "input_checksums": {
+      "abi_025_acceptance_report_sha256": "fbdacf2e62171c163cea1f4c2d06a56801b0af802c63f22f79530324d851c6e6",
+      "abi_025_aggregate_metrics_sha256": "4c0f64c1a9ae462d8db0f338e27a7cbd220c8f6da3c73b49374df648ce68a7a0",
+      "abi_025_evaluation_metadata_sha256": "da0dec8b5341a145b72917756d0e9fe3ddfbb41eb463173b367a05d7fe11979f",
+      "abi_025_run_metadata_sha256": "aad386b7fb8c5d12bb8fb8a964df6f5dcf142931ac25f2f7afa3f31af47e6d35",
+      "abi_025_threshold_sweep_sha256": "0193bd5df7853f7025aa19569aba28fe223008116e0611df4c72c1760b163d06",
+      "canonical_registry_sha256": "dc7de95ce72ffdddbd6a8a58832ed63d3a00737bdebdc29a5fa52c28c97102a1"
+    },
+    "research_problem_id": "goes_abi_contrail_segmentation",
+    "research_problem_version": "v0",
+    "workspace_configuration_sha256": "e45c6e589c593e36032273ef5b4951f0a076c8085591630e85754e64c86f5218"
+  },
+  "safety_contract": {
+    "authority_note": "Summary context only; not a new authoritative Run Result or promotion decision.",
+    "candidate_input_policy": "ABI channels 1-16 only; coordinate source channels 16 and 17 are excluded",
+    "content_policy": "aggregate summaries and immutable identities only",
+    "excluded_content": [
+      "raw training samples and qualitative sample pixels",
+      "coordinate arrays or coordinate-derived candidate features",
+      "baseline or candidate model weights",
+      "unrestricted training, ancillary, baseline, Run, or evaluation artifact roots",
+      "candidate-owned data loading, losses, metrics, Artifact Filters, or sampling logic"
+    ]
+  },
+  "schema": "abi_agent_campaign_context/v1"
+}

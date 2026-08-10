@@ -127,6 +127,21 @@ PY
 uv run ml-autoresearch validate-docker-gpu --docker-image "$RUNNER_IMAGE"
 ```
 
+## Curated Agent Campaign Context
+
+Refresh the required Agent-visible ABI/MCAST context from trusted host-side inputs before preparing the Agent Control Boundary:
+
+```bash
+RUN_ROOT=/data/iross/abi-ml-autoresearch/runs/run_20260810_110532_b465cf
+uv run abi-campaign-context \
+  --workspace-config ml-autoresearch.toml \
+  --run "$RUN_ROOT" \
+  --evaluation "$RUN_ROOT/outputs/evaluations/eval_20260810_110644_c0d61d" \
+  --output abi_contrail/profile/agent-campaign-context.v1.json
+```
+
+The command verifies canonical registry artifacts, summarizes the mounted ABI snapshot and ABI-025 canary, enforces a whitelist/denylist safety contract, and never executes candidate code. See `abi_contrail/profile/initial-dataset-profile.md` for scope, provenance, review checks, and limitations.
+
 ## Provider and boundary smoke validation
 
 Validate the configured provider and smoke Candidate contract without training:
@@ -157,10 +172,7 @@ export ML_AUTORESEARCH_PI_FORT=/absolute/path/to/pi-fort
 uv run ml-autoresearch prepare-agent-boundary --workspace-root .
 ```
 
-The full training dataset is not mounted into the Agent Control Boundary by
-default. Candidate Execution receives trusted Research Problem roots only
-through Harness-owned read-only Docker mounts at `/data/training` and
-`/data/ancillary`; candidate inputs still contain no longitude or latitude.
+The full training, ancillary, and baselines roots are not mounted into the Agent Control Boundary by default. The generated campaign context is copied into the curated `/research-problem` snapshot, indexed as a required Dataset Profile Artifact, and mounted read-only. Candidate Execution separately receives trusted Research Problem roots only through Harness-owned read-only Docker mounts; candidate inputs still contain no longitude or latitude.
 
 ## MCAST baseline evaluation
 

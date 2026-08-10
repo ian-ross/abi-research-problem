@@ -64,6 +64,8 @@ ABI projection and geolocation are important for interpreting diagnostics, but n
 
 ## Baselines and evaluation context
 
+Read `/research-problem/abi_contrail/profile/agent-campaign-context.v1.json` for the current curated ABI snapshot, canonical MCAST 1.1/2.1, threshold, Artifact Filter, and ABI-025 manual-canary summaries. It is trusted summary context, not raw data, an unrestricted artifact root, or a new authoritative Run Result.
+
 MCAST Baseline Segmenters and provider-owned Artifact Filters are trusted comparison/evaluation components, not candidate-owned training code. Candidate experiments should compare against the current best validated run or an explicitly declared baseline family, and should inspect filtered/unfiltered metrics, source-stratified metrics, and false positive/false negative diagnostics rather than relying on a single aggregate score.
 
 SMP-style encoder-decoder architectures, including UNet- or MANet-like families, are acceptable as optional quick baselines or comparators because they align with existing Baseline Segmenter lineage. They are not preferred solutions, and the existing UNet/MANet baselines must not constrain the candidate search space. Strong candidates should also explore contrail-specific opportunities beyond generic segmentation backbones, such as thin-line continuity and connectivity, ABI spectral-channel interactions and brightness-temperature differences, robustness across MIT and Google Dataset Sources, calibrated threshold behavior, and artifact-aware false-positive suppression that does not move Artifact Filters into candidate code.

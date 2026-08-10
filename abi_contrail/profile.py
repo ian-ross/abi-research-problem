@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
@@ -22,7 +23,28 @@ from abi_contrail.datasets import (
     open_abi_patch_arrays,
 )
 
-GENERATOR_VERSION = "abi_contrail.profile.v0"
+GENERATOR_VERSION = "abi_contrail.profile.v1"
+CHANNEL_STAT_MAX_RECORDS_PER_SPLIT = 16
+CHANNEL_STAT_MAX_PIXELS_PER_RECORD = 1024
+
+_ABI_CHANNELS = (
+    (1, "Blue", 0.47, "reflectance_factor"),
+    (2, "Red", 0.64, "reflectance_factor"),
+    (3, "Veggie", 0.865, "reflectance_factor"),
+    (4, "Cirrus", 1.378, "reflectance_factor"),
+    (5, "Snow/Ice", 1.61, "reflectance_factor"),
+    (6, "Cloud Particle Size", 2.25, "reflectance_factor"),
+    (7, "Shortwave Window", 3.9, "kelvin"),
+    (8, "Upper-level Water Vapor", 6.19, "kelvin"),
+    (9, "Mid-level Water Vapor", 6.95, "kelvin"),
+    (10, "Lower-level Water Vapor", 7.34, "kelvin"),
+    (11, "Cloud-top Phase", 8.5, "kelvin"),
+    (12, "Ozone", 9.61, "kelvin"),
+    (13, "Clean Longwave Window", 10.35, "kelvin"),
+    (14, "Longwave Window", 11.2, "kelvin"),
+    (15, "Dirty Longwave Window", 12.3, "kelvin"),
+    (16, "CO2 Longwave Infrared", 13.3, "kelvin"),
+)
 
 
 def generate_dataset_profile(data_config: Mapping[str, object]) -> dict[str, Any]:
@@ -45,14 +67,18 @@ def generate_dataset_profile(data_config: Mapping[str, object]) -> dict[str, Any
         )
 
     source_profiles = [_profile_source(root, source_config) for source_config in _source_data_configs(data_config)]
+    safe_range_statistics = {
+        source["dataset_source"]: source.pop("safe_channel_statistics")
+        for source in source_profiles
+    }
     return {
         "artifact_type": "dataset_profile",
-        "schema_version": "dataset-profile.v0",
+        "schema_version": "dataset-profile.v1",
         "provenance": {
             "research_problem_id": RESEARCH_PROBLEM_ID,
             "research_problem_version": RESEARCH_PROBLEM_VERSION,
             "dataset_identity": "GOES ABI Contrail Segmentation on ABI Patches from MIT and Google Dataset Sources",
-            "data_config_scope": _safe_jsonable(data_config),
+            "data_config_scope": _profile_config_scope(data_config),
             "generation_command": "uv run python -m abi_contrail.profile --data-config <CONFIG_JSON> --output <OUTPUT_JSON>",
             "generation_version": GENERATOR_VERSION,
             "generation_timestamp": _timestamp(),
@@ -67,6 +93,18 @@ def generate_dataset_profile(data_config: Mapping[str, object]) -> dict[str, Any
         },
         "source_profiles": source_profiles,
         "combined_counts": _combine_counts(source_profiles),
+        "abi_channels": {
+            "semantics": _abi_channel_semantics(),
+            "safe_range_statistics_by_source": safe_range_statistics,
+            "source_channel_indices_included": list(range(16)),
+            "source_channel_indices_excluded": [16, 17],
+            "statistics_scope": {
+                "selection": "deterministic evenly-spaced records within each split",
+                "max_records_per_split": CHANNEL_STAT_MAX_RECORDS_PER_SPLIT,
+                "max_pixels_per_record": CHANNEL_STAT_MAX_PIXELS_PER_RECORD,
+                "nonfinite_values_excluded_from_ranges": True,
+            },
+        },
         "split_policy": split_data_policy_metadata(),
         "positivity": {
             "definition": "positive ABI Patch has any nonzero Contrail Mask pixel",
@@ -87,12 +125,12 @@ def missing_data_profile(data_config: Mapping[str, object] | None, reason: str) 
 
     return {
         "artifact_type": "dataset_profile",
-        "schema_version": "dataset-profile.v0",
+        "schema_version": "dataset-profile.v1",
         "provenance": {
             "research_problem_id": RESEARCH_PROBLEM_ID,
             "research_problem_version": RESEARCH_PROBLEM_VERSION,
             "dataset_identity": "GOES ABI Contrail Segmentation on ABI Patches from MIT and Google Dataset Sources",
-            "data_config_scope": _safe_jsonable(data_config or {}),
+            "data_config_scope": _profile_config_scope(data_config or {}),
             "generation_command": "uv run python -m abi_contrail.profile --allow-missing --output <OUTPUT_JSON>",
             "generation_version": GENERATOR_VERSION,
             "generation_timestamp": _timestamp(),
@@ -105,6 +143,8 @@ def missing_data_profile(data_config: Mapping[str, object] | None, reason: str) 
         "expected_summaries": [
             "MIT and Google train/validation counts",
             "positive ABI Patch counts and prevalence",
+            "per-split Contrail Mask area distributions",
+            "bounded safe-range statistics for ABI channels 1-16",
             "source split policy metadata",
             "input/label array shapes and projection caveats",
         ],
@@ -150,10 +190,17 @@ def _profile_source(root: Path, source_config: Mapping[str, object]) -> dict[str
     records = split_index.records
     return {
         "dataset_source": layout,
-        "inputs_zarr": str(inputs_path),
-        "labels_zarr": str(labels_path),
+        "source_artifacts": {
+            "inputs": _logical_artifact_reference(source_config.get("inputs_zarr"), "inputs.zarr"),
+            "labels": _logical_artifact_reference(source_config.get("labels_zarr"), "labels.zarr"),
+            "metadata": _logical_artifact_reference(source_config.get("metadata_parquet"), "inline_or_unspecified"),
+        },
         "input_shape": list(arrays.inputs.shape),
+        "input_dtype": str(arrays.inputs.dtype),
+        "input_chunks": list(arrays.inputs.chunks) if arrays.inputs.chunks is not None else None,
         "label_shape": list(arrays.labels.shape),
+        "label_dtype": str(arrays.labels.dtype),
+        "label_chunks": list(arrays.labels.chunks) if arrays.labels.chunks is not None else None,
         "split_counts": {
             "train": len(split_index.train),
             "validation": len(split_index.validation),
@@ -161,7 +208,9 @@ def _profile_source(root: Path, source_config: Mapping[str, object]) -> dict[str
         },
         "positivity": _positive_summary(records),
         "mask_area_distribution": _mask_area_summary(records, arrays.labels),
-        "split_policy": split_index.data_policy_metadata,
+        "safe_channel_statistics": _safe_channel_statistics(records, arrays.inputs),
+        "record_index_sha256": _record_index_digest(records),
+        "split_policy": _safe_split_policy(split_index.data_policy_metadata),
     }
 
 
@@ -189,10 +238,25 @@ def _positive_summary(records: Sequence[ABIPatchIndexRecord]) -> dict[str, Any]:
 
 def _mask_area_summary(records: Sequence[ABIPatchIndexRecord], labels: Any) -> dict[str, Any]:
     fractions = [_mask_area_fraction(record, labels) for record in records]
+    summary = _fraction_summary(fractions)
+    summary["by_split"] = {
+        split: _fraction_summary([
+            value for record, value in zip(records, fractions, strict=True) if record.split == split
+        ])
+        for split in ("train", "validation")
+    }
+    return summary
+
+
+def _fraction_summary(fractions: Sequence[float]) -> dict[str, Any]:
     positive_fractions = [value for value in fractions if value > 0.0]
     bins = [0.0, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 1.0]
+    digest = hashlib.sha256()
+    for value in fractions:
+        digest.update(float(value).hex().encode() + b"\n")
     return {
-        "sample_count": len(records),
+        "sample_count": len(fractions),
+        "fractions_sha256": digest.hexdigest(),
         "min_fraction": min(fractions) if fractions else 0.0,
         "mean_fraction": mean(fractions) if fractions else 0.0,
         "max_fraction": max(fractions) if fractions else 0.0,
@@ -212,6 +276,135 @@ def _mask_area_fraction(record: ABIPatchIndexRecord, labels: Any) -> float:
         col_end = record.col + 256
         label_window = np.asarray(labels[record.scene_index, record.row : row_end, record.col : col_end])
     return float(np.count_nonzero(label_window != 0)) / float(label_window.size) if label_window.size else 0.0
+
+
+def _safe_split_policy(policy: Mapping[str, object]) -> dict[str, object]:
+    safe = {
+        key: value
+        for key, value in policy.items()
+        if key not in {"train_scenes", "validation_scenes"}
+    }
+    for split in ("train", "validation"):
+        scenes = policy.get(f"{split}_scenes")
+        if isinstance(scenes, Sequence) and not isinstance(scenes, (str, bytes)):
+            digest = hashlib.sha256()
+            for scene in scenes:
+                digest.update(str(scene).encode() + b"\n")
+            safe[f"{split}_scene_count"] = len(scenes)
+            safe[f"{split}_scene_ids_sha256"] = digest.hexdigest()
+    return safe
+
+
+def _safe_channel_statistics(
+    records: Sequence[ABIPatchIndexRecord], inputs: Any
+) -> dict[str, Any]:
+    import numpy as np
+
+    selected = []
+    for split in ("train", "validation"):
+        split_records = [record for record in records if record.split == split]
+        if len(split_records) <= CHANNEL_STAT_MAX_RECORDS_PER_SPLIT:
+            selected.extend(split_records)
+        elif split_records:
+            indices = np.linspace(
+                0, len(split_records) - 1, CHANNEL_STAT_MAX_RECORDS_PER_SPLIT, dtype=int
+            )
+            selected.extend(split_records[int(index)] for index in indices)
+
+    channel_values: list[list[Any]] = [[] for _ in range(16)]
+    sampled_pixel_count = 0
+    sample_digest = hashlib.sha256()
+    value_digest = hashlib.sha256()
+    for record in selected:
+        window = _input_window(record, inputs)
+        if window.ndim != 3 or window.shape[-1] < 16:
+            raise ResearchProblemDataError(
+                f"ABI source input must have shape [H, W, >=16], got {window.shape}"
+            )
+        flat = window[..., :16].reshape(-1, 16)
+        count = min(len(flat), CHANNEL_STAT_MAX_PIXELS_PER_RECORD)
+        if count == 0:
+            continue
+        indices = np.linspace(0, len(flat) - 1, count, dtype=int)
+        sampled = flat[indices]
+        sampled_pixel_count += len(sampled)
+        sample_digest.update(_record_identity(record).encode() + b"\n")
+        value_digest.update(np.asarray(sampled, dtype="<f4").tobytes(order="C"))
+        for channel_index in range(16):
+            channel_values[channel_index].append(np.asarray(sampled[:, channel_index]))
+
+    summaries = []
+    for source_index, values in enumerate(channel_values):
+        merged = np.concatenate(values) if values else np.asarray([], dtype=np.float32)
+        finite = merged[np.isfinite(merged)]
+        summaries.append(
+            {
+                "abi_channel": source_index + 1,
+                "source_channel_index": source_index,
+                "sampled_value_count": int(merged.size),
+                "finite_value_count": int(finite.size),
+                "nonfinite_value_count": int(merged.size - finite.size),
+                "min": float(np.min(finite)) if finite.size else None,
+                "p01": float(np.quantile(finite, 0.01)) if finite.size else None,
+                "mean": float(np.mean(finite)) if finite.size else None,
+                "p99": float(np.quantile(finite, 0.99)) if finite.size else None,
+                "max": float(np.max(finite)) if finite.size else None,
+            }
+        )
+    return {
+        "selection_record_count": len(selected),
+        "sampled_pixel_count": sampled_pixel_count,
+        "selected_records_sha256": sample_digest.hexdigest(),
+        "sampled_values_sha256": value_digest.hexdigest(),
+        "channels": summaries,
+    }
+
+
+def _input_window(record: ABIPatchIndexRecord, inputs: Any) -> Any:
+    import numpy as np
+
+    if record.sample_index is not None:
+        return np.asarray(inputs[record.sample_index, :, :, :16])
+    row_end = record.row + 256
+    col_end = record.col + 256
+    return np.asarray(
+        inputs[record.scene_index, record.row : row_end, record.col : col_end, :16]
+    )
+
+
+def _record_index_digest(records: Sequence[ABIPatchIndexRecord]) -> str:
+    digest = hashlib.sha256()
+    for record in records:
+        digest.update(_record_identity(record).encode() + b"\n")
+    return digest.hexdigest()
+
+
+def _record_identity(record: ABIPatchIndexRecord) -> str:
+    return "|".join(
+        (
+            record.dataset_source,
+            record.split,
+            record.scene_name,
+            str(record.scene_index),
+            str(record.sample_index),
+            str(record.row),
+            str(record.col),
+            "1" if record.positive else "0",
+        )
+    )
+
+
+def _abi_channel_semantics() -> list[dict[str, Any]]:
+    return [
+        {
+            "abi_channel": channel,
+            "source_channel_index": channel - 1,
+            "common_name": name,
+            "central_wavelength_micrometers": wavelength,
+            "unit": unit,
+        }
+        for channel, name, wavelength, unit in _ABI_CHANNELS
+    ]
 
 
 def _combine_counts(source_profiles: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -290,16 +483,29 @@ def _optional_string_sequence(value: object) -> tuple[str, ...] | None:
     return tuple(str(item) for item in value)
 
 
-def _safe_jsonable(value: object) -> object:
-    try:
-        json.dumps(value)
-        return value
-    except TypeError:
-        if isinstance(value, Mapping):
-            return {str(key): _safe_jsonable(item) for key, item in value.items()}
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            return [_safe_jsonable(item) for item in value]
-        return str(value)
+def _profile_config_scope(data_config: Mapping[str, object]) -> dict[str, Any]:
+    safe_keys = ("layout", "val_fraction", "split_seed", "patch_size", "stride")
+    return {
+        "logical_data_root": "training",
+        "sources": [
+            {
+                **{key: source[key] for key in safe_keys if key in source},
+                "inputs": _logical_artifact_reference(source.get("inputs_zarr"), "inputs.zarr"),
+                "labels": _logical_artifact_reference(source.get("labels_zarr"), "labels.zarr"),
+                "metadata": _logical_artifact_reference(source.get("metadata_parquet"), "inline_or_unspecified"),
+            }
+            for source in _source_data_configs(data_config)
+        ],
+    }
+
+
+def _logical_artifact_reference(value: object, fallback: str) -> str:
+    if not isinstance(value, str) or not value:
+        return fallback
+    path = Path(value)
+    if path.is_absolute() or ".." in path.parts:
+        return path.name
+    return path.as_posix()
 
 
 def _timestamp() -> str:
