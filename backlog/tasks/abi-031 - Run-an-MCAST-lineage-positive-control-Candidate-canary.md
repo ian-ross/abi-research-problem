@@ -4,13 +4,15 @@ title: Run an MCAST-lineage positive-control Candidate canary
 status: To Do
 assignee: []
 created_date: '2026-08-11 10:31'
+updated_date: '2026-08-11 10:32'
 labels:
   - harness
   - candidates
   - canary
   - positive-control
   - mcast
-dependencies: []
+dependencies:
+  - ABI-030
 priority: high
 ---
 
