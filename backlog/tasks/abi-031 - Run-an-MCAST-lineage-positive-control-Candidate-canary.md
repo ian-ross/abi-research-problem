@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 14:47'
+updated_date: '2026-08-11 15:19'
 labels:
   - harness
   - candidates
@@ -78,4 +78,12 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Verified SMP U-Net/ResNet-18 with 3 inputs and 1 output has 14,328,209 parameters. The current Harness hard-codes 10,000,000 in `smoke.py`. Proposed trusted `candidate_execution.max_parameters`: default 10M, ABI workspace 25M, hard configurable ceiling 100M; Candidate code/manifests cannot select it.
 - Verified the current validated ABI runner lacks `segmentation_models_pytorch`; Gate 0 therefore includes adding pinned trusted runner dependencies and rebuilding/validating a new image before controlled checks.
 - No Candidate code, Harness/provider code, external-data training, or GPU Run has been started. Human Gate 0 is pending.
+
+## Human Gate 0 and implementation checkpoint (2026-08-11)
+- Human Gate 0 approved the preregistered protocol, ABI-wide 25M parameter budget direction, thresholds, and staged gates.
+- Harness commit `0524fdd` adds trusted `candidate_execution.max_parameters` (10M default, 100M config ceiling), propagates it through native/Docker/managed/autonomy/batch smoke paths, records the effective budget, exposes it to Agent guidance, and pins compatible runner torchvision.
+- ABI commit `3c4cfce` adds the exact manually authored Candidate, pilot preparation helper, provider-owned ordinary/positive-control reporting, and tests. The local trusted ABI Workspace Configuration is set to 25,000,000 and adds SMP 0.5.0 to runner requirements.
+- Reviewed Candidate source checksum: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
+- Harness focused suites passed (104 passed). Full Harness suite: 563 passed, 2 skipped, 1 known unrelated external GVCCS characterization failure (`focal_bce_dice` versus that test fake Spec allowing only `bce_dice`).
+- Candidate static validation, Candidate import/model checks, managed Docker smoke, fixture training, runtime image build, and all GPU work remain unexecuted pending Human Gate 1 review.
 <!-- SECTION:NOTES:END -->
