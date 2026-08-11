@@ -178,6 +178,23 @@ The provider applies the cap per Dataset Source: at most 2,048 combined training
 
 Before evaluation, the terminal Run must have exactly one terminal event, finite logged train/validation metrics, a finite readable best checkpoint, a complete resource profile, correct sample/source counts, expected read-only mounts, no forbidden coordinate inputs, the reviewed Candidate source checksum, and bounded qualitative artifacts. Any non-finite or non-degenerate prerequisite failure blocks evaluation pending human review.
 
+### Gate 3 main Run result
+
+Human Gate 3 authorized the corrected `first_n` command, and Run `run_20260811_160920_07a7f4` completed exactly once on 2026-08-11.
+
+- Canonical source and immutable Run snapshot both have Candidate tree SHA-256 `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
+- Three epochs processed 6,144 training and 6,144 validation observations in total (2,048 per split per epoch; 1,024 from each Dataset Source), with batch size 4 and no retry.
+- All 6,279 numeric values across 1,539 metric records were finite. Epoch 3 was selected with train/validation loss `0.9831224490` / `1.0004627658`.
+- Selected raw/filtered Dice: aggregate `0.1070328316` / `0.1028192765`; Google `0.0768765897` / `0.0750351272`; MIT `0.1194279187` / `0.1142849159`.
+- The selected epoch-3 checkpoint contains 184 tensors and 14,339,829 tensor values, all finite.
+- Four bounded prediction masks contain 403 positive and 261,741 negative pixels; every mask contains both classes.
+- Peak CUDA allocated/reserved: 568,427,008 / 666,894,336 bytes, with 41,855,287,296 bytes free at start.
+- Total measured operation wall time was 8,047.34 seconds. Training processed 6,144 observations in 49.21 seconds (124.86/s); legacy CPU validation/postprocessing processed 6,144 in 7,995.87 seconds (0.768/s).
+- Exactly one `run_completed` event remains after two reconciliations. The sole container exited 0, was removed, and left GPU 0 with no process/memory allocation.
+- Final/best metrics, checkpoint, model summary, completed resource profile, logs, and four bounded qualitative artifact sets are present. Data/baseline/ancillary mounts are recorded read-only, and the model summary excludes longitude/latitude.
+
+The main Run satisfies the finite, non-degenerate training prerequisites for Gate 4 review. It does not itself establish the full positive-control hypothesis. The unexpectedly opaque and slow CPU-only epoch postprocessing path is tracked as `ABI-033`; it did not alter the completed Run's trusted metric semantics. Canonical Working Validation evaluation remains separately human-gated.
+
 ## Canonical Working Validation evaluation
 
 After a separate evaluation approval, evaluate the completed checkpoint once without retraining:
