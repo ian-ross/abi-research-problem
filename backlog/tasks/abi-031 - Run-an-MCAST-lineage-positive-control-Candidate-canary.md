@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 19:42'
+updated_date: '2026-08-11 19:49'
 labels:
   - harness
   - candidates
@@ -29,8 +29,8 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - [x] #2 The manually authored Candidate contains architecture-only code, uses no baseline weights or baseline-root access, receives no longitude/latitude, and leaves data loading, losses, metrics, filters, sampling, augmentation, and execution policy to trusted provider/Harness code
 - [x] #3 Static validation, controlled model smoke tests, and bounded fixture checks pass before any real-data training is authorized
 - [x] #4 A human-approved sequential Docker/GPU Run executes only after ABI-030 is complete and demonstrates the new non-finite fail-fast and recoverable long-Run lifecycle behavior
-- [ ] #5 A full canonical Working Validation evaluation and provider-owned acceptance report evaluate preregistered finite/non-degenerate criteria, including finite checkpoint parameters, finite losses, predicted-positive pixels, aggregate raw/filtered metrics, and MIT/Google source-stratified metrics
-- [ ] #6 Run, evaluation, resource profile, bounded qualitative artifacts, Research Ledger/index records, canonical MCAST provenance, and all pass/fail evidence are validated and recorded durably whether the positive-control hypothesis passes or fails
+- [x] #5 A full canonical Working Validation evaluation and provider-owned acceptance report evaluate preregistered finite/non-degenerate criteria, including finite checkpoint parameters, finite losses, predicted-positive pixels, aggregate raw/filtered metrics, and MIT/Google source-stratified metrics
+- [x] #6 Run, evaluation, resource profile, bounded qualitative artifacts, Research Ledger/index records, canonical MCAST provenance, and all pass/fail evidence are validated and recorded durably whether the positive-control hypothesis passes or fails
 - [ ] #7 A final human decision records whether Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy; the decision does not itself launch an automatic iteration
 <!-- AC:END -->
 
@@ -139,4 +139,11 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Human reviewed the completed main Run evidence and authorized exactly one canonical Working Validation evaluation without retraining.
 - Authorized bounds: Run `run_20260811_160920_07a7f4`, Docker GPU backend on A100 device 0, validated ABI-031 runner, split `val`, all 3,088 canonical samples, at most four diagnostic samples/eight GeoTIFFs, and the existing Research Ledger.
 - This authorization does not decide the final Gate 5 autonomy question.
+
+## Gate 4 evaluation and reports complete (2026-08-11)
+- Canonical `eval_20260811_194238_7183db` completed once on all 3,088 Working Validation samples; ledger has one requested + one completed event. It wrote 3,088 finite per-sample records, complete aggregate/threshold metadata, four diagnostics, and eight GeoTIFFs.
+- Raw/filtered predicted-positive pixels were 680,918/651,238 of 202,375,168. Aggregate Dice was 0.10594/0.10210; Google 0.09347/0.09125; MIT 0.11556/0.11051.
+- Accelerated postprocessing recorded `torch_cuda`, bounded batch 8, 118.35s postprocessing and about 301s end-to-end. Operator separately observed about 3% GPU consumption; recorded as contextual human observation, not formal telemetry.
+- `positive_control_report.json` passes all eight preregistered criteria (`positive_control_passed`). `acceptance_report.json` separately records expected promotion failures versus MCAST 2.1; the Candidate is not promoted.
+- Updated the durable campaign report and EXPERIMENT_INDEX. AC 5-6 are complete. Human final Gate 5/AC 7 remains pending and does not itself launch autonomy.
 <!-- SECTION:NOTES:END -->
