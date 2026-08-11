@@ -147,6 +147,17 @@ uv run ml-autoresearch evaluate-run \
 
 The evaluation must contain all 3,088 canonical Working Validation samples (MIT 1,232; Google 1,856), use registry `abi-mcast-working-validation-v1`, apply the provider-owned raw and ordered Artifact-Filtered assessment, and write no more than four diagnostic samples/eight GeoTIFFs. Expected wall time is approximately 5-15 minutes.
 
+After evaluation, generate both the ordinary promotion-oriented acceptance report and the separate preregistered positive-control report using the Candidate checksum approved at Gate 1:
+
+```bash
+uv run abi-positive-control-report \
+  --workspace-root . \
+  --run /data/iross/abi-ml-autoresearch/runs/<MAIN_RUN_ID> \
+  --evaluation /data/iross/abi-ml-autoresearch/runs/<MAIN_RUN_ID>/outputs/evaluations/<EVALUATION_ID> \
+  --ledger research-ledger.jsonl \
+  --expected-candidate-sha256 <GATE1_CANDIDATE_SHA256>
+```
+
 ## Preregistered positive-control decision criteria
 
 A new provider-owned `positive_control_report.json` will report these criteria separately from the ordinary promotion-oriented `acceptance_report.json`. Ordinary acceptance flags for not beating MCAST do not by themselves fail this positive-control hypothesis.
