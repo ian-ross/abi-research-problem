@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 15:19'
+updated_date: '2026-08-11 15:43'
 labels:
   - harness
   - candidates
@@ -86,4 +86,8 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Reviewed Candidate source checksum: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
 - Harness focused suites passed (104 passed). Full Harness suite: 563 passed, 2 skipped, 1 known unrelated external GVCCS characterization failure (`focal_bce_dice` versus that test fake Spec allowing only `bce_dice`).
 - Candidate static validation, Candidate import/model checks, managed Docker smoke, fixture training, runtime image build, and all GPU work remain unexecuted pending Human Gate 1 review.
+
+## Human Gate 1 (2026-08-11)
+- Human approved the exact Candidate/trusted implementation checkpoint and authorized static validation, finite model checks, tiny fixture checks, ABI tests, and SMP-enabled runtime-image rebuild/validation only.
+- This approval does not authorize the A100 resource pilot, main Run, or Working Validation evaluation.
 <!-- SECTION:NOTES:END -->
