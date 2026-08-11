@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-08-11 10:29'
+updated_date: '2026-08-11 10:35'
 labels:
   - harness
   - candidates
@@ -30,3 +31,34 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 - [ ] #5 Tests cover non-finite training, caller interruption, successful reattachment/reconciliation, duplicate-finalization prevention, and distinction from Resource Failure retry behavior
 - [ ] #6 Operator and Agent-visible guidance documents the fail-fast and long-Run lifecycle semantics before another fully automatic autonomy iteration is approved
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+## Phase 0 — Reproduce and approve the trusted design
+1. **Agent:** Reproduce both ABI-025 failures with tiny deterministic fixtures: a Candidate whose loss becomes non-finite within the first batches, and a long-enough Docker operation whose initiating client is terminated while the container continues. Capture the current incorrect terminal metadata/ledger behavior without using real ABI training data.
+2. **Agent:** Inspect the generic training loop, Docker backend, `run-candidate --daemonize`, `execute-next-action` / `execute-open-actions`, Run metadata, Resource Failure retries, and Research Ledger terminal-event paths. Propose one lifecycle design in which the Harness creates a stable Run identity before detachment, persists observable execution state, and owns exactly-once finalization.
+3. **Agent:** Define the numerical policy before implementation: every-batch checks for finite logits, primary/auxiliary/total loss, gradients before `optimizer.step`, and parameters after the step; finite selection metrics before checkpointing; and defense-in-depth validation of required terminal metrics/checkpoints. Define the bounded `nonfinite_diagnostic.json` schema and classify Candidate-caused non-finite state separately from Resource Failure.
+4. **Human Review Gate 0:** Approve the numerical checkpoints, failure classification, execution-state schema, CLI surface, reconciliation rules, and whether the lifecycle change warrants a short Harness ADR. Do not change code before approval.
+
+## Phase 1 — Trusted non-finite fail-fast
+5. **Agent:** Add failing Harness tests at the real generic training-loop seam for non-finite logits/loss, gradients, parameters, validation/selection metrics, and terminal-output validation. Assert termination occurs before further batches, no best checkpoint is selected from non-finite state, and Resource Failure retry is not invoked.
+6. **Agent:** Implement shared trusted finite-state validation in `ml_autoresearch.training`, including bounded counts/names rather than raw tensors or samples. Persist the diagnostic and failed resource profile even when failure occurs before normal final artifacts.
+7. **Agent:** Route the failure through Run orchestration as an explicit Candidate/training failure with stable metadata and one `run_failed` ledger event. Keep Candidate code, Research Problem adapters, and manifests unable to disable or weaken the checks.
+8. **Agent:** Add smoke-test finite checks for forward output, synthetic loss, gradients, and parameters so immediately invalid architectures fail before real training, while retaining the training-loop checks as the authoritative runtime guard.
+9. **Agent:** Run focused training, smoke, resource-retry, Docker-backend, and Run-ledger tests; report behavior and diagnostic examples without starting real training.
+
+## Phase 2 — Observable, recoverable long Docker Runs
+10. **Agent:** Add failing lifecycle tests that pre-create a stable Run, start a managed detached/supervised operation, simulate caller disappearance, observe it by Run id, and reconcile success/failure without creating another Run or duplicate terminal event.
+11. **Agent:** Implement the approved Harness-owned execution record and supervisor/reattachment path. Foreground and detached commands must use the same underlying managed lifecycle; `execute-next-action` and `execute-open-actions` must return an observable Run identity rather than relying on an attached `docker run` client for finalization.
+12. **Agent:** Centralize terminal artifact validation and metadata/ledger finalization behind an idempotent lock/compare-and-set operation. Reconciliation must distinguish active, exited-success, exited-failure, already-finalized, missing-container, and corrupt-artifact states and must never retrain.
+13. **Agent:** Add supported status and reconciliation CLI behavior with machine-readable output, durable log paths, container/execution identity, timestamps, and clear operator errors. Ensure Docker `--rm`, timeout/grace, GPU pinning, rootless ownership, and network/read-only mount policies remain enforced.
+14. **Agent:** Extend tests across native/Docker backends, daemonization, autonomy open-action recovery, Resource Failure retry, ledger idempotence, and abrupt supervisor/client termination. Run the Harness focused suites and full suite; document unrelated failures separately.
+
+## Phase 3 — ABI integration and bounded validation
+15. **Agent:** Commit the Harness changes in `../ml-autoresearch`, update the ABI workspace integration/runtime image, validate the image identity, and run the ABI unit suite. Do not run a scientific Candidate.
+16. **Human Execution Gate 1:** Approve two lightweight GPU validations: (a) a deliberately non-finite tiny Candidate that must fail promptly with the new diagnostic and no retry, and (b) a finite bounded Docker fixture whose client is deliberately disconnected and whose Run must finalize exactly once through the supported lifecycle.
+17. **Agent:** Execute only the approved lightweight validations; inspect execution status, metadata, resource profile, diagnostic, logs, container cleanup, and ledger cardinality. Repeat reconciliation to prove idempotence, not training.
+18. **Agent:** Update operator docs, CLI help, Agent-visible execution guidance, and ABI campaign notes. State that non-finite failure is not a Resource Failure and that callers must use Run status/reconciliation rather than relaunching.
+19. **Human Review Gate 2:** Review evidence and decide whether ABI-030 is complete and ABI-031 may begin. Completion does not authorize ABI-031 GPU training.
+<!-- SECTION:PLAN:END -->
