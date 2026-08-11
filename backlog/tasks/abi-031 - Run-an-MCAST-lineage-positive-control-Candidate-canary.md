@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 19:49'
+updated_date: '2026-08-11 19:54'
 labels:
   - harness
   - candidates
@@ -31,7 +31,7 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - [x] #4 A human-approved sequential Docker/GPU Run executes only after ABI-030 is complete and demonstrates the new non-finite fail-fast and recoverable long-Run lifecycle behavior
 - [x] #5 A full canonical Working Validation evaluation and provider-owned acceptance report evaluate preregistered finite/non-degenerate criteria, including finite checkpoint parameters, finite losses, predicted-positive pixels, aggregate raw/filtered metrics, and MIT/Google source-stratified metrics
 - [x] #6 Run, evaluation, resource profile, bounded qualitative artifacts, Research Ledger/index records, canonical MCAST provenance, and all pass/fail evidence are validated and recorded durably whether the positive-control hypothesis passes or fails
-- [ ] #7 A final human decision records whether Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy; the decision does not itself launch an automatic iteration
+- [x] #7 A final human decision records whether Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy; the decision does not itself launch an automatic iteration
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -146,4 +146,9 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Accelerated postprocessing recorded `torch_cuda`, bounded batch 8, 118.35s postprocessing and about 301s end-to-end. Operator separately observed about 3% GPU consumption; recorded as contextual human observation, not formal telemetry.
 - `positive_control_report.json` passes all eight preregistered criteria (`positive_control_passed`). `acceptance_report.json` separately records expected promotion failures versus MCAST 2.1; the Candidate is not promoted.
 - Updated the durable campaign report and EXPERIMENT_INDEX. AC 5-6 are complete. Human final Gate 5/AC 7 remains pending and does not itself launch autonomy.
+
+## Human Gate 5 decision (2026-08-11)
+- Human agreed Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy.
+- This is a planning-only go decision: it does not launch autonomy, promote the positive-control Candidate, or waive ordinary acceptance gates.
+- ABI-033 must be completed before autonomy work continues; retain supported `first_n` diagnostics in the meantime.
 <!-- SECTION:NOTES:END -->
