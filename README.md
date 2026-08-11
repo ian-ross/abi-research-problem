@@ -176,7 +176,7 @@ The full training, ancillary, and baselines roots are not mounted into the Agent
 
 ## Candidate Run reliability and recovery
 
-Long Candidate Runs use a Harness-owned managed lifecycle. Create one stable Run and detach when appropriate:
+Candidate Runs use a Harness-owned managed lifecycle from smoke through training. Candidate validation creates one stable Run before smoke, and the detached supervisor records `smoke_testing` in `execution.json` before it enters training. Detach when appropriate:
 
 ```bash
 uv run ml-autoresearch run-candidate \
@@ -192,11 +192,13 @@ uv run ml-autoresearch run-status --workspace-root . --run-id <run_id>
 uv run ml-autoresearch reconcile-run --workspace-root . --run-id <run_id>
 ```
 
-Caller disconnection is not authorization to rerun. `reconcile-run` validates existing artifacts and terminalizes metadata and the Research Ledger idempotently; repeating it must not retrain or append another terminal event. Managed supervisor/container state is stored in the Run's `execution.json`, with logs under `outputs/logs/`.
+Caller disconnection is not authorization to rerun, whether it occurs during smoke or training. `reconcile-run` observes or terminalizes the same Run idempotently; repeating it must not rerun smoke, retrain, or append another terminal event. Managed supervisor/container state is stored in the Run's `execution.json`, with logs under `outputs/logs/`.
 
-Trusted smoke, training, validation, checkpoint, and terminal-artifact paths fail closed on non-finite numerical state. A Candidate output/loss/gradient/parameter failure is normally `candidate_bug`; a trusted provider aggregate-metric failure is `harness_failure`. Neither is a Resource Failure, and neither receives batch-size retry. Inspect the bounded `outputs/nonfinite_diagnostic.json`; it contains counts and execution location only, never raw ABI Patches, coordinates, or tensor values.
+Omitted `run-candidate` Docker image, GPU/device, and ownership options resolve from the validated `[candidate_execution]` Workspace Configuration. Explicit options override configuration; use `--no-docker-enable-gpu` or `--no-docker-rootless-container-root` when explicit disablement is required. An explicit `--docker-user` replaces configured rootless-container-root ownership for that Run.
 
-Do not approve another fully automatic autonomy iteration until the ABI-030 lightweight Docker/GPU validation gate has demonstrated prompt non-finite failure and exactly-once detached Run reconciliation.
+Trusted smoke, training, validation, checkpoint, and terminal-artifact paths fail closed on non-finite numerical state. A Candidate output/loss/gradient/parameter failure is normally `candidate_bug`; trusted Docker image/runtime, Research Problem provider, data bootstrap, or provider aggregate-metric failures are `harness_failure`. Neither is a Resource Failure, and neither receives batch-size retry. Inspect the bounded `outputs/nonfinite_diagnostic.json`; it contains counts and execution location only, never raw ABI Patches, coordinates, or tensor values.
+
+These reliability semantics do not authorize a scientific Candidate Run, GPU validation, or fully automatic autonomy iteration without the task-specific human gate.
 
 ## MCAST baseline evaluation
 
