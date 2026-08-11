@@ -93,6 +93,33 @@ def test_bounded_cpu_postprocessing_matches_reference_filters_and_metrics() -> N
     assert any(message.startswith("connectivity metric phase started") for message in messages)
 
 
+def test_bounded_progress_reports_threshold_crossings_when_batch_size_does_not_divide_interval() -> None:
+    probabilities, targets, _, pipeline = _fixture()
+    probabilities = torch.cat((probabilities, probabilities[:2]), dim=0)
+    targets = torch.cat((targets, targets[:2]), dim=0)
+    dataset = _CountingContextDataset([np.zeros((4, 12), dtype=bool) for _ in range(5)])
+    messages: list[str] = []
+    processor = BoundedBatchPostprocessor(
+        filter_pipeline=pipeline,
+        device="cpu",
+        batch_size=2,
+        progress_callback=messages.append,
+        log_every=3,
+    )
+    contexts = processor.prepare_contexts(dataset=dataset, sample_count=5, prediction_shape=(4, 12))
+
+    processor.evaluate_operational(
+        probabilities=probabilities,
+        targets=targets,
+        threshold=0.5,
+        contexts=contexts,
+    )
+
+    assert any(message.startswith("Artifact Filter phase: 4/5") for message in messages)
+    assert any(message.startswith("ordinary metric phase: 4/5") for message in messages)
+    assert any(message.startswith("connectivity metric phase: 4/5") for message in messages)
+
+
 def test_scanline_population_std_boundary_matches_numpy_reference() -> None:
     width = 10
     base = np.linspace(0.6, 0.8, width, dtype=np.float32)

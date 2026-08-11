@@ -452,9 +452,7 @@ def _evaluate_probability_tensor(
 
     from abi_contrail.postprocessing import (
         BoundedBatchPostprocessor,
-        aggregate_counts,
-        mean_connectivity,
-        metrics_from_counts,
+        summarize_operational_metrics,
     )
 
     if log_every <= 0:
@@ -531,12 +529,13 @@ def _evaluate_probability_tensor(
             }
         )
 
-    raw_counts = aggregate_counts(operational.raw_counts)
-    filtered_counts = aggregate_counts(operational.filtered_counts)
-    raw_aggregate = metrics_from_counts(raw_counts)
-    filtered_aggregate = metrics_from_counts(filtered_counts)
-    raw_connectivity = mean_connectivity(operational.raw_connectivity)
-    filtered_connectivity = mean_connectivity(operational.filtered_connectivity)
+    aggregate_summary = summarize_operational_metrics(operational)
+    raw_counts = aggregate_summary["raw_counts"]
+    filtered_counts = aggregate_summary["filtered_counts"]
+    raw_aggregate = aggregate_summary["raw_metrics"]
+    filtered_aggregate = aggregate_summary["filtered_metrics"]
+    raw_connectivity = aggregate_summary["raw_connectivity"]
+    filtered_connectivity = aggregate_summary["filtered_connectivity"]
     aggregate = {
         **{f"raw/{key}": value for key, value in raw_aggregate.items()},
         "raw/cldice": raw_connectivity,
@@ -553,14 +552,11 @@ def _evaluate_probability_tensor(
         indices = [index for index, sample_source in enumerate(sample_sources) if sample_source == source]
         if not indices:
             continue
-        source_raw_counts = aggregate_counts([operational.raw_counts[index] for index in indices])
-        source_filtered_counts = aggregate_counts([operational.filtered_counts[index] for index in indices])
-        source_raw_metrics = metrics_from_counts(source_raw_counts)
-        source_filtered_metrics = metrics_from_counts(source_filtered_counts)
-        source_raw_connectivity = mean_connectivity([operational.raw_connectivity[index] for index in indices])
-        source_filtered_connectivity = mean_connectivity(
-            [operational.filtered_connectivity[index] for index in indices]
-        )
+        source_summary = summarize_operational_metrics(operational, indices=indices)
+        source_raw_metrics = source_summary["raw_metrics"]
+        source_filtered_metrics = source_summary["filtered_metrics"]
+        source_raw_connectivity = source_summary["raw_connectivity"]
+        source_filtered_connectivity = source_summary["filtered_connectivity"]
         aggregate.update(
             {
                 **{f"source/{source}/raw/{key}": value for key, value in source_raw_metrics.items()},

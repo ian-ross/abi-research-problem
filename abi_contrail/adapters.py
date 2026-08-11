@@ -397,6 +397,67 @@ class ABITrainingAdapter:
     def compute_validation_metrics(self, logits: Any, target_mask: Any) -> dict[str, float]:
         return self.compute_validation_metrics_from_dataset(logits, target_mask, dataset=None)
 
+    def compute_validation_result_from_dataset(
+        self,
+        logits: Any,
+        target_mask: Any,
+        dataset: object,
+        *,
+        device: Any,
+        progress_callback: Any,
+    ) -> Any:
+        """Compute training validation evidence through bounded trusted postprocessing."""
+
+        import torch
+        from ml_autoresearch.training_adapters import ResearchProblemValidationResult
+        from abi_contrail.postprocessing import BoundedBatchPostprocessor
+
+        probabilities = torch.sigmoid(logits.detach().cpu())
+        targets = target_mask.detach().cpu() >= 0.5
+        sample_count = int(probabilities.shape[0])
+        processor = BoundedBatchPostprocessor(
+            filter_pipeline=self.filter_pipeline,
+            device=device,
+            batch_size=int(self.data_config.get("postprocessing_batch_size", 8)),
+            progress_callback=progress_callback,
+        )
+        contexts = processor.prepare_contexts(
+            dataset=dataset,
+            sample_count=sample_count,
+            prediction_shape=(int(probabilities.shape[-2]), int(probabilities.shape[-1])),
+        )
+        operational = processor.evaluate_operational(
+            probabilities=probabilities,
+            targets=targets,
+            threshold=0.5,
+            contexts=contexts,
+        )
+        sources: list[str | None] = []
+        for index in range(sample_count):
+            metadata = dataset.sample_metadata(index) if hasattr(dataset, "sample_metadata") else {}
+            source = str(metadata.get("dataset_source", "")).lower() if isinstance(metadata, Mapping) else ""
+            sources.append(source or None)
+        metrics = _validation_metric_payload_from_operational(
+            operational,
+            indices=range(sample_count),
+            prefix="val/",
+        )
+        for source in ("mit", "google"):
+            indices = [index for index, row_source in enumerate(sources) if row_source == source]
+            if indices:
+                metrics.update(
+                    _validation_metric_payload_from_operational(
+                        operational,
+                        indices=indices,
+                        prefix=f"val/source/{source}/",
+                        include_legacy=False,
+                    )
+                )
+        timings = processor.report.get("timings_seconds", {})
+        if isinstance(timings, Mapping):
+            processor.report["total_postprocessing_seconds"] = float(sum(float(value) for value in timings.values()))
+        return ResearchProblemValidationResult(metrics=metrics, report=dict(processor.report))
+
     def compute_validation_metrics_from_dataset(self, logits: Any, target_mask: Any, dataset: object | None) -> dict[str, float]:
         import torch
 
@@ -776,6 +837,46 @@ class _CombinedTorchABIPatchDataset:
             if index >= offset:
                 return self.datasets[dataset_index], index - offset
         raise IndexError(index)
+
+
+def _validation_metric_payload_from_operational(
+    operational: Any,
+    *,
+    indices: Sequence[int] | range,
+    prefix: str,
+    include_legacy: bool = True,
+) -> dict[str, float]:
+    from abi_contrail.postprocessing import summarize_operational_metrics
+
+    summary = summarize_operational_metrics(operational, indices=indices)
+    raw_metrics = summary["raw_metrics"]
+    filtered_metrics = summary["filtered_metrics"]
+    raw_connectivity = summary["raw_connectivity"]
+    filtered_connectivity = summary["filtered_connectivity"]
+    payload = {
+        f"{prefix}raw_dice": raw_metrics["dice"],
+        f"{prefix}raw_iou": raw_metrics["iou"],
+        f"{prefix}raw_precision": raw_metrics["precision"],
+        f"{prefix}raw_recall": raw_metrics["recall"],
+        f"{prefix}raw_cldice": raw_connectivity,
+        f"{prefix}raw_contrail_connectivity": raw_connectivity,
+        f"{prefix}filtered_dice": filtered_metrics["dice"],
+        f"{prefix}filtered_iou": filtered_metrics["iou"],
+        f"{prefix}filtered_precision": filtered_metrics["precision"],
+        f"{prefix}filtered_recall": filtered_metrics["recall"],
+        f"{prefix}filtered_cldice": filtered_connectivity,
+        f"{prefix}filtered_contrail_connectivity": filtered_connectivity,
+    }
+    if include_legacy:
+        payload.update(
+            {
+                f"{prefix}dice": raw_metrics["dice"],
+                f"{prefix}iou": raw_metrics["iou"],
+                f"{prefix}precision": raw_metrics["precision"],
+                f"{prefix}recall": raw_metrics["recall"],
+            }
+        )
+    return payload
 
 
 def _validation_metric_payload(raw_predictions: Any, filtered_predictions: Any, targets: Any, *, prefix: str, include_legacy: bool = True) -> dict[str, float]:

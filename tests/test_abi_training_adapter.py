@@ -352,6 +352,123 @@ def test_validation_metrics_are_dataset_source_stratified() -> None:
     assert metrics["val/source/mit/raw_dice"] > metrics["val/source/google/raw_dice"]
 
 
+def test_accelerated_validation_result_preserves_source_metrics_and_reports_bounded_cpu_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class ValidationDataset:
+        metadata = (
+            {"dataset_source": "mit"},
+            {"dataset_source": "google"},
+        )
+
+        def sample_metadata(self, index: int) -> dict[str, object]:
+            return dict(self.metadata[index])
+
+        def filter_context(self, index: int) -> dict[str, object]:
+            return {}
+
+    logits = torch.full((2, 1, 4, 4), -10.0)
+    target = torch.zeros((2, 1, 4, 4), dtype=torch.float32)
+    target[:, :, 1:3, 1:3] = 1.0
+    logits[0, :, 1:3, 1:3] = 10.0
+    adapter = ABITrainingAdapter({"postprocessing_batch_size": 1})
+    expected = adapter.compute_validation_metrics_from_dataset(logits, target, ValidationDataset())
+
+    class AcceleratedOnlyPipeline:
+        filters = adapter.filter_pipeline.filters
+        pixel_area_km2 = adapter.filter_pipeline.pixel_area_km2
+
+    adapter.filter_pipeline = AcceleratedOnlyPipeline()  # type: ignore[assignment]
+    messages: list[str] = []
+
+    result = adapter.compute_validation_result_from_dataset(
+        logits,
+        target,
+        ValidationDataset(),
+        device=torch.device("cpu"),
+        progress_callback=messages.append,
+    )
+
+    assert result.metrics == pytest.approx(expected)
+    assert result.report["backend"] == "torch_cpu"
+    assert result.report["requested_device"] == "cpu"
+    assert result.report["batch_size"] == 1
+    assert result.report["max_device_batch_samples"] == 1
+    assert result.report["bounded_device_batches"] is True
+    assert result.report["full_validation_gpu_residency"] is False
+    assert set(result.report["timings_seconds"]) == {
+        "artifact_filter_context_preparation",
+        "artifact_filter",
+        "ordinary_metric",
+        "connectivity_metric",
+    }
+    assert any(message.startswith("Artifact Filter context preparation started") for message in messages)
+    assert any(message.startswith("connectivity metric phase complete") for message in messages)
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    fallback = adapter.compute_validation_result_from_dataset(
+        logits,
+        target,
+        ValidationDataset(),
+        device=torch.device("cuda"),
+        progress_callback=lambda _message: None,
+    )
+    assert fallback.report["requested_device"] == "cuda"
+    assert fallback.report["backend"] == "torch_cpu"
+    assert fallback.metrics == pytest.approx(expected)
+
+
+def test_accelerated_source_metrics_preserve_geographic_then_scanline_filter_order() -> None:
+    from abi_contrail.artifact_filters import (
+        ABIArtifactFilterPipeline,
+        GeographicFeatureFilter,
+        ScanlineArtifactFilter,
+    )
+
+    class ValidationDataset:
+        sources = ("mit", "google")
+        geographic_masks = (
+            np.array([[False, False, False, False, False, True, False, False, False, False]]),
+            np.zeros((1, 10), dtype=bool),
+        )
+
+        def sample_metadata(self, index: int) -> dict[str, object]:
+            return {"dataset_source": self.sources[index]}
+
+        def filter_context(self, index: int) -> dict[str, object]:
+            return {"geographic_feature_mask": self.geographic_masks[index]}
+
+    probabilities = torch.stack(
+        (
+            torch.full((1, 1, 10), 0.7),
+            torch.linspace(0.55, 0.95, 10).reshape(1, 1, 10),
+        )
+    )
+    logits = torch.logit(probabilities)
+    target = torch.ones_like(logits)
+    adapter = ABITrainingAdapter({"postprocessing_batch_size": 2})
+    adapter.filter_pipeline = ABIArtifactFilterPipeline(
+        filters=(
+            GeographicFeatureFilter(pixel_buffer=0),
+            ScanlineArtifactFilter(min_length_pixels=8, max_probability_std=0.01),
+        ),
+        pixel_area_km2=1.0,
+    )
+    expected = adapter.compute_validation_metrics_from_dataset(logits, target, ValidationDataset())
+
+    result = adapter.compute_validation_result_from_dataset(
+        logits,
+        target,
+        ValidationDataset(),
+        device=torch.device("cpu"),
+        progress_callback=lambda _message: None,
+    )
+
+    assert result.metrics == pytest.approx(expected)
+    assert result.metrics["val/source/mit/filtered_dice"] > 0.9
+    assert result.metrics["val/source/google/filtered_dice"] == pytest.approx(1.0)
+
+
 def test_training_adapter_computes_manifest_declared_auxiliary_losses() -> None:
     adapter = ABITrainingAdapter()
     target = torch.zeros((1, 1, 7, 7), dtype=torch.float32)
@@ -497,6 +614,17 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert "val/raw_contrail_connectivity" in final_metrics
     assert "val/filtered_contrail_connectivity" in final_metrics
     assert best_metrics["selection_metric"] == "val/filtered_dice"
+    validation_index = json.loads((outputs / "validation_postprocessing" / "index.json").read_text())
+    validation_report = json.loads((outputs / "validation_postprocessing" / "epoch_001.json").read_text())
+    assert validation_index["reports"] == ["outputs/validation_postprocessing/epoch_001.json"]
+    expected_backend = "torch_cuda" if final_metrics["hardware/device"] == "cuda" else "torch_cpu"
+    assert validation_report["postprocessing"]["backend"] == expected_backend
+    assert validation_report["postprocessing"]["bounded_device_batches"] is True
+    assert validation_report["postprocessing"]["max_device_batch_samples"] == 1
+    training_log = (outputs / "logs" / "training.log").read_text()
+    assert "validation inference complete" in training_log
+    assert "Artifact Filter context preparation complete" in training_log
+    assert "connectivity metric phase complete" in training_log
 
     evaluation = evaluate_run(run.run_dir, max_artifact_samples=1)
     assert evaluation.status == "completed"

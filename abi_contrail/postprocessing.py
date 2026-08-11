@@ -133,6 +133,7 @@ class BoundedBatchPostprocessor:
             _emit_periodic_progress(
                 self.emit,
                 phase="Artifact Filter context preparation",
+                previous_completed=index,
                 completed=index + 1,
                 total=sample_count,
                 started_at=started,
@@ -183,6 +184,7 @@ class BoundedBatchPostprocessor:
             _emit_periodic_progress(
                 self.emit,
                 phase="Artifact Filter phase",
+                previous_completed=start,
                 completed=end,
                 total=sample_count,
                 started_at=filter_started,
@@ -216,6 +218,7 @@ class BoundedBatchPostprocessor:
             _emit_periodic_progress(
                 self.emit,
                 phase="ordinary metric phase",
+                previous_completed=start,
                 completed=end,
                 total=sample_count,
                 started_at=ordinary_started,
@@ -244,6 +247,7 @@ class BoundedBatchPostprocessor:
             _emit_periodic_progress(
                 self.emit,
                 phase="connectivity metric phase",
+                previous_completed=start,
                 completed=end,
                 total=sample_count,
                 started_at=connectivity_started,
@@ -329,6 +333,7 @@ class BoundedBatchPostprocessor:
             _emit_periodic_progress(
                 self.emit,
                 phase="threshold-sweep phase samples",
+                previous_completed=start,
                 completed=end,
                 total=sample_count,
                 started_at=started,
@@ -458,6 +463,28 @@ class BoundedBatchPostprocessor:
             import torch
 
             torch.cuda.synchronize(self.device)
+
+
+def summarize_operational_metrics(
+    operational: OperationalPostprocessingResult,
+    *,
+    indices: Sequence[int] | range | None = None,
+) -> dict[str, object]:
+    """Aggregate one operational result consistently for training and evaluation."""
+
+    selected = list(range(len(operational.raw_counts)) if indices is None else indices)
+    raw_counts = aggregate_counts([operational.raw_counts[index] for index in selected])
+    filtered_counts = aggregate_counts([operational.filtered_counts[index] for index in selected])
+    return {
+        "raw_counts": raw_counts,
+        "filtered_counts": filtered_counts,
+        "raw_metrics": metrics_from_counts(raw_counts),
+        "filtered_metrics": metrics_from_counts(filtered_counts),
+        "raw_connectivity": mean_connectivity([operational.raw_connectivity[index] for index in selected]),
+        "filtered_connectivity": mean_connectivity(
+            [operational.filtered_connectivity[index] for index in selected]
+        ),
+    }
 
 
 def aggregate_counts(records: Sequence[Mapping[str, int]]) -> dict[str, int]:
@@ -697,12 +724,14 @@ def _emit_periodic_progress(
     emit: Callable[[str], None],
     *,
     phase: str,
+    previous_completed: int,
     completed: int,
     total: int,
     started_at: float,
     log_every: int,
 ) -> None:
-    if completed != total and completed % log_every != 0:
+    crossed_interval = completed // log_every > previous_completed // log_every
+    if completed != total and not crossed_interval:
         return
     elapsed = max(0.0, time.monotonic() - started_at)
     rate = completed / elapsed if elapsed > 0 else 0.0
@@ -722,4 +751,5 @@ __all__ = [
     "aggregate_counts",
     "mean_connectivity",
     "metrics_from_counts",
+    "summarize_operational_metrics",
 ]
