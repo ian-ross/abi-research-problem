@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 15:55'
+updated_date: '2026-08-11 16:01'
 labels:
   - harness
   - candidates
@@ -101,4 +101,11 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 ## Human Gate 2 (2026-08-11)
 - Human authorized exactly one sequential A100 resource pilot: reviewed model source, one epoch, 32 training and 32 validation samples per Dataset Source, batch size 4, four bounded diagnostics.
 - Any Resource Failure retry, non-finite state, constant bounded predictions, missing artifact, or lifecycle inconsistency stops for review. This does not authorize the main Run or full evaluation.
+
+## Gate 2 pilot attempt stopped for review (2026-08-11)
+- Authorized Run `run_20260811_155607_5a9ea1` trained/validated exactly once on A100 device 0 with 64 train + 64 validation samples, batch 4, no retry, finite metrics, and a fully finite checkpoint. Peak allocated/reserved memory was 571,703,808 / 664,797,184 bytes; measured operation wall time 68.30s.
+- The Run then failed before `final_metrics.json`/qualitative artifacts because ABI does not implement the requested Harness-owned `adjacent_and_scattered` prediction sample selector. It was incorrectly classified `candidate_bug`; Candidate source did not cause the trusted-policy incompatibility.
+- Validation was non-degenerate in both sources: aggregate raw/filtered Dice 0.00838/0.00851; Google 0.00139/0.00139; MIT 0.01690/0.01756.
+- Two reconciliations preserved exactly one `run_failed`; container cleanup completed; no duplicate/retry Run was launched.
+- Per Gate 2 stop rules, no repair or second pilot was started. Recommended review decision: revise the pilot qualitative policy to supported provider/Harness-owned `first_n` and authorize one deliberate replacement pilot; retain this failed Run as evidence. AC 4 remains incomplete.
 <!-- SECTION:NOTES:END -->
