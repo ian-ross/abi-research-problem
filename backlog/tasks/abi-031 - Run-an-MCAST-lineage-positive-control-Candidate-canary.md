@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 16:03'
+updated_date: '2026-08-11 16:07'
 labels:
   - harness
   - candidates
@@ -28,7 +28,7 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - [x] #1 A reviewed positive-control protocol defines the MCAST-lineage architecture, approved-channel transforms, random initialization, sequential GPU policy, sample/epoch bounds, finite-state checks, non-degeneracy thresholds, expected artifacts, and explicit human review/execution gates
 - [x] #2 The manually authored Candidate contains architecture-only code, uses no baseline weights or baseline-root access, receives no longitude/latitude, and leaves data loading, losses, metrics, filters, sampling, augmentation, and execution policy to trusted provider/Harness code
 - [x] #3 Static validation, controlled model smoke tests, and bounded fixture checks pass before any real-data training is authorized
-- [ ] #4 A human-approved sequential Docker/GPU Run executes only after ABI-030 is complete and demonstrates the new non-finite fail-fast and recoverable long-Run lifecycle behavior
+- [x] #4 A human-approved sequential Docker/GPU Run executes only after ABI-030 is complete and demonstrates the new non-finite fail-fast and recoverable long-Run lifecycle behavior
 - [ ] #5 A full canonical Working Validation evaluation and provider-owned acceptance report evaluate preregistered finite/non-degenerate criteria, including finite checkpoint parameters, finite losses, predicted-positive pixels, aggregate raw/filtered metrics, and MIT/Google source-stratified metrics
 - [ ] #6 Run, evaluation, resource profile, bounded qualitative artifacts, Research Ledger/index records, canonical MCAST provenance, and all pass/fail evidence are validated and recorded durably whether the positive-control hypothesis passes or fails
 - [ ] #7 A final human decision records whether Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy; the decision does not itself launch an automatic iteration
@@ -113,4 +113,12 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Human approved one deliberate replacement pilot after reviewing `run_20260811_155607_5a9ea1`.
 - Keep the reviewed byte-identical model, one epoch, 32 train and 32 validation samples per Dataset Source, batch size 4, four diagnostics, sequential A100 device 0, and all prior stop conditions.
 - The sole protocol correction is to use the already-supported trusted `first_n` prediction-sample policy. This approval still does not authorize the main Run or full evaluation.
+
+## Gate 2 replacement pilot passed (2026-08-11)
+- Reviewed replacement Run `run_20260811_160407_9067ea` completed once using trusted `first_n`; two reconciliations preserved exactly one `run_completed`, the sole container exited 0 and was removed, and no retry occurred.
+- It processed 64 train + 64 validation samples at batch 4. All 45 numeric epoch metrics and all 184 checkpoint tensors (14,339,829 tensor values) were finite. Aggregate raw/filtered Dice was 0.00632/0.00622; Google 0.00208/0.00205; MIT 0.01384/0.01406.
+- Four bounded masks contained 48,530 positive and 213,614 negative pixels; every mask had both classes. Final/best metrics, checkpoint, model summary, completed resource profile, and four qualitative sets are present.
+- Peak CUDA allocated/reserved was 568,427,008/664,797,184 bytes with 41,855,287,296 bytes free at start. Training/validation throughput was 56.974/0.984 samples/s; measured operation wall time was 68.31s. Batch size 4 is recommended.
+- Canonical/pilot Candidate checksums are `33a410b...` / `1e2f1f36...`; `model.py` is byte-identical (`f40b484c...`). Mounts are read-only and model summary excludes coordinates.
+- AC 4 is complete. Gate 3 remains required. Recommended main correction: use supported `first_n`, with all other preregistered bounds unchanged.
 <!-- SECTION:NOTES:END -->
