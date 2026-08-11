@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:29'
-updated_date: '2026-08-11 12:20'
+updated_date: '2026-08-11 13:05'
 labels:
   - harness
   - candidates
@@ -82,4 +82,11 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 - ABI commit `df394b5` adds operator guidance, Agent-visible lifecycle guidance evidence, campaign report, and tests. ABI suite -> 104 passed.
 - Rebuilt and validated runtime image `ml-autoresearch-runner:abi-research-problem-9579186fcab90ca0-13b99524f1` against clean Harness commit `175c8a3`; Docker workspace smoke returned `accepted`, `trained: false`; rebuilt runner exposes `run-status`.
 - No scientific Candidate, real training data, or GPU training was run. Human Execution Gate 1 remains required before the two lightweight GPU validations; this does not authorize ABI-031.
+
+## Human Execution Gate 1 evidence (2026-08-11)
+- Approved non-finite target Run `run_20260811_125755_2e8cbf` used the validated runner on A100 device 0 and failed at train epoch 1/batch 0 on `output.mask_logits`: 65,536 NaNs, no raw values, `candidate_bug` / `non_finite_training_state`, zero processed training samples, no Resource Failure retry, one `run_failed`, and completed container cleanup. Reconciliation repeated twice without changing terminal cardinality.
+- Approved caller-interruption target Run `run_20260811_130321_8530cf`: foreground caller exited 143 while the managed training container was confirmed running. Immediate status showed metadata `training`, supervisor alive, and Docker running for the same Run ID. The Run completed 2 train + 2 validation samples on A100 device 0; two reconciliations returned completed, ledger cardinality remained one `run_completed`, and container cleanup completed. No recovery resubmission occurred.
+- Isolated evidence root: `/data/iross/abi-ml-autoresearch/validation/abi030-gate1-20260811/`; bounded summary: `validation-summary.json`.
+- Transparent extra attempts: `run_20260811_125709_32464a` failed pre-dataset because omitted `--docker-image` selected fixed CLI default `ml-autoresearch-runner:local`; `run_20260811_125931_23ef92` was killed during synchronous smoke before managed execution and reconciled as harness_failure with no GPU training; `run_20260811_130026_246827` accidentally completed one extra tiny finite A100 precheck (2 train + 2 validation samples) because persisted state was `starting` while Docker reported running. This exceeded the intended count by one bounded finite Run but did not duplicate or recover the disconnected target.
+- Created follow-up ABI-032 for configured Docker defaults, durable pre-training/smoke interruption, and trusted bootstrap classification. No scientific Candidate or ABI-031 training was run. Human Review Gate 2 remains required.
 <!-- SECTION:NOTES:END -->
