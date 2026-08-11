@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 18:25'
+updated_date: '2026-08-11 19:42'
 labels:
   - harness
   - candidates
@@ -134,4 +134,9 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Peak CUDA allocated/reserved was 568,427,008/666,894,336 bytes. Total operation time was 8,047.34s: training 49.21s versus legacy CPU validation/postprocessing 7,995.87s.
 - Created ABI-033 to route training validation through existing bounded accelerated postprocessing and add phase/progress/timing evidence. This performance gap did not change trusted metric semantics for the completed Run.
 - Main finite/non-degenerate prerequisites pass. Human Gate 4 is required before canonical Working Validation evaluation; AC 5-7 remain incomplete.
+
+## Human Gate 4 — canonical evaluation authorization (2026-08-11)
+- Human reviewed the completed main Run evidence and authorized exactly one canonical Working Validation evaluation without retraining.
+- Authorized bounds: Run `run_20260811_160920_07a7f4`, Docker GPU backend on A100 device 0, validated ABI-031 runner, split `val`, all 3,088 canonical samples, at most four diagnostic samples/eight GeoTIFFs, and the existing Research Ledger.
+- This authorization does not decide the final Gate 5 autonomy question.
 <!-- SECTION:NOTES:END -->
