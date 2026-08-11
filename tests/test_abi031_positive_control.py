@@ -7,6 +7,7 @@ import torch
 
 from abi_contrail.research_problem import build_spec
 from ml_autoresearch.candidates import validate_candidate_directory
+from ml_autoresearch.problem_support.segmentation import bce_dice_loss
 from ml_autoresearch.research_problems import ResearchProblemSpecRegistry
 from ml_autoresearch.smoke import _import_candidate_model
 
@@ -27,12 +28,12 @@ def test_abi031_candidate_contract_and_source_boundary() -> None:
     )
     source = (CANDIDATE / "model.py").read_text()
     tree = ast.parse(source)
-    imported_roots = {
-        alias.name.split(".", 1)[0]
-        for node in ast.walk(tree)
-        if isinstance(node, (ast.Import, ast.ImportFrom))
-        for alias in node.names
-    }
+    imported_roots = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_roots.update(alias.name.split(".", 1)[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module is not None:
+            imported_roots.add(node.module.split(".", 1)[0])
 
     assert manifest.input_mode == "abi_16ch"
     assert manifest.output_form == "mask_logits"
@@ -96,3 +97,30 @@ def test_abi031_candidate_zero_and_random_forward_backward_are_finite() -> None:
         full_size_output = model(torch.zeros(1, 16, 256, 256))
     assert full_size_output.shape == (1, 1, 256, 256)
     assert torch.isfinite(full_size_output).all()
+
+
+def test_abi031_candidate_tiny_harness_owned_fixture_step_writes_finite_checkpoint(tmp_path: Path) -> None:
+    module = _import_candidate_model(CANDIDATE)
+    model = module.build_model(
+        {"mode": "abi_16ch", "shape": [16, 256, 256]},
+        {"form": "mask_logits", "shape": [1, 256, 256]},
+    )
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
+    inputs = torch.randn(1, 16, 64, 64)
+    targets = torch.zeros(1, 1, 64, 64)
+    targets[:, :, 28:36, 8:56] = 1.0
+    initial_head = model.network.segmentation_head[0].weight.detach().clone()
+
+    optimizer.zero_grad(set_to_none=True)
+    logits = model(inputs)
+    loss = bce_dice_loss(logits, targets)
+    loss.backward()
+    optimizer.step()
+
+    assert torch.isfinite(loss)
+    assert not torch.equal(initial_head, model.network.segmentation_head[0].weight)
+    assert all(torch.isfinite(parameter).all() for parameter in model.parameters())
+    checkpoint_path = tmp_path / "fixture_checkpoint.pt"
+    torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    assert all(torch.isfinite(value).all() for value in checkpoint["model_state_dict"].values())

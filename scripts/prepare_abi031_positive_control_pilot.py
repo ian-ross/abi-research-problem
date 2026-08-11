@@ -20,7 +20,7 @@ def prepare_pilot(source: Path, output: Path) -> dict[str, object]:
     if output.exists():
         raise ValueError(f"pilot output already exists: {output}")
 
-    shutil.copytree(source, output)
+    shutil.copytree(source, output, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     manifest_path = output / "manifest.yaml"
     manifest = yaml.safe_load(manifest_path.read_text())
     if not isinstance(manifest, dict) or not isinstance(manifest.get("training"), dict):
