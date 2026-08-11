@@ -1,7 +1,7 @@
 ---
 id: ABI-033
 title: Use accelerated bounded postprocessing during ABI training validation
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-11 17:08'
