@@ -96,7 +96,24 @@ Human Gate 2 authorized one pilot on 2026-08-11. Run `run_20260811_155607_5a9ea1
 - Exactly one `run_failed` event remained after two reconciliations; container cleanup completed and no duplicate Run was launched.
 - Missing outputs: `final_metrics.json` and qualitative prediction artifacts. The late trusted-policy failure was incorrectly classified `candidate_bug`; Candidate source did not cause it.
 
-Per the preregistered stop rule, no repair or second pilot was launched. Gate 2 review must choose whether to implement ABI support for the policy or revise the bounded pilot to the already-supported Harness-owned `first_n` policy. The latter is the minimal recommended correction; full Working Validation diagnostics retain their separate provider-owned failure-bucket selection.
+Per the preregistered stop rule, no repair or second pilot was launched. Gate 2 review chose the minimal correction: retain the failed Run as evidence and authorize one deliberate replacement using the already-supported trusted `first_n` policy. Full Working Validation diagnostics retain their separate provider-owned failure-bucket selection.
+
+### Gate 2 replacement pilot result
+
+Human review authorized the replacement, and Run `run_20260811_160407_9067ea` completed exactly once on 2026-08-11.
+
+- Reviewed canonical/pilot Candidate tree checksums: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103` / `1e2f1f364b5822f2f7f84da3f299d90a1f1886f6d6b785c561aaa665efde654e`; canonical and pilot `model.py` SHA-256 both `f40b484c079b31a30287d3d4b521d26712ee295995e365349fe0c674700ae854`.
+- Status `completed`; exactly one `run_completed` event remained after two reconciliations; one container attempt exited successfully and cleanup removed it.
+- 64 training and 64 validation samples processed at batch size 4 with no retry.
+- All 45 numeric epoch metrics were finite. Train/validation loss: `1.7227236778` / `4.6490467936`.
+- Aggregate raw/filtered Dice: `0.0063185547` / `0.0062221879`; Google: `0.0020787475` / `0.0020476661`; MIT: `0.0138359561` / `0.0140604148`.
+- The selected checkpoint contained 184 tensors and 14,339,829 tensor values, all finite.
+- Four bounded prediction masks contained 48,530 positive and 213,614 negative pixels in total; every sample contained both classes.
+- Peak CUDA allocated/reserved: 568,427,008 / 664,797,184 bytes (about 1.6% of 40 GiB reserved), with 41,855,287,296 bytes free at start.
+- Training/validation throughput: 56.974 / 0.984 samples/s; measured operation wall time 68.31 seconds.
+- Required final metrics, best metrics/checkpoint, model summary, resource profile, and four bounded qualitative artifact sets are present. Training, ancillary, and baselines mounts are recorded read-only; the model summary records ABI source indices 0-15 and excludes longitude/latitude.
+
+The pilot meets its numerical, resource, artifact, provenance, and lifecycle criteria. Batch size 4 is recommended for Gate 3. The main Run remains unauthorized. Because ABI still does not support `adjacent_and_scattered`, the proposed main command below is corrected to `first_n`; Gate 3 must explicitly approve that correction.
 
 ## Sequential A100 resource pilot
 
@@ -106,7 +123,7 @@ Preflight:
 
 ```bash
 nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv
-uv run ml-autoresearch validate-runtime-image --workspace-root .
+uv run ml-autoresearch validate-runtime-images --workspace-root .
 ```
 
 Launch through the managed detached lifecycle using the newly validated configured runner:
@@ -117,11 +134,11 @@ uv run ml-autoresearch run-candidate \
   --workspace-root . \
   --max-samples 32 \
   --max-prediction-samples 4 \
-  --prediction-sample-policy adjacent_and_scattered \
+  --prediction-sample-policy first_n \
   --detach
 ```
 
-Retain the returned Run ID and only observe/reconcile that Run:
+`first_n` is the reviewed correction after the original `adjacent_and_scattered` attempt failed during trusted artifact selection. Retain the returned Run ID and only observe/reconcile that Run:
 
 ```bash
 uv run ml-autoresearch run-status --workspace-root . --run-id <PILOT_RUN_ID>
@@ -153,7 +170,7 @@ uv run ml-autoresearch run-candidate \
   --workspace-root . \
   --max-samples 1024 \
   --max-prediction-samples 4 \
-  --prediction-sample-policy adjacent_and_scattered \
+  --prediction-sample-policy first_n \
   --detach
 ```
 
