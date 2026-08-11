@@ -82,6 +82,22 @@ Human Gate 1 approved controlled non-data checks on 2026-08-11. No external ABI 
 
 This evidence authorizes review for Gate 2 only. It does not authorize the A100 pilot.
 
+### Gate 2 first pilot attempt
+
+Human Gate 2 authorized one pilot on 2026-08-11. Run `run_20260811_155607_5a9ea1` used the reviewed byte-identical one-epoch derivative, 32 train and 32 validation samples per Dataset Source, batch size 4, A100 device 0, and no concurrent GPU process. Training and validation completed once with finite losses/metrics and a finite checkpoint, but the Run failed during bounded qualitative-artifact selection because the preregistered `adjacent_and_scattered` Harness policy is not implemented by the ABI training adapter.
+
+- 64 training and 64 validation samples processed; no Resource Failure retry.
+- Train loss `1.7150806487`; validation loss `2.0541212559`.
+- Raw/filtered validation Dice `0.0083816075` / `0.0085124956`.
+- Google raw/filtered Dice `0.0013947959` / `0.0013873153`; MIT raw/filtered Dice `0.0169016537` / `0.0175550567`.
+- Checkpoint: 184 tensors, 14,339,829 tensor values, all finite.
+- Peak CUDA allocated/reserved: 571,703,808 / 664,797,184 bytes; free at start 41,855,287,296 bytes.
+- Training/validation throughput: 47.878 / 0.982 samples/s; measured operation wall time 68.30 seconds.
+- Exactly one `run_failed` event remained after two reconciliations; container cleanup completed and no duplicate Run was launched.
+- Missing outputs: `final_metrics.json` and qualitative prediction artifacts. The late trusted-policy failure was incorrectly classified `candidate_bug`; Candidate source did not cause it.
+
+Per the preregistered stop rule, no repair or second pilot was launched. Gate 2 review must choose whether to implement ABI support for the policy or revise the bounded pilot to the already-supported Harness-owned `first_n` policy. The latter is the minimal recommended correction; full Working Validation diagnostics retain their separate provider-owned failure-bucket selection.
+
 ## Sequential A100 resource pilot
 
 After a separate execution approval, prepare an operator-authored pilot derivative that keeps `model.py` byte-for-byte identical and changes only Candidate identity and `max_epochs` to 1. Use no Experiment Batch and no concurrent GPU work.
