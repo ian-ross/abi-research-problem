@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 16:07'
+updated_date: '2026-08-11 16:09'
 labels:
   - harness
   - candidates
@@ -121,4 +121,9 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Peak CUDA allocated/reserved was 568,427,008/664,797,184 bytes with 41,855,287,296 bytes free at start. Training/validation throughput was 56.974/0.984 samples/s; measured operation wall time was 68.31s. Batch size 4 is recommended.
 - Canonical/pilot Candidate checksums are `33a410b...` / `1e2f1f36...`; `model.py` is byte-identical (`f40b484c...`). Mounts are read-only and model summary excludes coordinates.
 - AC 4 is complete. Gate 3 remains required. Recommended main correction: use supported `first_n`, with all other preregistered bounds unchanged.
+
+## Human Gate 3 — main Run authorization (2026-08-11)
+- Human approved one sequential main Run after reviewing the successful replacement pilot.
+- Authorized bounds: reviewed canonical Candidate, batch size 4, three epochs, at most 1,024 training and 1,024 validation samples per Dataset Source, four bounded diagnostics using supported trusted `first_n`, A100 device 0, no concurrent GPU work.
+- Prior stop conditions remain. This does not authorize the canonical Working Validation evaluation.
 <!-- SECTION:NOTES:END -->
