@@ -1,7 +1,7 @@
 ---
 id: ABI-031
 title: Run an MCAST-lineage positive-control Candidate canary
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
