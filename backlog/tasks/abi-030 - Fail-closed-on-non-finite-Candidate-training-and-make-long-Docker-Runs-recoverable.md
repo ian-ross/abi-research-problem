@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:29'
-updated_date: '2026-08-11 10:52'
+updated_date: '2026-08-11 12:20'
 labels:
   - harness
   - candidates
@@ -25,12 +25,12 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Trusted training detects non-finite batch loss, aggregate loss/metrics, gradients, or model parameters at a defined bounded checkpoint and terminates promptly with an explicit failure reason and appropriate Harness-owned classification
-- [ ] #2 A non-finite failure writes a bounded diagnostic artifact identifying epoch, batch, failing quantity, and finite/non-finite counts without exposing raw samples or moving loss/metric ownership into Candidate code
-- [ ] #3 Long Docker Candidate Runs survive caller disconnection through a supported detached or reattachable execution path, and their status can be observed without launching a duplicate Run
-- [ ] #4 A supported idempotent reconciliation/finalization path validates completed artifacts and records exactly one terminal Run metadata state and exactly one terminal Research Ledger event
-- [ ] #5 Tests cover non-finite training, caller interruption, successful reattachment/reconciliation, duplicate-finalization prevention, and distinction from Resource Failure retry behavior
-- [ ] #6 Operator and Agent-visible guidance documents the fail-fast and long-Run lifecycle semantics before another fully automatic autonomy iteration is approved
+- [x] #1 Trusted training detects non-finite batch loss, aggregate loss/metrics, gradients, or model parameters at a defined bounded checkpoint and terminates promptly with an explicit failure reason and appropriate Harness-owned classification
+- [x] #2 A non-finite failure writes a bounded diagnostic artifact identifying epoch, batch, failing quantity, and finite/non-finite counts without exposing raw samples or moving loss/metric ownership into Candidate code
+- [x] #3 Long Docker Candidate Runs survive caller disconnection through a supported detached or reattachable execution path, and their status can be observed without launching a duplicate Run
+- [x] #4 A supported idempotent reconciliation/finalization path validates completed artifacts and records exactly one terminal Run metadata state and exactly one terminal Research Ledger event
+- [x] #5 Tests cover non-finite training, caller interruption, successful reattachment/reconciliation, duplicate-finalization prevention, and distinction from Resource Failure retry behavior
+- [x] #6 Operator and Agent-visible guidance documents the fail-fast and long-Run lifecycle semantics before another fully automatic autonomy iteration is approved
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -73,4 +73,13 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 - After disconnect, `find_open_executable_actions` returned no action because `candidate_submitted` already closed the handoff; Run observation reported `training`. Calling the current terminal-event helper twice produced two `run_completed` events, confirming no idempotent finalization guard.
 - Current focused baseline is green: `uv run pytest -q tests/test_synthetic_training.py tests/test_smoke_test.py tests/test_resource_retry_metadata.py tests/test_synthetic_backend_training.py tests/test_research_ledger_lifecycle.py tests/test_cli_submission.py tests/test_autonomy_step.py tests/test_run_observation.py` -> 121 passed.
 - Source inspection confirms finite-state checks are absent from smoke/training/selection/terminal validation; Docker uses attached `docker run --rm`; metadata and ledger terminal writes happen only after the synchronous backend returns; daemonization replays the whole command before a Run id exists; terminal ledger appends have no per-Run lock or duplicate precondition.
+
+## Phase 1-3 implementation evidence (2026-08-11)
+- Harness commit `175c8a3` adds mandatory finite-state checks in smoke, every training batch, validation/selection, metrics artifacts, and checkpoint tensors. Failures write bounded count-only `outputs/nonfinite_diagnostic.json`; Candidate numerical failures are `candidate_bug`, trusted aggregate metric failures are `harness_failure`, and neither enters Resource Failure retry.
+- Managed Runs now create a stable Run before training, use the same detached supervisor for foreground/`--detach`, persist `execution.json` with supervisor/container attempts and logs, omit Docker `--rm` until terminal cleanup, and expose `run-status` plus idempotent `reconcile-run`.
+- Candidate open-action recovery maps `candidate_submitted` to its existing non-terminal Run and reconciles that Run; per-Run/ledger locks and compare-before-append prevent duplicate terminal events. Tests cover caller kill, active-container reattachment, stale artifact completion, OOM/resource distinction, corrupt/non-finite terminal artifacts, and repeated finalization.
+- Harness validation: focused reliability/lifecycle suites 114 passed; full suite with `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=../test-research-problem` -> 554 passed, 2 skipped, 1 unrelated external GVCCS characterization failure (`focal_bce_dice` Candidate versus fake test Spec allowing only `bce_dice`).
+- ABI commit `df394b5` adds operator guidance, Agent-visible lifecycle guidance evidence, campaign report, and tests. ABI suite -> 104 passed.
+- Rebuilt and validated runtime image `ml-autoresearch-runner:abi-research-problem-9579186fcab90ca0-13b99524f1` against clean Harness commit `175c8a3`; Docker workspace smoke returned `accepted`, `trained: false`; rebuilt runner exposes `run-status`.
+- No scientific Candidate, real training data, or GPU training was run. Human Execution Gate 1 remains required before the two lightweight GPU validations; this does not authorize ABI-031.
 <!-- SECTION:NOTES:END -->
