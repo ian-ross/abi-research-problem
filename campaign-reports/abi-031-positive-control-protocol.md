@@ -65,6 +65,23 @@ Before any real-data authorization:
 
 Any failure returns to human review. Controlled checks do not automatically start the pilot.
 
+### Gate 1 controlled-check evidence
+
+Human Gate 1 approved controlled non-data checks on 2026-08-11. No external ABI data or GPU training was used.
+
+- Reviewed Candidate checksum: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
+- Static Candidate validation with required proposal and README: valid.
+- Source/import boundary, exact MCAST constants and channel formulas, 14,328,209 parameter count, output contract, zero/random finite forward/backward, one trusted `bce_dice`/AdamW fixture step, and finite checkpoint reload: 4 tests passed.
+- Pilot preparation and positive-control report fixtures: 3 tests passed.
+- Full ABI suite: 111 passed.
+- Harness focused parameter/smoke/runner tests: 49 passed; broader focused set: 104 passed.
+- Full Harness suite: 563 passed, 2 skipped, with one known unrelated external GVCCS characterization failure (`focal_bce_dice` in a committed external Candidate versus that test's fake Spec allowing only `bce_dice`).
+- Clean Harness commit `0524fdd` built runner `ml-autoresearch-runner:abi-research-problem-46ee69c350b0a037-13b99524f1`; runtime-image validation passed with Workspace Configuration SHA-256 `1e3d1e466fefd20de74a6d63396f9add28d149ce23f438d1ea71a3a1068aafea`.
+- Runner dependency probe: SMP 0.5.0, torch 2.5.1+cu121, torchvision 0.20.1+cu121.
+- Isolated Docker smoke Run `run_20260811_154950_b78993` was accepted without data/training; its copied source checksum matches Gate 1, output is finite `[2,1,256,256]`, and `model_summary.json` records 14,328,209 parameters against the trusted 25,000,000 limit with only ABI source indices 0-15 and explicit longitude/latitude exclusion.
+
+This evidence authorizes review for Gate 2 only. It does not authorize the A100 pilot.
+
 ## Sequential A100 resource pilot
 
 After a separate execution approval, prepare an operator-authored pilot derivative that keeps `model.py` byte-for-byte identical and changes only Candidate identity and `max_epochs` to 1. Use no Experiment Batch and no concurrent GPU work.
