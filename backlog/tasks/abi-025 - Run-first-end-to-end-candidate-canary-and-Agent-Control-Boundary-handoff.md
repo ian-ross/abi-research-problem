@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-10 22:50'
+updated_date: '2026-08-11 05:48'
 labels:
   - harness
   - candidates
@@ -31,7 +31,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - [x] #3 The canary Run produces expected Run artifacts, Research Ledger/index records, provider-owned metrics, and an acceptance report tied to the canonical MCAST registry
 - [x] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
 - [x] #5 One Agent Control Boundary autonomy step is run without automatic next-action execution, and its single handoff is inspected and approved before any candidate execution
-- [ ] #6 The approved Agent-generated handoff is executed separately and its Run artifacts and acceptance report are validated
+- [x] #6 The approved Agent-generated handoff is executed separately and its Run artifacts and acceptance report are validated
 - [ ] #7 A final human go/no-go decision is recorded before enabling or attempting a fully automatic autonomy iteration
 <!-- AC:END -->
 
@@ -125,4 +125,11 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Human Execution Gate 6 authorized execution of the single approved `abi_spectral_resunet_scout_v1` handoff. Proceeding with `execute-open-actions --max-actions 1` under the enforced 1,024-samples-per-source bound.
 
 - Gate 6 execution created Run `run_20260810_204928_ab0218` with the approved 1,024-samples-per-source bound and read-only trusted mounts. The foreground client timed out after two hours while Docker remained active in epoch 3/12; no duplicate Run was launched. Interim inspection found training loss had become NaN in epoch 3. Final outcome and Harness reconciliation remain pending container completion.
+
+- Human Execution Gate 6 completed for Agent-generated Candidate `abi_spectral_resunet_scout_v1`: Run `run_20260810_204928_ab0218` executed 12 epochs on pinned A100 with the enforced 1,024 samples per Dataset Source (2,048 combined train and validation), batch size 4, and no resource retry.
+- The synchronous CLI caller timed out after two hours while Docker continued. No duplicate Run was launched. Docker exited 0 after writing required artifacts; stale host metadata and the missing terminal ledger event were reconciled once with Harness validation/finalization helpers and duplicate-event preconditions.
+- Training became non-finite after two batches of epoch 1 and remained non-finite. The selected checkpoint has 2,539,889 non-finite parameter values out of 2,539,921 tensor values; the full Working Validation evaluation `eval_20260811_054134_51fc4c` predicted zero positive pixels across 3,088 samples.
+- Provider-owned acceptance report is tied to verified registry `abi-mcast-working-validation-v1` and flags aggregate baseline failure, recall regression, and catastrophic MIT and Google source failures. Promotion remains human_review_required.
+- Boundary/artifact validation passed: canonical and Run Candidate copies match byte-for-byte; static validation passes; model summary permits only ABI channels 1-16 and forbids longitude/latitude; trusted mounts are recorded read-only; expected Run/evaluation/ledger artifacts and four bounded diagnostic samples/eight GeoTIFFs exist.
+- Wrote final Gate 6 report `campaign-reports/abi-025-agent-handoff-canary.md`. Recommendation for Human Final Gate 7 is no-go until trusted non-finite fail-fast checks and robust detached/synchronous Run finalization are addressed. Final human go/no-go decision is not yet recorded.
 <!-- SECTION:NOTES:END -->
