@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 15:50'
+updated_date: '2026-08-11 15:55'
 labels:
   - harness
   - candidates
@@ -97,4 +97,8 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Built and validated clean-Harness runner `ml-autoresearch-runner:abi-research-problem-46ee69c350b0a037-13b99524f1` with SMP 0.5.0, torch 2.5.1+cu121, and torchvision 0.20.1+cu121.
 - Isolated no-data Docker smoke `run_20260811_154950_b78993` accepted the reviewed source, produced finite `[2,1,256,256]` output, and recorded 14,328,209 parameters under trusted 25,000,000 with ABI indices 0-15 and coordinate exclusion.
 - Updated the durable protocol with exact evidence. AC 1-3 are complete. Human Gate 2 remains required before one A100 pilot; no real-data or GPU training has run.
+
+## Human Gate 2 (2026-08-11)
+- Human authorized exactly one sequential A100 resource pilot: reviewed model source, one epoch, 32 training and 32 validation samples per Dataset Source, batch size 4, four bounded diagnostics.
+- Any Resource Failure retry, non-finite state, constant bounded predictions, missing artifact, or lifecycle inconsistency stops for review. This does not authorize the main Run or full evaluation.
 <!-- SECTION:NOTES:END -->
