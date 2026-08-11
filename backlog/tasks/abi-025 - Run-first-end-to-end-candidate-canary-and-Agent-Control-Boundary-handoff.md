@@ -1,11 +1,11 @@
 ---
 id: ABI-025
 title: Run first end-to-end candidate canary and Agent Control Boundary handoff
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-11 05:48'
+updated_date: '2026-08-11 10:30'
 labels:
   - harness
   - candidates
@@ -32,7 +32,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - [x] #4 Validation confirms longitude and latitude are not Candidate Experiment inputs and trusted data/baseline/ancillary mounts remain read-only and boundary-owned
 - [x] #5 One Agent Control Boundary autonomy step is run without automatic next-action execution, and its single handoff is inspected and approved before any candidate execution
 - [x] #6 The approved Agent-generated handoff is executed separately and its Run artifacts and acceptance report are validated
-- [ ] #7 A final human go/no-go decision is recorded before enabling or attempting a fully automatic autonomy iteration
+- [x] #7 A final human go/no-go decision is recorded before enabling or attempting a fully automatic autonomy iteration
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -132,4 +132,37 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Provider-owned acceptance report is tied to verified registry `abi-mcast-working-validation-v1` and flags aggregate baseline failure, recall regression, and catastrophic MIT and Google source failures. Promotion remains human_review_required.
 - Boundary/artifact validation passed: canonical and Run Candidate copies match byte-for-byte; static validation passes; model summary permits only ABI channels 1-16 and forbids longitude/latitude; trusted mounts are recorded read-only; expected Run/evaluation/ledger artifacts and four bounded diagnostic samples/eight GeoTIFFs exist.
 - Wrote final Gate 6 report `campaign-reports/abi-025-agent-handoff-canary.md`. Recommendation for Human Final Gate 7 is no-go until trusted non-finite fail-fast checks and robust detached/synchronous Run finalization are addressed. Final human go/no-go decision is not yet recorded.
+
+- Human Final Gate 7 recorded **NO-GO** on attempting a fully automatic autonomy iteration. Required Harness hardening is tracked in ABI-030: fail closed on non-finite Candidate training and provide supported observable/idempotent long-Docker-Run finalization.
+- A future positive-control Candidate canary is recommended after ABI-030, using an MCAST-like architecture without Candidate access to baseline weights or the baselines root; scope remains a separate human-reviewed task.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed the staged ABI Candidate Experiment lifecycle through the manual canary, isolated Agent Control Boundary handoff, separately approved Agent-generated Candidate execution, full Working Validation evaluation, and final human decision.
+
+Manual lifecycle canary:
+- Run `run_20260810_110532_b465cf` and evaluation `eval_20260810_110644_c0d61d` validated trusted artifacts, ledger/index integration, read-only mounts, forbidden coordinate inputs, and canonical MCAST acceptance reporting.
+
+Agent Control Boundary:
+- Remediated boundary context, isolation, and typed-config blockers through ABI-026/027/028.
+- Ingested and reviewed exactly one Candidate Submission, `abi_spectral_resunet_scout_v1`, without automatic execution.
+- Enforced the approved 1,024-samples-per-source bound before separate Human Execution Gate 6.
+
+Agent-generated Candidate result:
+- Run `run_20260810_204928_ab0218` and evaluation `eval_20260811_054134_51fc4c` completed with expected artifacts and canonical acceptance report.
+- Candidate source matched the reviewed handoff, used only ABI channels 1-16, and retained provider/Harness ownership of data, loss, metrics, filters, sampling, augmentation, and read-only mounts.
+- Training became non-finite after two batches; the checkpoint was non-finite and full validation produced all-negative predictions. All scientific acceptance gates failed; promotion was rejected.
+
+Final decision:
+- Human Final Gate 7 recorded NO-GO on fully automatic autonomy. ABI-030 tracks required trusted non-finite fail-fast and long Docker Run recovery/finalization fixes.
+- Final campaign evidence is recorded in `campaign-reports/abi-025-agent-handoff-canary.md`.
+
+Validation:
+- Candidate static validation passed.
+- Canonical and Run Candidate copies matched byte-for-byte.
+- Canonical registry `abi-mcast-working-validation-v1` and both baseline references verified.
+- Run/evaluation status, expected artifacts, 3,088-sample metrics, four diagnostic samples/eight GeoTIFFs, acceptance report linkage, model input boundary, read-only mounts, and Research Ledger events were inspected.
+- `execute-open-actions --dry-run` reported no remaining open actions.
+<!-- SECTION:FINAL_SUMMARY:END -->
