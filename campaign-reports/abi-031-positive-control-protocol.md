@@ -242,6 +242,36 @@ The hypothesis passes only if all of the following are true:
 
 The report records every observed value and an explicit pass/fail reason. A failed hypothesis remains a valid durable experimental outcome and blocks resuming fully automatic autonomy planning. Passing does not promote the Candidate, claim parity with MCAST, or launch autonomy.
 
+### Gate 4 canonical evaluation result
+
+Human Gate 4 authorized one evaluation, and `eval_20260811_194238_7183db` completed once against Run `run_20260811_160920_07a7f4` without retraining.
+
+- Registry: `abi-mcast-working-validation-v1`; sample count 3,088 (MIT 1,232; Google 1,856), totaling 202,375,168 evaluated pixels.
+- All numeric values in aggregate, threshold, diagnostic, request/metadata, acceptance, positive-control, and 3,088 per-sample records are finite.
+- Raw/filtered predicted-positive pixels: 680,918 / 651,238. Both are nonzero; raw is 0.336% of evaluated pixels and filtered does not exceed raw.
+- Aggregate raw/filtered Dice: `0.1059397345` / `0.1021034087`.
+- Google raw/filtered Dice: `0.0934689056` / `0.0912497980`; MIT: `0.1155569937` / `0.1105121118`.
+- Raw/filtered Contrail Connectivity: `0.1528400779` / `0.1536021382`.
+- The ordered Artifact Filters removed 29,680 predicted-positive pixels (118,720 km²); the ordinary acceptance report does not flag excessive Artifact Filter dependence.
+- Best diagnostic threshold by raw/filtered Dice is 0.15 (`0.1125366463` / `0.1090310227`); the preregistered decision remains at threshold 0.5.
+- Accelerated postprocessing used `torch_cuda`, bounded batches of 8, no full-validation GPU residency, and 386 target-skeleton batches. Recorded postprocessing time is 118.35 seconds, including 105.34 seconds of context preparation and 3.05 seconds of Artifact Filters. End-to-end evaluation elapsed about 301 seconds. The operator separately observed about 3% GPU consumption; this is contextual human observation rather than artifact telemetry.
+- Exactly four diagnostic records and eight GeoTIFFs were written. The Research Ledger contains one `evaluation_requested` and one `evaluation_completed` event linked to the source Run.
+
+The provider-owned `positive_control_report.json` passes all eight preregistered criteria and records `decision: positive_control_passed`. The ordinary promotion-oriented `acceptance_report.json` correctly records `gate_flags_present`: filtered Dice `0.1021034087` is below MCAST 2.1's `0.3872848668`, with recall/source performance promotion failures. This does not contradict the reliability positive-control result because beating MCAST was never required.
+
+| Positive-control criterion | Result |
+| --- | --- |
+| Finite numerical state | Pass |
+| Finite checkpoint | Pass |
+| Raw prediction non-degeneracy | Pass |
+| Filtered prediction non-degeneracy | Pass |
+| Aggregate Dice above floor | Pass |
+| MIT/Google Dice above floor | Pass |
+| Artifact and ledger completeness | Pass |
+| Candidate boundary and provenance | Pass |
+
+The positive-control hypothesis passes. Gate 5 human review remains required to decide whether this evidence is sufficient to resume **planning** for fully automatic autonomy; no automatic iteration is authorized by this result.
+
 ## Human gates
 
 - **Gate 0 — protocol/design:** approve architecture, ABI-wide 25M trusted budget, 100M config ceiling, runtime dependency addition, training policy, thresholds, commands, bounds, and artifacts.
