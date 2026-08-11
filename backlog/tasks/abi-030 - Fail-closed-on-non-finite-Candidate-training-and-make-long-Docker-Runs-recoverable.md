@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:29'
-updated_date: '2026-08-11 10:39'
+updated_date: '2026-08-11 10:52'
 labels:
   - harness
   - candidates
@@ -63,3 +63,14 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 18. **Agent:** Update operator docs, CLI help, Agent-visible execution guidance, and ABI campaign notes. State that non-finite failure is not a Resource Failure and that callers must use Run status/reconciliation rather than relaunching.
 19. **Human Review Gate 2:** Review evidence and decide whether ABI-030 is complete and ABI-031 may begin. Completion does not authorize ABI-031 GPU training.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Phase 0 evidence (2026-08-11)
+- Reproduced non-finite handling twice with a tiny CPU fixture and no real data: smoke accepted non-finite output/backward state; all four training batch losses were NaN; the selected checkpoint had 0/1 finite parameter values; both Runs were marked completed with one `run_completed` event and no diagnostic artifact.
+- Reproduced caller disconnection with a tiny real Docker fixture: killed the host orchestrator while the named container was running; the container completed, wrote 14 output files including final/best metrics, and was removed, while Run metadata remained `training` and the ledger remained at `run_started`.
+- After disconnect, `find_open_executable_actions` returned no action because `candidate_submitted` already closed the handoff; Run observation reported `training`. Calling the current terminal-event helper twice produced two `run_completed` events, confirming no idempotent finalization guard.
+- Current focused baseline is green: `uv run pytest -q tests/test_synthetic_training.py tests/test_smoke_test.py tests/test_resource_retry_metadata.py tests/test_synthetic_backend_training.py tests/test_research_ledger_lifecycle.py tests/test_cli_submission.py tests/test_autonomy_step.py tests/test_run_observation.py` -> 121 passed.
+- Source inspection confirms finite-state checks are absent from smoke/training/selection/terminal validation; Docker uses attached `docker run --rm`; metadata and ledger terminal writes happen only after the synchronous backend returns; daemonization replays the whole command before a Run id exists; terminal ledger appends have no per-Run lock or duplicate precondition.
+<!-- SECTION:NOTES:END -->
