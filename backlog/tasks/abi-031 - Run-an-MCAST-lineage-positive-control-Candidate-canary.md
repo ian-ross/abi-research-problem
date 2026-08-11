@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 16:09'
+updated_date: '2026-08-11 18:25'
 labels:
   - harness
   - candidates
@@ -126,4 +126,12 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Human approved one sequential main Run after reviewing the successful replacement pilot.
 - Authorized bounds: reviewed canonical Candidate, batch size 4, three epochs, at most 1,024 training and 1,024 validation samples per Dataset Source, four bounded diagnostics using supported trusted `first_n`, A100 device 0, no concurrent GPU work.
 - Prior stop conditions remain. This does not authorize the canonical Working Validation evaluation.
+
+## Gate 3 main Run completed (2026-08-11)
+- `run_20260811_160920_07a7f4` completed three epochs exactly once: 6,144 train + 6,144 validation observations total, batch 4, no retry. Two reconciliations preserved one `run_completed`; container exited 0 and was removed.
+- All 6,279 numeric values in 1,539 metric records and every selected-checkpoint tensor were finite. Epoch 3 raw/filtered Dice: aggregate 0.10703/0.10282; Google 0.07688/0.07504; MIT 0.11943/0.11428.
+- Four bounded masks contained 403 positive and 261,741 negative pixels, with both classes in each mask. Canonical and Run-snapshot Candidate checksums both match reviewed `33a410b...`; model summary excludes coordinates and data roots are read-only.
+- Peak CUDA allocated/reserved was 568,427,008/666,894,336 bytes. Total operation time was 8,047.34s: training 49.21s versus legacy CPU validation/postprocessing 7,995.87s.
+- Created ABI-033 to route training validation through existing bounded accelerated postprocessing and add phase/progress/timing evidence. This performance gap did not change trusted metric semantics for the completed Run.
+- Main finite/non-degenerate prerequisites pass. Human Gate 4 is required before canonical Working Validation evaluation; AC 5-7 remain incomplete.
 <!-- SECTION:NOTES:END -->
