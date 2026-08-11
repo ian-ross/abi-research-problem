@@ -174,6 +174,30 @@ uv run ml-autoresearch prepare-agent-boundary --workspace-root .
 
 The full training, ancillary, and baselines roots are not mounted into the Agent Control Boundary by default. The generated campaign context is copied into the curated `/research-problem` snapshot, indexed as a required Dataset Profile Artifact, and mounted read-only. Candidate Execution separately receives trusted Research Problem roots only through Harness-owned read-only Docker mounts; candidate inputs still contain no longitude or latitude.
 
+## Candidate Run reliability and recovery
+
+Long Candidate Runs use a Harness-owned managed lifecycle. Create one stable Run and detach when appropriate:
+
+```bash
+uv run ml-autoresearch run-candidate \
+  --candidate candidates/<candidate-id> \
+  --workspace-root . \
+  --detach
+```
+
+Retain the returned `run_id`. Observe or reconcile that same Run without launching another Candidate:
+
+```bash
+uv run ml-autoresearch run-status --workspace-root . --run-id <run_id>
+uv run ml-autoresearch reconcile-run --workspace-root . --run-id <run_id>
+```
+
+Caller disconnection is not authorization to rerun. `reconcile-run` validates existing artifacts and terminalizes metadata and the Research Ledger idempotently; repeating it must not retrain or append another terminal event. Managed supervisor/container state is stored in the Run's `execution.json`, with logs under `outputs/logs/`.
+
+Trusted smoke, training, validation, checkpoint, and terminal-artifact paths fail closed on non-finite numerical state. A Candidate output/loss/gradient/parameter failure is normally `candidate_bug`; a trusted provider aggregate-metric failure is `harness_failure`. Neither is a Resource Failure, and neither receives batch-size retry. Inspect the bounded `outputs/nonfinite_diagnostic.json`; it contains counts and execution location only, never raw ABI Patches, coordinates, or tensor values.
+
+Do not approve another fully automatic autonomy iteration until the ABI-030 lightweight Docker/GPU validation gate has demonstrated prompt non-finite failure and exactly-once detached Run reconciliation.
+
 ## MCAST baseline evaluation
 
 MCAST 1.1 and 2.1 are trusted Baseline Segmenters, not Candidate Experiments.
