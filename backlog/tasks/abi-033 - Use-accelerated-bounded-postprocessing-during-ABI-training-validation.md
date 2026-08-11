@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 17:08'
-updated_date: '2026-08-11 19:54'
+updated_date: '2026-08-11 20:47'
 labels:
   - provider
   - harness
@@ -24,11 +24,11 @@ ABI-031 exposed that epoch validation still calls ABITrainingAdapter.compute_val
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Training-time ABI validation routes Artifact Filters and aggregate/source-stratified metrics through the existing bounded-batch postprocessing abstraction on the Harness-selected device; Candidate code cannot select or own this behavior
-- [ ] #2 CPU and CUDA implementations preserve numerical parity with the current trusted raw/filtered metrics and ordered Geographic Feature then Scanline Artifact Filter behavior on representative fixtures
-- [ ] #3 Validation emits phase and bounded progress/timing evidence sufficient to distinguish inference, context preparation, filtering, ordinary metrics, and connectivity work without per-sample log spam
-- [ ] #4 The implementation preserves bounded device memory and records the selected postprocessing backend, device batch size, and timings in Run artifacts/resource evidence
-- [ ] #5 Unit/integration tests cover training-adapter integration, source-stratified metrics, finite-state behavior, and CPU fallback; any real-data GPU benchmark remains separately human-gated
+- [x] #1 Training-time ABI validation routes Artifact Filters and aggregate/source-stratified metrics through the existing bounded-batch postprocessing abstraction on the Harness-selected device; Candidate code cannot select or own this behavior
+- [x] #2 CPU and CUDA implementations preserve numerical parity with the current trusted raw/filtered metrics and ordered Geographic Feature then Scanline Artifact Filter behavior on representative fixtures
+- [x] #3 Validation emits phase and bounded progress/timing evidence sufficient to distinguish inference, context preparation, filtering, ordinary metrics, and connectivity work without per-sample log spam
+- [x] #4 The implementation preserves bounded device memory and records the selected postprocessing backend, device batch size, and timings in Run artifacts/resource evidence
+- [x] #5 Unit/integration tests cover training-adapter integration, source-stratified metrics, finite-state behavior, and CPU fallback; any real-data GPU benchmark remains separately human-gated
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -41,3 +41,15 @@ ABI-031 exposed that epoch validation still calls ABITrainingAdapter.compute_val
 5. Add CPU/reference parity, source-stratified parity, CUDA/CPU-fallback, finite-state, progress/reporting, and memory-bounding tests. First run focused Harness/provider suites, then full ABI and Harness suites; perform no real-data or GPU benchmark without a separate human execution gate.
 6. Record measured fixture behavior, validation commands, residual risks, and any separately proposed real-data benchmark. Mark Done only when all ACs and durable task evidence are complete.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Implementation complete (2026-08-11)
+- Harness `401f9f7` adds the backward-compatible device-aware validation result hook, live flushed progress, atomic per-epoch reports, finite-state ordering, and strict terminal report validation.
+- ABI `3e6d0f4` routes training validation through trusted bounded CPU/CUDA postprocessing, shares aggregate/source metric summarization with evaluation, preserves Geographic-then-Scanline order, and fixes progress threshold crossings.
+- Durable evidence: `campaign-reports/abi-033-accelerated-training-validation.md` (`71e6052`).
+- ABI suite: 114 passed. Harness: 565 passed, 2 skipped, 1 known unrelated GVCCS stale-fake-Spec failure. Focused Harness lifecycle/non-finite/reconciliation: 43 passed.
+- Built and validated `ml-autoresearch-runner:abi-research-problem-c9e1b76b2a52c22c-13b99524f1`; isolated no-data/no-GPU Docker adapter check passed with finite source-stratified metrics.
+- Independent final review found no blocker/high/medium issue. Production-shape CUDA throughput/peak allocation remains unmeasured and separately human-gated.
+<!-- SECTION:NOTES:END -->
