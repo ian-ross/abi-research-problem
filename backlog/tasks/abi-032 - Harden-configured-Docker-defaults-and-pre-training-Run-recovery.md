@@ -4,11 +4,13 @@ title: Harden configured Docker defaults and pre-training Run recovery
 status: To Do
 assignee: []
 created_date: '2026-08-11 13:05'
+updated_date: '2026-08-11 13:05'
 labels:
   - harness
   - docker
   - reliability
-dependencies: []
+dependencies:
+  - ABI-030
 priority: medium
 ---
 
