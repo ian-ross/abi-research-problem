@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 15:43'
+updated_date: '2026-08-11 15:50'
 labels:
   - harness
   - candidates
@@ -25,9 +25,9 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A reviewed positive-control protocol defines the MCAST-lineage architecture, approved-channel transforms, random initialization, sequential GPU policy, sample/epoch bounds, finite-state checks, non-degeneracy thresholds, expected artifacts, and explicit human review/execution gates
-- [ ] #2 The manually authored Candidate contains architecture-only code, uses no baseline weights or baseline-root access, receives no longitude/latitude, and leaves data loading, losses, metrics, filters, sampling, augmentation, and execution policy to trusted provider/Harness code
-- [ ] #3 Static validation, controlled model smoke tests, and bounded fixture checks pass before any real-data training is authorized
+- [x] #1 A reviewed positive-control protocol defines the MCAST-lineage architecture, approved-channel transforms, random initialization, sequential GPU policy, sample/epoch bounds, finite-state checks, non-degeneracy thresholds, expected artifacts, and explicit human review/execution gates
+- [x] #2 The manually authored Candidate contains architecture-only code, uses no baseline weights or baseline-root access, receives no longitude/latitude, and leaves data loading, losses, metrics, filters, sampling, augmentation, and execution policy to trusted provider/Harness code
+- [x] #3 Static validation, controlled model smoke tests, and bounded fixture checks pass before any real-data training is authorized
 - [ ] #4 A human-approved sequential Docker/GPU Run executes only after ABI-030 is complete and demonstrates the new non-finite fail-fast and recoverable long-Run lifecycle behavior
 - [ ] #5 A full canonical Working Validation evaluation and provider-owned acceptance report evaluate preregistered finite/non-degenerate criteria, including finite checkpoint parameters, finite losses, predicted-positive pixels, aggregate raw/filtered metrics, and MIT/Google source-stratified metrics
 - [ ] #6 Run, evaluation, resource profile, bounded qualitative artifacts, Research Ledger/index records, canonical MCAST provenance, and all pass/fail evidence are validated and recorded durably whether the positive-control hypothesis passes or fails
@@ -90,4 +90,11 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 ## Human Gate 1 (2026-08-11)
 - Human approved the exact Candidate/trusted implementation checkpoint and authorized static validation, finite model checks, tiny fixture checks, ABI tests, and SMP-enabled runtime-image rebuild/validation only.
 - This approval does not authorize the A100 resource pilot, main Run, or Working Validation evaluation.
+
+## Gate 1 controlled evidence complete (2026-08-11)
+- Static Candidate validation passed with required proposal/README. Candidate checksum remained `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
+- Exact lineage/boundary/parameter checks plus zero/random finite forward/backward and one tiny trusted `bce_dice`/AdamW fixture step with finite checkpoint reload: 4 passed. Pilot/report fixtures: 3 passed. Full ABI suite: 111 passed.
+- Built and validated clean-Harness runner `ml-autoresearch-runner:abi-research-problem-46ee69c350b0a037-13b99524f1` with SMP 0.5.0, torch 2.5.1+cu121, and torchvision 0.20.1+cu121.
+- Isolated no-data Docker smoke `run_20260811_154950_b78993` accepted the reviewed source, produced finite `[2,1,256,256]` output, and recorded 14,328,209 parameters under trusted 25,000,000 with ABI indices 0-15 and coordinate exclusion.
+- Updated the durable protocol with exact evidence. AC 1-3 are complete. Human Gate 2 remains required before one A100 pilot; no real-data or GPU training has run.
 <!-- SECTION:NOTES:END -->
