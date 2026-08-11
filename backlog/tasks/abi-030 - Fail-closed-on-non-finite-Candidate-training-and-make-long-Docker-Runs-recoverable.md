@@ -3,11 +3,11 @@ id: ABI-030
 title: >-
   Fail closed on non-finite Candidate training and make long Docker Runs
   recoverable
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:29'
-updated_date: '2026-08-11 13:05'
+updated_date: '2026-08-11 13:09'
 labels:
   - harness
   - candidates
@@ -90,3 +90,17 @@ ABI-025 exposed two trusted Harness reliability gaps. Candidate training continu
 - Transparent extra attempts: `run_20260811_125709_32464a` failed pre-dataset because omitted `--docker-image` selected fixed CLI default `ml-autoresearch-runner:local`; `run_20260811_125931_23ef92` was killed during synchronous smoke before managed execution and reconciled as harness_failure with no GPU training; `run_20260811_130026_246827` accidentally completed one extra tiny finite A100 precheck (2 train + 2 validation samples) because persisted state was `starting` while Docker reported running. This exceeded the intended count by one bounded finite Run but did not duplicate or recover the disconnected target.
 - Created follow-up ABI-032 for configured Docker defaults, durable pre-training/smoke interruption, and trusted bootstrap classification. No scientific Candidate or ABI-031 training was run. Human Review Gate 2 remains required.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented fail-closed finite-state enforcement and managed exactly-once Run recovery in Harness commit `175c8a3`. Smoke, training, validation, terminal metrics, and checkpoint tensors are checked; failures emit bounded count-only diagnostics and do not enter Resource Failure retry. Added stable managed Run supervision, durable Docker execution records, status/reconciliation CLI, caller-disconnection recovery, artifact validation, locks, idempotent metadata/ledger terminalization, and autonomy recovery by existing Run ID.
+
+Integrated ABI guidance and evidence in commits `df394b5`, `50250aa`, and `8d9b35a`; rebuilt and validated runner image `ml-autoresearch-runner:abi-research-problem-9579186fcab90ca0-13b99524f1`. Gate 1 target Runs proved first-batch non-finite rejection and successful completion after foreground caller termination, each with exactly one terminal event and completed container cleanup. Human Review Gate 2 accepted completion; ABI-031 may begin Phase 0 planning only. ABI-032 tracks configured CLI defaults and pre-managed smoke recovery before fully automatic autonomy.
+
+Tests:
+- Focused Harness reliability/lifecycle suites: 114 passed
+- Full Harness suite: 554 passed, 2 skipped, 1 unrelated external GVCCS characterization failure
+- ABI suite: 104 passed
+- Bounded A100 validation evidence: `/data/iross/abi-ml-autoresearch/validation/abi030-gate1-20260811/validation-summary.json`
+<!-- SECTION:FINAL_SUMMARY:END -->
