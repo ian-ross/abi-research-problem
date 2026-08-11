@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 16:01'
+updated_date: '2026-08-11 16:03'
 labels:
   - harness
   - candidates
@@ -108,4 +108,9 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - Validation was non-degenerate in both sources: aggregate raw/filtered Dice 0.00838/0.00851; Google 0.00139/0.00139; MIT 0.01690/0.01756.
 - Two reconciliations preserved exactly one `run_failed`; container cleanup completed; no duplicate/retry Run was launched.
 - Per Gate 2 stop rules, no repair or second pilot was started. Recommended review decision: revise the pilot qualitative policy to supported provider/Harness-owned `first_n` and authorize one deliberate replacement pilot; retain this failed Run as evidence. AC 4 remains incomplete.
+
+## Human review — replacement Gate 2 pilot authorization (2026-08-11)
+- Human approved one deliberate replacement pilot after reviewing `run_20260811_155607_5a9ea1`.
+- Keep the reviewed byte-identical model, one epoch, 32 train and 32 validation samples per Dataset Source, batch size 4, four diagnostics, sequential A100 device 0, and all prior stop conditions.
+- The sole protocol correction is to use the already-supported trusted `first_n` prediction-sample policy. This approval still does not authorize the main Run or full evaluation.
 <!-- SECTION:NOTES:END -->
