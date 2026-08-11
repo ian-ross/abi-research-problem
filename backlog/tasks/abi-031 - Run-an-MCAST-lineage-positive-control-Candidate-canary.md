@@ -1,10 +1,11 @@
 ---
 id: ABI-031
 title: Run an MCAST-lineage positive-control Candidate canary
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 10:35'
+updated_date: '2026-08-11 14:43'
 labels:
   - harness
   - candidates
