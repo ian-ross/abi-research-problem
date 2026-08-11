@@ -152,3 +152,21 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 - This is a planning-only go decision: it does not launch autonomy, promote the positive-control Candidate, or waive ordinary acceptance gates.
 - ABI-033 must be completed before autonomy work continues; retain supported `first_n` diagnostics in the meantime.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented and executed the manually authored, randomly initialized MCAST 1.1-lineage positive-control Candidate through the complete trusted lifecycle. Added scoped 25M parameter-budget support and a validated SMP runner, passed controlled finite checks and the replacement A100 pilot, completed three bounded training epochs, and evaluated all 3,088 canonical Working Validation samples. The provider-owned positive-control report passed all eight finite/non-degenerate, source, artifact, ledger, boundary, and provenance criteria. The ordinary promotion report correctly failed versus MCAST 2.1, so the Candidate is not promoted. Human Gate 5 approved resuming autonomy planning only, with ABI-033 blocking continuation.
+
+Key evidence:
+- Main Run: run_20260811_160920_07a7f4
+- Evaluation: eval_20260811_194238_7183db
+- Positive-control report: positive_control_passed
+- Raw/filtered Dice: 0.10594 / 0.10210
+
+Validation:
+- uv run pytest -q tests/test_positive_control_report.py (2 passed)
+- Actual evaluation artifact validation: 3,088 per-sample records, eight GeoTIFFs, all eight criteria passed
+- Full pre-execution ABI suite: 111 passed
+- Full Harness suite: 563 passed, 2 skipped, 1 known unrelated external GVCCS characterization failure
+<!-- SECTION:FINAL_SUMMARY:END -->
