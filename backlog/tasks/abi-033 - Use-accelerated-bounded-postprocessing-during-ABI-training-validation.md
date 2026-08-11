@@ -53,3 +53,23 @@ ABI-031 exposed that epoch validation still calls ABITrainingAdapter.compute_val
 - Built and validated `ml-autoresearch-runner:abi-research-problem-c9e1b76b2a52c22c-13b99524f1`; isolated no-data/no-GPU Docker adapter check passed with finite source-stratified metrics.
 - Independent final review found no blocker/high/medium issue. Production-shape CUDA throughput/peak allocation remains unmeasured and separately human-gated.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Integrated ABI training-time validation with the existing bounded accelerated postprocessor while preserving Candidate/trusted-provider ownership. The Harness now offers an optional backward-compatible enhanced validation hook, passes its selected device, streams bounded live progress, persists atomic finite per-epoch evidence, and validates report completeness at terminal reconciliation. ABI now uses trusted postprocessing batch policy on CPU/CUDA and shares metric aggregation with Post-Run Evaluation, preserving aggregate/source metrics and Artifact Filter order.
+
+Commits:
+- Harness: 401f9f7
+- ABI implementation: 3e6d0f4
+- Evidence report: 71e6052
+
+Validation:
+- uv run pytest -q: 114 passed
+- Harness full suite with external test provider: 565 passed, 2 skipped, 1 known unrelated GVCCS characterization failure
+- Focused Harness lifecycle/non-finite/reconciliation: 43 passed
+- Runtime image build/validation passed
+- No-data/no-GPU Docker installed-adapter check passed
+
+Residual risk: production-shape CUDA throughput and peak allocation require a separately approved real-data benchmark; no speedup claim is made without it.
+<!-- SECTION:FINAL_SUMMARY:END -->
