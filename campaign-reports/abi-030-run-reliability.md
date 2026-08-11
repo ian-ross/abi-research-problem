@@ -49,6 +49,6 @@ The validation sequence made three bounded setup/observation attempts in additio
 
 These findings do not invalidate long-training durability, finite-state rejection, or exactly-once reconciliation, but the configured-image CLI default and pre-managed smoke phase should be considered follow-up hardening before relying on caller interruption during submission/smoke.
 
-## Remaining human gate
+## Human Review Gate 2 decision
 
-Human Execution Gate 1 is complete. Human Review Gate 2 must decide whether ABI-030 is complete and whether follow-up hardening is required. This report does not authorize ABI-031 scientific training.
+Human Review Gate 2 accepted the evidence on 2026-08-11 and approved ABI-030 as complete. ABI-031 may begin Phase 0 planning and preregistration only; this decision does not authorize its Candidate implementation, fixture checks, GPU pilot, main Run, evaluation, or scientific training. ABI-032 tracks the non-blocking configured-image and pre-managed-smoke hardening required before relying on caller interruption during submission/smoke or resuming fully automatic autonomy.
