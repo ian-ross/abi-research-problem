@@ -3,10 +3,11 @@ id: ABI-030
 title: >-
   Fail closed on non-finite Candidate training and make long Docker Runs
   recoverable
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-11 10:29'
-updated_date: '2026-08-11 10:35'
+updated_date: '2026-08-11 10:39'
 labels:
   - harness
   - candidates
