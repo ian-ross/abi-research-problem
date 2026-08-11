@@ -1,15 +1,18 @@
 ---
 id: ABI-033
 title: Use accelerated bounded postprocessing during ABI training validation
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-11 17:08'
+updated_date: '2026-08-11 19:54'
 labels:
   - provider
   - harness
   - performance
   - training
-dependencies: []
+dependencies:
+  - ABI-031
 priority: high
 ---
 
