@@ -1,7 +1,7 @@
 ---
 id: ABI-038
 title: Add representative provider-owned sample limiting for bounded ABI research
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
