@@ -132,6 +132,19 @@ def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:
     ]
 
 
+def test_research_problem_brief_defines_staged_scout_semantics() -> None:
+    brief = Path("abi_contrail/brief/goes-abi-contrail-segmentation.md").read_text()
+
+    assert "one-epoch resource pilot" in brief
+    assert "32 representative records per Dataset Source and Leakage-Safe Split" in brief
+    assert "abi_scout_assessment.v1" in brief
+    assert "does not apply strict top-k ranking" in brief
+    assert "Low-scoring but improving, source-balanced, novel, noisy, or ambiguous" in brief
+    assert "Representative scout evidence is a feasibility screen" in brief
+    assert "full-data training and evaluation" in brief
+    assert "effective only after the generated Workspace Configuration activates them" in brief
+
+
 def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
     metadata = split_data_policy_metadata()
 

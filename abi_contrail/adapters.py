@@ -881,7 +881,13 @@ def _validation_metric_payload_from_operational(
     filtered_metrics = summary["filtered_metrics"]
     raw_connectivity = summary["raw_connectivity"]
     filtered_connectivity = summary["filtered_connectivity"]
+    raw_prediction_evidence = _predicted_positive_evidence(operational.raw_predictions, indices)
+    filtered_prediction_evidence = _predicted_positive_evidence(operational.filtered_predictions, indices)
     payload = {
+        f"{prefix}raw_predicted_positive_pixel_count": raw_prediction_evidence["count"],
+        f"{prefix}raw_predicted_positive_fraction": raw_prediction_evidence["fraction"],
+        f"{prefix}filtered_predicted_positive_pixel_count": filtered_prediction_evidence["count"],
+        f"{prefix}filtered_predicted_positive_fraction": filtered_prediction_evidence["fraction"],
         f"{prefix}raw_dice": raw_metrics["dice"],
         f"{prefix}raw_iou": raw_metrics["iou"],
         f"{prefix}raw_precision": raw_metrics["precision"],
@@ -907,6 +913,18 @@ def _validation_metric_payload_from_operational(
     return payload
 
 
+def _predicted_positive_evidence(predictions: Any, indices: Sequence[int] | range) -> dict[str, float]:
+    import torch
+
+    selected = predictions.index_select(0, torch.as_tensor(list(indices), dtype=torch.long))
+    pixel_count = int(selected.numel())
+    positive_count = int(selected.bool().sum().item())
+    return {
+        "count": float(positive_count),
+        "fraction": float(positive_count / pixel_count) if pixel_count else 0.0,
+    }
+
+
 def _validation_metric_payload(raw_predictions: Any, filtered_predictions: Any, targets: Any, *, prefix: str, include_legacy: bool = True) -> dict[str, float]:
     from ml_autoresearch.problem_support.segmentation import binary_segmentation_metrics, contrail_connectivity_metric
 
@@ -914,7 +932,14 @@ def _validation_metric_payload(raw_predictions: Any, filtered_predictions: Any, 
     filtered_metrics = binary_segmentation_metrics(filtered_predictions, targets)
     raw_connectivity = contrail_connectivity_metric(raw_predictions, targets)
     filtered_connectivity = contrail_connectivity_metric(filtered_predictions, targets)
+    pixel_count = int(raw_predictions.numel())
+    raw_positive_count = int(raw_predictions.bool().sum().item())
+    filtered_positive_count = int(filtered_predictions.bool().sum().item())
     payload = {
+        f"{prefix}raw_predicted_positive_pixel_count": float(raw_positive_count),
+        f"{prefix}raw_predicted_positive_fraction": float(raw_positive_count / pixel_count) if pixel_count else 0.0,
+        f"{prefix}filtered_predicted_positive_pixel_count": float(filtered_positive_count),
+        f"{prefix}filtered_predicted_positive_fraction": float(filtered_positive_count / pixel_count) if pixel_count else 0.0,
         f"{prefix}raw_dice": raw_metrics["dice"],
         f"{prefix}raw_iou": raw_metrics["iou"],
         f"{prefix}raw_precision": raw_metrics["precision"],

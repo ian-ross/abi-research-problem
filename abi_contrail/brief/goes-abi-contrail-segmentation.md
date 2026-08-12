@@ -48,6 +48,18 @@ An absent cap, or a cap at least as large as the source/split population, retain
 
 Run `data_policy` metadata records the requested and effective caps, policy identity/version and seed, available/selected source/split and positive/negative counts, distinct scene/provenance counts, and an order-independent SHA-256 digest of selected stable record identities. It does not disclose scene names, coordinates, raw samples, or an unrestricted selected-record list. The digest supports same-snapshot audit comparisons; it does not make a small deterministic subset statistically unbiased or guarantee transfer to a changed dataset snapshot.
 
+## Staged architecture-feasibility protocol
+
+A new or materially different architecture family starts sequentially. Its first execution stage is a **one-epoch resource pilot** requesting at most 32 representative records per Dataset Source and Leakage-Safe Split. The pilot answers only whether the candidate is finite, contract-valid, operationally trainable, and compatible with the proposed batch/resource envelope. Its loss or Dice is not architecture-ranking evidence, and successful completion does not authorize concurrency.
+
+After a successful resource pilot, a separately authorized **representative scout** may use the current generated Workspace ceilings. The promoted protocol is designed for up to 1,024 ABI-038-selected records per Dataset Source and split over 12 epochs, but those values are effective only after the generated Workspace Configuration activates them. A scout uses the same fixed provider-owned selection semantics described above; Candidate code cannot select records or turn a capped scout into full-data training. Materially different families remain sequential even when a prior family was profiled.
+
+Trusted epoch evidence includes aggregate and MIT/Google raw and filtered metrics, recent train-loss and filtered-Dice trends, and bounded raw/filtered predicted-positive counts and fractions. The provider-owned `abi_scout_assessment.v1` summary is conservative decision support: it reports finite/resource state, source behavior, trend direction, and persistent all-negative or all-positive prediction degeneracy. It does not apply strict top-k ranking or a single absolute-Dice elimination threshold.
+
+Scout decisions are asymmetric. Hard execution failure, non-finite behavior, persistent prediction collapse, clear optimization failure, or convincing plateau/divergence at the scout budget can support elimination. Low-scoring but improving, source-balanced, novel, noisy, or ambiguous finite trajectories remain eligible for a separately authorized extension; low Dice alone is not an elimination rule. A roughly 36-epoch extended scout is a later policy transition, not an automatic continuation.
+
+Representative scout evidence is a feasibility screen, not a substitute for focused full-data evidence. Promotion claims require separately authorized full-data training and evaluation, expected to allow up to 100 epochs only after measured timeout/scheduler/early-stopping policy is activated. Do not compare a capped scout score as though it were a full-data Result. The generated Agent Workspace Configuration is authoritative for currently active sample, epoch, timeout, parameter, batch, prediction, scheduler, early-stopping, and concurrency limits.
+
 ## Loss and auxiliary-target allowlists
 
 Primary loss allowlist:

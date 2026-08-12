@@ -478,6 +478,11 @@ def test_validation_metrics_are_dataset_source_stratified() -> None:
     assert "val/source/google/raw_dice" in metrics
     assert "val/source/mit/filtered_dice" in metrics
     assert "val/source/google/filtered_dice" in metrics
+    assert metrics["val/raw_predicted_positive_pixel_count"] == 4.0
+    assert metrics["val/raw_predicted_positive_fraction"] == pytest.approx(4 / 32)
+    assert metrics["val/filtered_predicted_positive_pixel_count"] == 4.0
+    assert metrics["val/source/mit/raw_predicted_positive_fraction"] == pytest.approx(4 / 16)
+    assert metrics["val/source/google/raw_predicted_positive_fraction"] == 0.0
     assert metrics["val/source/mit/raw_dice"] > metrics["val/source/google/raw_dice"]
 
 
@@ -737,6 +742,16 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     best_metrics = json.loads((outputs / "best_metrics.json").read_text())
     assert "val/raw_dice" in final_metrics
     assert "val/filtered_dice" in final_metrics
+    assert "val/raw_predicted_positive_pixel_count" in final_metrics
+    assert 0.0 <= final_metrics["val/raw_predicted_positive_fraction"] <= 1.0
+    assert "val/filtered_predicted_positive_pixel_count" in final_metrics
+    assert 0.0 <= final_metrics["val/filtered_predicted_positive_fraction"] <= 1.0
+    metrics_records = [json.loads(line) for line in (outputs / "metrics.jsonl").read_text().splitlines()]
+    validation_record = next(record for record in metrics_records if record.get("split") == "val")
+    assert validation_record["val/raw_predicted_positive_pixel_count"] == final_metrics["val/raw_predicted_positive_pixel_count"]
+    assert validation_record["val/source/google/raw_predicted_positive_fraction"] == final_metrics[
+        "val/source/google/raw_predicted_positive_fraction"
+    ]
     assert "val/filtered_iou" in final_metrics
     assert "val/filtered_precision" in final_metrics
     assert "val/filtered_recall" in final_metrics
