@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 11:39'
-updated_date: '2026-08-12 11:55'
+updated_date: '2026-08-12 12:03'
 labels:
   - harness
   - autonomy
@@ -72,3 +72,14 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 22. **Agent:** Obtain an independent final review of the commits, terminal artifacts, no-duplicate evidence, policy enforcement, and task acceptance criteria. Address blockers within approved scope or create follow-up work.
 23. **Agent:** Check each acceptance criterion only when evidenced, add a PR-style final summary, ensure exact validated revisions are pushed/preserved, and mark ABI-035 Done only after all gates, validations, reports, and checklist items are complete.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Phase 0 protocol committed at 51c3f24: campaign-reports/abi-035-first-bounded-autonomous-candidate-protocol.md
+- Preserved ABI execution-bearing revision c8adf5c and Harness a38ad74; runtime identity/config SHA revalidated
+- Candidate tree fbcf6294e7350286bfa734382d63b45ad0ed466f86d6e359b07253fdf6adf333 is architecture-equivalent to ABI-031 apart from names/docstrings; manifest changes trusted loss bce_dice to focal_tversky
+- Dry run found exactly one open run_candidate action at ledger index 73; baseline remains 12 Runs, 3 Evaluations, 74 ledger lines; no Candidate executed
+- Pre-execution validation: ABI focused 33 passed; Harness autonomy/config/reconciliation 56 passed
+- Gate 0 execution authorization remains pending
+<!-- SECTION:NOTES:END -->
