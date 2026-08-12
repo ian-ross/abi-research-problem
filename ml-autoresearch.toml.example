@@ -18,7 +18,20 @@ docker_gpu_device = "0"
 docker_rootless_container_root = true
 runs_root = "/path/to/abi-ml-autoresearch/runs"
 ledger_path = "research-ledger.jsonl"
-max_prediction_samples = 2
+# ABI-039 representative architecture-scout envelope. max_samples applies per
+# Dataset Source and Leakage-Safe Split through provider-owned record selection.
+# A new-family resource pilot should request only 32 samples/source/split and one
+# epoch; the ceilings below do not authorize longer or full-data training.
+max_samples = 1024
+max_parameters = 25000000
+max_epochs = 12
+max_batch_size = 4
+allowed_scheduler_policies = ["constant_lr"]
+early_stopping_policy = "disabled"
+training_wall_clock_timeout_seconds = 3600
+# Unprofiled or materially different architecture families remain sequential.
+max_parallel_runs = 1
+max_prediction_samples = 4
 prediction_sample_policy = "first_n"
 
 [research_problem]

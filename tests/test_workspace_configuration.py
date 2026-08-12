@@ -28,6 +28,17 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
     sources = data_config["sources"]
     assert {source["layout"] for source in sources} == {"mit", "google"}
     assert all(source["metadata_parquet"].endswith("metadata.parquet") for source in sources)
+    execution = data["candidate_execution"]
+    assert execution["max_samples"] == 1024
+    assert execution["max_parameters"] == 25_000_000
+    assert execution["max_epochs"] == 12
+    assert execution["max_batch_size"] == 4
+    assert execution["allowed_scheduler_policies"] == ["constant_lr"]
+    assert execution["early_stopping_policy"] == "disabled"
+    assert execution["training_wall_clock_timeout_seconds"] == 3600
+    assert execution["max_parallel_runs"] == 1
+    assert execution["max_prediction_samples"] == 4
+    assert execution["prediction_sample_policy"] == "first_n"
     requirements = data["runtime_images"]["runner_requirements"]
     assert any(requirement.startswith("zarr") for requirement in requirements)
     assert any(requirement.startswith("pandas") for requirement in requirements)
