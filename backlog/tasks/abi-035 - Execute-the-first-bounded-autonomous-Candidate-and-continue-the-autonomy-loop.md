@@ -1,7 +1,7 @@
 ---
 id: ABI-035
 title: Execute the first bounded autonomous Candidate and continue the autonomy loop
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 11:39'
@@ -33,7 +33,7 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 - [x] #6 The bounded Run result is recorded durably as directional autonomy/reliability evidence and is not represented as promotion-grade or directly comparable to ABI-031's larger training Run
 - [x] #7 Only if the Candidate Run passes the preregistered continuation gate, the Agent Control Boundary is refreshed with the new Run and exactly one subsequent bounded Autonomy Step is run with next-action execution enabled; otherwise the campaign stops for human review
 - [x] #8 Any handoff and Harness-owned action from the subsequent Autonomy Step are inspected, linked durably, and shown to obey the configured 128-sample, 3-epoch, concurrency-one, and 1,800-second ceilings
-- [ ] #9 Focused/full validation, final independent review, residual risks, commands, Run and handoff identifiers, and a PR-style final summary are recorded before the task is marked Done
+- [x] #9 Focused/full validation, final independent review, residual risks, commands, Run and handoff identifiers, and a PR-style final summary are recorded before the task is marked Done
 <!-- AC:END -->
 
 ## Implementation Plan
