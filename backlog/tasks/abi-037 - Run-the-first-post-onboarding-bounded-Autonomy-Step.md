@@ -1,9 +1,11 @@
 ---
 id: ABI-037
 title: Run the first post-onboarding bounded Autonomy Step
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-12 15:11'
+updated_date: '2026-08-12 15:11'
 labels:
   - harness
   - autonomy
@@ -29,3 +31,13 @@ After the operator pushes ABI-036 durable authorization, verify the preserved bo
 - [ ] #4 Any executed action is inspected and reconciled by stable identifier without duplicate submission, or a no-action stop is recorded
 - [ ] #5 The result, validation, residual risks, and commands are recorded durably
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Verify clean pushed ABI/Harness revisions, durable authorization, idle execution state, and configured ceilings
+2. Revalidate runtime identity and refresh the Agent Control Boundary
+3. Invoke exactly one autonomy-step with next-action execution enabled
+4. Inspect and, if needed, observe/reconcile the single resulting action by stable identifier
+5. Record evidence, validate, review, and close the task
+<!-- SECTION:PLAN:END -->
