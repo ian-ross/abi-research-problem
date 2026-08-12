@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 20:27'
+updated_date: '2026-08-12 21:25'
 labels:
   - harness
   - autonomy
@@ -26,17 +26,17 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A reviewed policy proposal selects justified ceilings for samples per Dataset Source, epochs, wall-clock timeout, parallel Runs, prediction artifacts, parameters, batch/resource classes, scheduler use, and early stopping
-- [ ] #2 The proposal distinguishes full-data Runs from representative reduced-budget scouts and uses the ABI-038 trusted sample-limiting semantics for capped Runs
-- [ ] #3 New or materially different architecture families remain sequential until separately profiled, and concurrency is enabled only for compatible measured resource classes
-- [ ] #4 The approved values are enforced by trusted Workspace Configuration and Harness validation; Candidate source and manifests cannot raise or bypass them
-- [ ] #5 Durable campaign authorization, Experiment Index, Research Ledger, provider brief/guidance, and generated Agent Control Boundary consistently expose the promoted policy and retained human stop conditions
-- [ ] #6 Runtime images and policy/config identity validate after the policy change, and focused ABI/Harness tests prove clamping, rejection, handoff, batch, and boundary behavior
-- [ ] #7 Preflight confirms configured data, ancillary, baseline, Runs, Docker, and pinned-A100 resources are available for a later calibration Run
-- [ ] #8 No scientific Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step is launched by this task; the first calibrated real model Run requires a separate backlog task
-- [ ] #9 After ABI-040 is complete, the activated architecture-scout envelope allows a 32-sample-per-source, one-epoch resource pilot within trusted ceilings of 1,024 representative samples per Dataset Source and Leakage-Safe Split, 12 epochs, 3,600 seconds, batch size 4, four first_n predictions, 25,000,000 parameters, constant learning rate, disabled early stopping, and one sequential Run
-- [ ] #10 The promoted authorization uses asymmetric scout decisions: only hard failure, persistent collapse, clear optimization failure, or convincing plateau/divergence supports elimination at 12 epochs; low-scoring but improving, source-balanced, novel, or ambiguous trajectories remain eligible for separately authorized extension
-- [ ] #11 A roughly 36-epoch extended scout and full-data training up to 100 epochs with a provisionally eight-hour timeout are documented as later policy transitions but are not activated by ABI-039; each requires measured evidence and separate authorization
+- [x] #1 A reviewed policy proposal selects justified ceilings for samples per Dataset Source, epochs, wall-clock timeout, parallel Runs, prediction artifacts, parameters, batch/resource classes, scheduler use, and early stopping
+- [x] #2 The proposal distinguishes full-data Runs from representative reduced-budget scouts and uses the ABI-038 trusted sample-limiting semantics for capped Runs
+- [x] #3 New or materially different architecture families remain sequential until separately profiled, and concurrency is enabled only for compatible measured resource classes
+- [x] #4 The approved values are enforced by trusted Workspace Configuration and Harness validation; Candidate source and manifests cannot raise or bypass them
+- [x] #5 Durable campaign authorization, Experiment Index, Research Ledger, provider brief/guidance, and generated Agent Control Boundary consistently expose the promoted policy and retained human stop conditions
+- [x] #6 Runtime images and policy/config identity validate after the policy change, and focused ABI/Harness tests prove clamping, rejection, handoff, batch, and boundary behavior
+- [x] #7 Preflight confirms configured data, ancillary, baseline, Runs, Docker, and pinned-A100 resources are available for a later calibration Run
+- [x] #8 No scientific Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step is launched by this task; the first calibrated real model Run requires a separate backlog task
+- [x] #9 After ABI-040 is complete, the activated architecture-scout envelope allows a 32-sample-per-source, one-epoch resource pilot within trusted ceilings of 1,024 representative samples per Dataset Source and Leakage-Safe Split, 12 epochs, 3,600 seconds, batch size 4, four first_n predictions, 25,000,000 parameters, constant learning rate, disabled early stopping, and one sequential Run
+- [x] #10 The promoted authorization uses asymmetric scout decisions: only hard failure, persistent collapse, clear optimization failure, or convincing plateau/divergence supports elimination at 12 epochs; low-scoring but improving, source-balanced, novel, or ambiguous trajectories remain eligible for separately authorized extension
+- [x] #11 A roughly 36-epoch extended scout and full-data training up to 100 epochs with a provisionally eight-hour timeout are documented as later policy transitions but are not activated by ABI-039; each requires measured evidence and separate authorization
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -72,4 +72,9 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 
 - Agreed delivery sequence: ABI-040 implements Harness enforcement, ABI provider feasibility evidence, and Agent-visible staged-scout guidance without activating policy. ABI-039 then activates and validates the exact resource-pilot/12-epoch scout envelope, updates authorization/index/ledger, performs non-training preflight, and closes. ABI-041 follows with trusted checkpoint continuation.
 - Point-4 activation factors recorded as ACs: 32/source x 1 resource pilot request; active 1,024/source-split x 12 scout ceiling; 3,600s; batch <=4; four first_n artifacts; 25M parameters; constant LR; early stopping disabled; global concurrency one. The 36-epoch and full-data 100-epoch/eight-hour stages remain inactive and separately gated.
+
+- Activated the approved ABI-039 trusted scout envelope: 1,024 samples per source/split, 12 epochs, 3,600s, batch 4, four first_n predictions, 25M parameters, constant LR, disabled early stopping, concurrency one; resource pilot remains 32/source/split x one epoch.
+- Rebuilt and validated runtime images against clean Harness c346f07; regenerated and inspected the Agent Control Boundary and linked authorization/index/ledger state.
+- Non-training preflight passed for data, ancillary, baselines, Runs, rootless Docker, pinned idle A100, no containers, no pause, and no open Harness action.
+- Validation: ABI 133 passed; focused Harness 186 passed; full configured Harness 581 passed/2 skipped/1 known unrelated GVCCS fake-allowlist failure. No Run, Evaluation, Batch, handoff, or Autonomy action count changed.
 <!-- SECTION:NOTES:END -->
