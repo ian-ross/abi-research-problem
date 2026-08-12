@@ -270,7 +270,7 @@ The provider-owned `positive_control_report.json` passes all eight preregistered
 | Artifact and ledger completeness | Pass |
 | Candidate boundary and provenance | Pass |
 
-The positive-control hypothesis passes. Gate 5 human review remains required to decide whether this evidence is sufficient to resume **planning** for fully automatic autonomy; no automatic iteration is authorized by this result.
+The positive-control hypothesis passes. Human Gate 5 subsequently approved resuming **planning** for fully automatic autonomy. That planning-only decision did not promote this Candidate or authorize an automatic iteration.
 
 ## Human gates
 
@@ -279,4 +279,4 @@ The positive-control hypothesis passes. Gate 5 human review remains required to 
 - **Gate 2 — pilot execution:** review controlled evidence and authorize one bounded A100 pilot.
 - **Gate 3 — main execution:** review pilot resource/numerical evidence and select batch size; authorize one bounded main Run.
 - **Gate 4 — evaluation:** review terminal training evidence and authorize one canonical Working Validation evaluation.
-- **Gate 5 — campaign decision:** decide whether Candidate Execution is trustworthy enough to resume planning for fully automatic autonomy. This gate never launches an iteration.
+- **Gate 5 — campaign decision:** complete. Human review found Candidate Execution trustworthy enough to resume planning for fully automatic autonomy. This planning-only approval did not launch an iteration, promote the positive-control Candidate, or waive ordinary acceptance gates.
