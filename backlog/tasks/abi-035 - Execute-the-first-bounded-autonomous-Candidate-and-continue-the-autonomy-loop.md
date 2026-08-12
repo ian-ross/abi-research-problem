@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 11:39'
-updated_date: '2026-08-12 12:03'
+updated_date: '2026-08-12 12:22'
 labels:
   - harness
   - autonomy
@@ -25,12 +25,12 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The exact validated ABI and Harness revisions, including ABI-034 and Harness a38ad74, are pushed or otherwise durably preserved before Candidate execution
-- [ ] #2 A preregistered execution protocol records the exact open abi032_mcast11_focal_tversky_v1 action, 128-samples-per-source/3-epoch/sequential-A100/1,800-second bounds, expected artifacts, finite and non-degeneracy checks, and explicit stop conditions before execution
-- [ ] #3 Human review authorizes exactly one execution of the existing open run_candidate action; no second Candidate, automatic retry, or duplicate Run is launched after caller disconnect, timeout, or failure
-- [ ] #4 The Candidate executes through the trusted managed Docker lifecycle on pinned A100 GPU 0, and the stable Run ID is observed and reconciled idempotently without resubmission
-- [ ] #5 Terminal evidence is reviewed for finite losses, metrics, gradients/checkpoint parameters, prediction non-degeneracy, MIT/Google source-stratified behavior, sample/epoch bounds, resource profile, timeout state, artifacts, read-only mounts, coordinate exclusion, and exactly-once ledger finalization
-- [ ] #6 The bounded Run result is recorded durably as directional autonomy/reliability evidence and is not represented as promotion-grade or directly comparable to ABI-031's larger training Run
+- [x] #1 The exact validated ABI and Harness revisions, including ABI-034 and Harness a38ad74, are pushed or otherwise durably preserved before Candidate execution
+- [x] #2 A preregistered execution protocol records the exact open abi032_mcast11_focal_tversky_v1 action, 128-samples-per-source/3-epoch/sequential-A100/1,800-second bounds, expected artifacts, finite and non-degeneracy checks, and explicit stop conditions before execution
+- [x] #3 Human review authorizes exactly one execution of the existing open run_candidate action; no second Candidate, automatic retry, or duplicate Run is launched after caller disconnect, timeout, or failure
+- [x] #4 The Candidate executes through the trusted managed Docker lifecycle on pinned A100 GPU 0, and the stable Run ID is observed and reconciled idempotently without resubmission
+- [x] #5 Terminal evidence is reviewed for finite losses, metrics, gradients/checkpoint parameters, prediction non-degeneracy, MIT/Google source-stratified behavior, sample/epoch bounds, resource profile, timeout state, artifacts, read-only mounts, coordinate exclusion, and exactly-once ledger finalization
+- [x] #6 The bounded Run result is recorded durably as directional autonomy/reliability evidence and is not represented as promotion-grade or directly comparable to ABI-031's larger training Run
 - [ ] #7 Only if the Candidate Run passes the preregistered continuation gate, the Agent Control Boundary is refreshed with the new Run and exactly one subsequent bounded Autonomy Step is run with next-action execution enabled; otherwise the campaign stops for human review
 - [ ] #8 Any handoff and Harness-owned action from the subsequent Autonomy Step are inspected, linked durably, and shown to obey the configured 128-sample, 3-epoch, concurrency-one, and 1,800-second ceilings
 - [ ] #9 Focused/full validation, final independent review, residual risks, commands, Run and handoff identifiers, and a PR-style final summary are recorded before the task is marked Done
@@ -82,4 +82,10 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 - Dry run found exactly one open run_candidate action at ledger index 73; baseline remains 12 Runs, 3 Evaluations, 74 ledger lines; no Candidate executed
 - Pre-execution validation: ABI focused 33 passed; Harness autonomy/config/reconciliation 56 passed
 - Gate 0 execution authorization remains pending
+
+- Human Gate 0 authorized exactly one execute-next-action invocation and explicitly forbade duplicate submission, retry, replacement Run, and a second Candidate
+- Exactly one invocation created stable Run run_20260812_121722_8d6cd3; one Docker/A100-0 container completed and was removed; two same-Run reconciliations were idempotent
+- Reliability gate passed: 3 epochs, 128 train/validation observations per source per epoch, batch 4, no timeout/retry, all structured numerics and 184 checkpoint tensors finite, both bounded masks non-degenerate, source Dice above 0.0001
+- Directional report committed/pushed at 6fe98c7 and linked by campaign_report_written: campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md
+- Human Gate 1 remains pending; no boundary refresh, subsequent Autonomy Step, evaluation, or second Candidate was launched
 <!-- SECTION:NOTES:END -->
