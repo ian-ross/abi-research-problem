@@ -1,0 +1,30 @@
+---
+id: ABI-034
+title: Prepare and run the first bounded autonomy boundary trial
+status: To Do
+assignee: []
+created_date: '2026-08-12 10:31'
+labels:
+  - harness
+  - autonomy
+  - boundary
+  - reliability
+dependencies: []
+priority: high
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Reconcile the approved Gate 5 campaign state, add trusted test-run execution ceilings, validate notification setup, refresh the Agent Control Boundary, and run one handoff-only Autonomy Step without executing any Candidate or evaluation.
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Agent-visible campaign records consistently state that Gate 5 approved resuming autonomy planning, without authorizing promotion or automatic execution
+- [ ] #2 Trusted Workspace Configuration supports and enforces test-run ceilings of 128 samples per Dataset Source, 3 epochs, one parallel Run, and a 30-minute Candidate training wall-clock budget
+- [ ] #3 Mailjet configuration is validated and a notification test to iross@mit.edu succeeds without exposing credentials
+- [ ] #4 The Agent Control Boundary is refreshed from the exact validated clean revisions while retaining the approved egress and read-only Runs policy
+- [ ] #5 One Autonomy Step completes without --execute-next-action; no Candidate training, evaluation, or other Harness-owned next action executes
+- [ ] #6 Focused and full validation pass, and the trial handoff/result artifacts and residual risks are recorded durably
+<!-- AC:END -->
