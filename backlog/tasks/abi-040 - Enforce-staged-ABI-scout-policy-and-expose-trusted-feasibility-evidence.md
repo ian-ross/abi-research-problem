@@ -4,7 +4,7 @@ title: Enforce staged ABI scout policy and expose trusted feasibility evidence
 status: To Do
 assignee: []
 created_date: '2026-08-12 20:27'
-updated_date: '2026-08-12 20:27'
+updated_date: '2026-08-12 20:31'
 labels:
   - harness
   - provider
@@ -34,3 +34,17 @@ Implement the trusted Harness, ABI provider, and Agent-visible capabilities requ
 - [ ] #8 Focused Harness and ABI tests cover configuration bounds, direct and handoff no-bypass paths, batches, generated boundary content, positive-count evidence, curve assessment, slow-starter/ambiguous trajectories, and hard-failure/collapse trajectories
 - [ ] #9 No promoted machine-local policy is activated and no scientific execution action is launched by this task; activation remains in ABI-039
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Initial code audit for the next session:
+  - `../ml-autoresearch/src/ml_autoresearch/candidate_execution_config.py` has `max_samples`, `max_parameters`, `max_epochs`, timeout, prediction, and concurrency fields, but no trusted `max_batch_size` or scheduler/early-stopping constraint fields.
+  - `../ml-autoresearch/src/ml_autoresearch/research_loop_operations.py::effective_execution_options` clamps `max_samples` but currently lets CLI `max_prediction_samples` exceed config and lets an explicit prediction policy replace config. Config-driven handoff/batch paths already pass configured values directly.
+  - `../ml-autoresearch/src/ml_autoresearch/candidates.py` has a generic batch-size range 1..32 and trusted scheduler allowlist (`constant_lr`, `cosine_decay`, `reduce_on_plateau`) plus early-stopping schema, but validation currently has no Workspace-specific batch/scheduler/early-stop policy argument.
+  - `../ml-autoresearch/src/ml_autoresearch/agent_boundary.py` generates sample/epoch/parameter/prediction/concurrency config and prose, but needs the new batch and training-policy fields consistently exposed.
+  - ABI `outputs/metrics.jsonl` already records per-epoch train loss, learning rate, aggregate raw/filtered metrics, and MIT/Google raw/filtered metrics. Add bounded predicted-positive count/fraction evidence; do not duplicate the existing curve history.
+  - Representative tests are `test_candidate_execution_config.py`, `test_research_loop_operations.py`, `test_agent_boundary.py`, `test_agent_handoff_ingestion.py`, `test_autonomy_step.py`, `test_experiment_batches.py`, plus ABI training/provider tests.
+  - The local pi-subagents context-builder could not run because its installation lacks `typebox/compile`; direct audit findings above replace that attempted handoff.
+- Approved design intent: the provider-owned scout assessment is conservative decision support, not an automatic top-k ranker. Strong negative evidence is required for elimination; low but improving, source-balanced, novel, noisy, or ambiguous trajectories remain extension-eligible.
+<!-- SECTION:NOTES:END -->
