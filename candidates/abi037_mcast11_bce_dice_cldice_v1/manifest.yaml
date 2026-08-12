@@ -1,0 +1,15 @@
+name: abi037_mcast11_bce_dice_cldice_v1
+description: Controlled BCE-Dice-clDice continuity-loss continuation of the MCAST 1.1-lineage model.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: none
+training:
+  loss: bce_dice_cldice
+  optimizer: adamw
+  learning_rate: 0.001
+  batch_size: 4
+  max_epochs: 3
