@@ -1,7 +1,7 @@
 ---
 id: ABI-034
 title: Prepare and run the first bounded autonomy boundary trial
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 10:31'
