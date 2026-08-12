@@ -78,3 +78,4 @@
 {"candidate_id":"abi032_mcast11_focal_tversky_v1","created_at":"2026-08-12T12:17:27Z","event_type":"run_started","run_id":"run_20260812_121722_8d6cd3"}
 {"created_at":"2026-08-12T12:18:24Z","event_type":"run_completed","metrics_path":"/data/iross/abi-ml-autoresearch/runs/run_20260812_121722_8d6cd3/outputs/final_metrics.json","run_id":"run_20260812_121722_8d6cd3"}
 {"created_at":"2026-08-12T12:22:11Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md"}
+{"created_at":"2026-08-12T13:11:39Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md"}

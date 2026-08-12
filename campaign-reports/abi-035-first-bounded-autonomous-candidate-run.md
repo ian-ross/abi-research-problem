@@ -131,6 +131,7 @@ This is consistent with the proposed recall-oriented shift but also with substan
 - The two `first_n` qualitative samples are intentionally bounded and are not representative full-validation evidence.
 - `resolved_manifest.yaml` correctly captures clean launch commit `51126c4`; later `run_metadata.json` reports the same commit as dirty because trusted submission appended tracked Research Ledger events before training metadata refresh. Preflight evidence and the immutable resolved manifest establish the clean launch identity, but the mutable metadata presentation remains a provenance clarity risk.
 - The 1,800-second timeout did not fire, so this Run validates successful bounded execution, not the timeout termination path.
+- Trusted Resource Failure retry support remained structurally enabled with a maximum of three retries even though Gate 0 prohibited an automatic retry for this trial. The observed retry count was zero and there was exactly one attempt, so the exactly-once criterion passed in fact; future reliability trials should add a trusted policy switch that disables retry rather than relying only on the stop contract.
 
 ## Human Gate 1 and one conditional continuation step
 
@@ -165,6 +166,12 @@ This conservative stop obeyed the one-outcome boundary. No Candidate, Experiment
 - Correctly configured full Harness suite: 570 passed, 2 skipped, and one known unrelated GVCCS characterization failure. The stale fake GVCCS Spec permits only `bce_dice`, while an external committed Candidate uses `focal_bce_dice`; ABI-034 recorded the same unrelated failure.
 - An initial unconfigured full Harness invocation also reported two missing external test-package environment variables. Rerunning with `ML_AUTORESEARCH_GVCCS_PROBLEM_ROOT=../gvccs-research-problem` and `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=../test-research-problem` removed those configuration failures and left only the known GVCCS failure above.
 - Runtime-image validation, static Candidate validation, terminal artifact audit, finite checkpoint audit, two idempotent reconciliations, post-step count/action inspection, and post-step idle-GPU/container inspection passed.
+
+## Independent final review
+
+A separate read-only Pi session reviewed the ABI-035 task, protocol, report, index, ledger, continuation result, and terminal Run artifacts with only the `read` tool enabled. It found no blocker in the Candidate Run's numerical, resource, coordinate, mount, or exactly-once outcome and assessed AC1-AC8 as passed (AC8 with no action applicable). Its one high finding was incomplete/inconsistent task closeout: AC7-AC9 and notes had not yet been synchronized and no final review/PR-style summary was recorded. That finding is addressed by this final report update and the Backlog CLI closeout.
+
+The reviewer also identified three medium residual risks already bounded here: Resource Failure retries were structurally enabled although none occurred; interactive Gate 1 approval was not durably Agent-visible before the step; and mutable Run metadata presents the clean launch commit as dirty after tracked ledger mutation while the immutable resolved manifest correctly records the clean launch state. It confirmed that no additional Candidate or Autonomy Step is warranted.
 
 ## Commands
 
