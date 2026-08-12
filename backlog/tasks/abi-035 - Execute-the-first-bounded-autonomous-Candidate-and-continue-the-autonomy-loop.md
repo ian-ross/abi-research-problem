@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 11:39'
-updated_date: '2026-08-12 12:22'
+updated_date: '2026-08-12 13:12'
 labels:
   - harness
   - autonomy
@@ -31,8 +31,8 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 - [x] #4 The Candidate executes through the trusted managed Docker lifecycle on pinned A100 GPU 0, and the stable Run ID is observed and reconciled idempotently without resubmission
 - [x] #5 Terminal evidence is reviewed for finite losses, metrics, gradients/checkpoint parameters, prediction non-degeneracy, MIT/Google source-stratified behavior, sample/epoch bounds, resource profile, timeout state, artifacts, read-only mounts, coordinate exclusion, and exactly-once ledger finalization
 - [x] #6 The bounded Run result is recorded durably as directional autonomy/reliability evidence and is not represented as promotion-grade or directly comparable to ABI-031's larger training Run
-- [ ] #7 Only if the Candidate Run passes the preregistered continuation gate, the Agent Control Boundary is refreshed with the new Run and exactly one subsequent bounded Autonomy Step is run with next-action execution enabled; otherwise the campaign stops for human review
-- [ ] #8 Any handoff and Harness-owned action from the subsequent Autonomy Step are inspected, linked durably, and shown to obey the configured 128-sample, 3-epoch, concurrency-one, and 1,800-second ceilings
+- [x] #7 Only if the Candidate Run passes the preregistered continuation gate, the Agent Control Boundary is refreshed with the new Run and exactly one subsequent bounded Autonomy Step is run with next-action execution enabled; otherwise the campaign stops for human review
+- [x] #8 Any handoff and Harness-owned action from the subsequent Autonomy Step are inspected, linked durably, and shown to obey the configured 128-sample, 3-epoch, concurrency-one, and 1,800-second ceilings
 - [ ] #9 Focused/full validation, final independent review, residual risks, commands, Run and handoff identifiers, and a PR-style final summary are recorded before the task is marked Done
 <!-- AC:END -->
 
@@ -88,4 +88,37 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 - Reliability gate passed: 3 epochs, 128 train/validation observations per source per epoch, batch 4, no timeout/retry, all structured numerics and 184 checkpoint tensors finite, both bounded masks non-degenerate, source Dice above 0.0001
 - Directional report committed/pushed at 6fe98c7 and linked by campaign_report_written: campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md
 - Human Gate 1 remains pending; no boundary refresh, subsequent Autonomy Step, evaluation, or second Candidate was launched
+
+- Human Gate 1 approved one boundary refresh and one autonomy-step with execution enabled
+- Exactly one continuation step ran and returned no_handoff/stop_for_human with execution=null because interactive approval was not yet Agent-visible; no Run, Evaluation, ledger event, handoff, or Harness action was created and no second step was run
+- Full ABI suite: 114 passed; focused Harness suite: 123 passed; configured full Harness suite: 570 passed, 2 skipped, 1 known unrelated GVCCS stale fake-Spec failure
+- Independent read-only final review found no blocker in numerical/resource/coordinate/mount/exactly-once evidence; its closeout finding was addressed in d36a226
+- Residual risks: retry mechanism remained enabled though retry_count=0; Gate 1 durable visibility sequencing; mutable metadata dirty-state presentation; timeout path unexercised; directional 128-vs-1024 comparison only
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Executed ABI-035 as a bounded autonomy reliability trial. Preregistered and pushed the exact Candidate/revision/runtime protocol, then invoked execute-next-action exactly once. Stable Run run_20260812_121722_8d6cd3 completed three epochs on Docker-pinned A100 GPU 0 with 128 train and validation samples per MIT/Google source per epoch, batch 4, no timeout or retry, one removed container, finite structured evidence/checkpoint, non-degenerate bounded predictions, read-only mounts, and coordinate exclusion. Two reconciliations were idempotent. The reliability continuation gate passed; results remain directional and non-promotion-grade versus ABI-031's 1,024-per-source Run.
+
+After Human Gate 1, refreshed the unchanged Agent boundary and ran exactly one autonomy-step with execution enabled. The Agent conservatively returned no_handoff/stop_for_human because interactive approval was not yet durable in Agent-visible state; no action executed, counts stayed 13 Runs/3 Evaluations, and no second step ran.
+
+Evidence:
+- campaign-reports/abi-035-first-bounded-autonomous-candidate-protocol.md
+- campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md
+- Run run_20260812_121722_8d6cd3
+- agent-work/autonomy-step-result.json
+- ABI launch commit 51126c4; Harness a38ad74; final review commit d36a226
+
+Validation:
+- uv run pytest -q: 114 passed
+- focused Harness autonomy/boundary/handoff/config/reconciliation suite: 123 passed
+- configured full Harness suite: 570 passed, 2 skipped, 1 known unrelated GVCCS stale fake-Spec failure
+- independent read-only final review: no execution blocker; closeout finding addressed
+
+Residual risks:
+- Resource Failure retries were structurally enabled although no retry occurred
+- Gate 1 approval must be made Agent-visible before future continuation steps
+- mutable Run metadata dirty-state presentation is less clear than the clean resolved manifest
+- timeout path remains unexercised and scientific comparison is sample-budget mismatched
+<!-- SECTION:FINAL_SUMMARY:END -->
