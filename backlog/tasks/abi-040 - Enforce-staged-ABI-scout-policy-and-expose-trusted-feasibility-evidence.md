@@ -36,6 +36,17 @@ Implement the trusted Harness, ABI provider, and Agent-visible capabilities requ
 - [ ] #9 No promoted machine-local policy is activated and no scientific execution action is launched by this task; activation remains in ABI-039
 <!-- AC:END -->
 
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Audit trusted Harness and ABI provider policy paths and their focused tests, including dependency ABI-038 outputs
+2. Add trusted batch, scheduler, and early-stopping limits and enforce all configured ceilings across direct, handoff, continuation, autonomy, and batch execution
+3. Update generated Agent boundary configuration and durable scout/resource-pilot guidance
+4. Add bounded predicted-positive validation evidence and a conservative provider-owned scout assessment
+5. Add focused Harness and ABI tests for policy enforcement, boundary content, and scout trajectories
+6. Run targeted uv-managed test suites, verify no policy activation or scientific execution occurred, and update ABI-040 completion metadata
+<!-- SECTION:PLAN:END -->
+
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
