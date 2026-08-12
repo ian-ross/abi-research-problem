@@ -1,7 +1,7 @@
 ---
 id: ABI-040
 title: Enforce staged ABI scout policy and expose trusted feasibility evidence
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 20:27'
