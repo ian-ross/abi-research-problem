@@ -132,7 +132,39 @@ This is consistent with the proposed recall-oriented shift but also with substan
 - `resolved_manifest.yaml` correctly captures clean launch commit `51126c4`; later `run_metadata.json` reports the same commit as dirty because trusted submission appended tracked Research Ledger events before training metadata refresh. Preflight evidence and the immutable resolved manifest establish the clean launch identity, but the mutable metadata presentation remains a provenance clarity risk.
 - The 1,800-second timeout did not fire, so this Run validates successful bounded execution, not the timeout termination path.
 
-Human Gate 1 remains required. If approved, it may authorize one boundary refresh and exactly one subsequent bounded Autonomy Step with next-action execution enabled. It must not authorize an arbitrary loop, automatic evaluation, or more than the single action owned by that step.
+## Human Gate 1 and one conditional continuation step
+
+Human Gate 1 approved one boundary refresh and exactly one subsequent bounded Autonomy Step with next-action execution enabled. It did not authorize an arbitrary loop, automatic evaluation, retry, second Autonomy Step, or more than the one Harness-owned action belonging to the approved step.
+
+Before the step, ABI commit `f5a6e9c3ce57e678ddac6c552fce72260e569ad4` and Harness commit `a38ad742e187e23b1fa13f7b0ec8bd21da7ad637` were clean, pushed, and at zero upstream divergence. Runtime validation passed again at `2026-08-12T12:57:43Z` with the same Harness fingerprint, runner, and Workspace Configuration checksum. Counts were 13 Runs, 3 Evaluations, and 80 ledger events; no open Harness action, GPU process, or managed container existed. All prior primary handoffs had ingestion markers.
+
+`prepare-agent-boundary` refreshed the boundary while retaining egress and the full read-only `/history/runs` mount. Agent-visible state included Run `run_20260812_121722_8d6cd3` through `/history/runs`, its ledger events through `/history/research-ledger.jsonl`, and its report identity/status through the refreshed `/reference/EXPERIMENT_INDEX.md` and `campaign_report_written` ledger event. The configured ceilings remained 128 samples per source, three epochs, concurrency one, two `first_n` predictions, and a 1,800-second trusted Docker training budget.
+
+Exactly one approved command was invoked:
+
+```bash
+uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
+```
+
+The Agent returned code 0 and deliberately created no handoff. It observed that the refreshed Experiment Index still said Human Gate 1 was pending and that no later operator approval existed in the Research Ledger. Rather than infer approval or create another Candidate, it stopped for human review. `agent-work/autonomy-step-result.json` records:
+
+- `status: no_handoff`;
+- `ingestion.status: no_handoff`;
+- `next_action: stop_for_human`;
+- `executed_next_action: false`;
+- `ledger_events: []`;
+- `execution: null`;
+- written at `2026-08-12T13:01:13Z`.
+
+This conservative stop obeyed the one-outcome boundary. No Candidate, Experiment Batch, evaluation, or Harness-owned action executed; no Run/Evaluation/ledger count changed; no executable action remains. No second Autonomy Step was launched. The reason is a durable-control sequencing gap: Gate 1 approval was given interactively but was not written to Agent-visible campaign state before the refresh. The outcome is still a successful autonomy safety result—ambiguous authorization caused a stop rather than unauthorized work—but it produced no scientific handoff. A future task must durably record operator authorization before expecting an Agent to act on it; ABI-035 does not rerun the step.
+
+## Validation
+
+- Full ABI suite: 114 passed.
+- Focused Harness autonomy, boundary, handoff, submission, configuration, reconciliation, and research-loop suite: 123 passed.
+- Correctly configured full Harness suite: 570 passed, 2 skipped, and one known unrelated GVCCS characterization failure. The stale fake GVCCS Spec permits only `bce_dice`, while an external committed Candidate uses `focal_bce_dice`; ABI-034 recorded the same unrelated failure.
+- An initial unconfigured full Harness invocation also reported two missing external test-package environment variables. Rerunning with `ML_AUTORESEARCH_GVCCS_PROBLEM_ROOT=../gvccs-research-problem` and `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=../test-research-problem` removed those configuration failures and left only the known GVCCS failure above.
+- Runtime-image validation, static Candidate validation, terminal artifact audit, finite checkpoint audit, two idempotent reconciliations, post-step count/action inspection, and post-step idle-GPU/container inspection passed.
 
 ## Commands
 
