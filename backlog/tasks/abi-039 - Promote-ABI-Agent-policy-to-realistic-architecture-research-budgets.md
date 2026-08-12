@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 20:17'
+updated_date: '2026-08-12 20:27'
 labels:
   - harness
   - autonomy
@@ -13,7 +13,7 @@ labels:
   - gpu
   - candidates
 dependencies:
-  - ABI-038
+  - ABI-040
 priority: high
 ---
 
@@ -33,6 +33,9 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 - [ ] #6 Runtime images and policy/config identity validate after the policy change, and focused ABI/Harness tests prove clamping, rejection, handoff, batch, and boundary behavior
 - [ ] #7 Preflight confirms configured data, ancillary, baseline, Runs, Docker, and pinned-A100 resources are available for a later calibration Run
 - [ ] #8 No scientific Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step is launched by this task; the first calibrated real model Run requires a separate backlog task
+- [ ] #9 After ABI-040 is complete, the activated architecture-scout envelope allows a 32-sample-per-source, one-epoch resource pilot within trusted ceilings of 1,024 representative samples per Dataset Source and Leakage-Safe Split, 12 epochs, 3,600 seconds, batch size 4, four first_n predictions, 25,000,000 parameters, constant learning rate, disabled early stopping, and one sequential Run
+- [ ] #10 The promoted authorization uses asymmetric scout decisions: only hard failure, persistent collapse, clear optimization failure, or convincing plateau/divergence supports elimination at 12 epochs; low-scoring but improving, source-balanced, novel, or ambiguous trajectories remain eligible for separately authorized extension
+- [ ] #11 A roughly 36-epoch extended scout and full-data training up to 100 epochs with a provisionally eight-hour timeout are documented as later policy transitions but are not activated by ABI-039; each requires measured evidence and separate authorization
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -65,4 +68,7 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 
 - Policy refinement: a 12-epoch, 1,024-per-source scout sees 24,576 training observations, roughly 1% of the 2,545,700 record-exposures in a 100-epoch pass over the mounted 25,457-record training snapshot. It is therefore a failure/feasibility screen, not a reliable final architecture ranking.
 - Proposed slow-starter protection: asymmetric successive-halving decisions. Reject at 12 epochs only for hard failure, collapse, or convincing plateau/divergence; extend low-scoring models with positive tail slope, stable finite optimization, source-balanced signal, or ambiguous/noisy trajectories to a longer scout. Do not use a strict top-k or absolute Dice cutoff.
+
+- Agreed delivery sequence: ABI-040 implements Harness enforcement, ABI provider feasibility evidence, and Agent-visible staged-scout guidance without activating policy. ABI-039 then activates and validates the exact resource-pilot/12-epoch scout envelope, updates authorization/index/ledger, performs non-training preflight, and closes. ABI-041 follows with trusted checkpoint continuation.
+- Point-4 activation factors recorded as ACs: 32/source x 1 resource pilot request; active 1,024/source-split x 12 scout ceiling; 3,600s; batch <=4; four first_n artifacts; 25M parameters; constant LR; early stopping disabled; global concurrency one. The 36-epoch and full-data 100-epoch/eight-hour stages remain inactive and separately gated.
 <!-- SECTION:NOTES:END -->
