@@ -1,7 +1,7 @@
 ---
 id: ABI-036
 title: Record durable authorization for bounded autonomous continuation
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:04'
@@ -26,7 +26,7 @@ Record the operator's post-onboarding decision in Agent-visible durable campaign
 - [x] #1 A durable campaign report records the exact authorization scope, existing ceilings, and retained human stop gates
 - [x] #2 EXPERIMENT_INDEX.md exposes the authorization to the Agent Control Boundary
 - [x] #3 A validated campaign_resumed Research Ledger event links the authorization report
-- [ ] #4 The authorization artifacts are committed locally but not pushed
+- [x] #4 The authorization artifacts are committed locally but not pushed
 <!-- AC:END -->
 
 ## Implementation Plan
