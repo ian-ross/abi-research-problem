@@ -1,11 +1,11 @@
 ---
 id: ABI-037
 title: Run the first post-onboarding bounded Autonomy Step
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:11'
-updated_date: '2026-08-12 15:22'
+updated_date: '2026-08-12 15:23'
 labels:
   - harness
   - autonomy
