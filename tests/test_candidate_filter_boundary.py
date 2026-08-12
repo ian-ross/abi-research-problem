@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import pytest
 import yaml
 
-from abi_contrail.adapters import build_spec
+from abi_contrail.adapters import ABITrainingAdapter, build_spec
+from abi_contrail.record_selection import select_representative_records
 from ml_autoresearch.candidates import CandidateValidationError, validate_candidate_directory
 from ml_autoresearch.research_problems import ResearchProblemSpecRegistry
 
@@ -25,6 +27,9 @@ def test_candidate_manifest_cannot_define_or_override_sampling_policy_parameters
                     "augmentation_policy": "none",
                     "source_mixture": {"mit": 0.9, "google": 0.1},
                     "positive_patch_preference": 99,
+                    "bounded_record_selection": "candidate_prefix",
+                    "record_selection_seed": 1,
+                    "max_samples": 999999,
                 },
                 "training": {
                     "loss": "bce_dice",
@@ -41,8 +46,23 @@ def test_candidate_manifest_cannot_define_or_override_sampling_policy_parameters
     registry = ResearchProblemSpecRegistry(active_id="goes_abi_contrail_segmentation")
     registry.register(build_spec())
 
-    with pytest.raises(CandidateValidationError, match="source_mixture|positive_patch_preference"):
+    with pytest.raises(
+        CandidateValidationError,
+        match="source_mixture|positive_patch_preference|bounded_record_selection|record_selection_seed|max_samples",
+    ):
         validate_candidate_directory(candidate, research_problem_registry=registry)
+
+
+def test_trusted_record_selector_exposes_no_candidate_policy_seed_or_record_callback() -> None:
+    selector_parameters = set(inspect.signature(select_representative_records).parameters)
+    adapter_parameters = set(inspect.signature(ABITrainingAdapter.build_datasets).parameters)
+
+    assert selector_parameters == {"records", "max_samples", "dataset_source", "split"}
+    assert adapter_parameters == {"self", "data_config", "resolved_manifest_path", "max_samples"}
+    assert "seed" not in selector_parameters
+    assert "policy" not in selector_parameters
+    assert "candidate" not in adapter_parameters
+    assert "record_selector" not in adapter_parameters
 
 
 def test_candidate_manifest_cannot_define_or_override_artifact_filters(tmp_path: Path) -> None:

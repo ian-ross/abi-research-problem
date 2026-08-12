@@ -38,6 +38,16 @@ Augmentation policy allowlist:
 
 The v0 primary checkpoint metric is `val/filtered_dice`. Validation reporting keeps raw overlap metrics beside filtered metrics and reports Dataset Source-stratified metrics when both MIT and Google samples are present.
 
+## Trusted capped-record selection
+
+When the Harness requests `max_samples`, the provider applies that cap independently to each Dataset Source and each already-constructed Leakage-Safe Split. The fixed `abi_representative_scene_positive_hash` policy version `v1` (provider seed `20260812`) selects membership from trusted `ABIPatchIndexRecord` metadata; it does not truncate the raw record prefix. Candidates cannot choose, seed, override, or implement this policy, and `max_samples` remains a Harness execution ceiling rather than a manifest field.
+
+For each source/split, the policy computes a prevalence-proportional positive-record quota while reserving at least one Contrail Mask-positive patch when one exists. When both positive and negative patches exist and the cap is at least two, it reserves both classes. A cap of one therefore chooses a positive patch when available. Within each class quota, deterministic hash ranks spread selection across MIT scene names or Google provenance scene names before selecting a second record from the same group. Positive coverage is allocated first; the negative quota prefers scene/provenance groups not already represented by the positive quota.
+
+An absent cap, or a cap at least as large as the source/split population, retains every record and its existing order. Capped membership is ordered canonically after selection. This bounded-record policy is distinct from the manifest-selected training epoch sampling policy (`sequential`, `deterministic_shuffle`, or source-aware policies), which controls how the already-selected training dataset is traversed.
+
+Run `data_policy` metadata records the requested and effective caps, policy identity/version and seed, available/selected source/split and positive/negative counts, distinct scene/provenance counts, and an order-independent SHA-256 digest of selected stable record identities. It does not disclose scene names, coordinates, raw samples, or an unrestricted selected-record list. The digest supports same-snapshot audit comparisons; it does not make a small deterministic subset statistically unbiased or guarantee transfer to a changed dataset snapshot.
+
 ## Loss and auxiliary-target allowlists
 
 Primary loss allowlist:
@@ -60,7 +70,7 @@ Candidate-defined arbitrary losses, auxiliary labels, target transforms, augment
 
 Dataset Source is part of trusted sample metadata. Google patch membership follows train/validation provenance encoded in scene or file names. MIT full-scene sources are split by whole scene before 256 x 256 windowing to avoid leakage across adjacent patches from the same scene.
 
-ABI projection and geolocation are important for interpreting diagnostics, but not for candidate inputs. Pixel size and viewing geometry vary across the GOES disk; profile artifacts should record projection caveats and source-specific count summaries for the local mounted snapshot.
+ABI projection and geolocation are important for interpreting diagnostics, but not for candidate inputs. Pixel size and viewing geometry vary across the GOES disk; profile artifacts should record projection caveats and source-specific count summaries for the local mounted snapshot. Capped-record selection never combines Dataset Sources or train/validation records, and it ranks only provider-owned record metadata after these boundaries have been established.
 
 ## Candidate resource and Experiment Batch policy
 

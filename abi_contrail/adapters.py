@@ -23,7 +23,6 @@ from abi_contrail.datasets import (
     ABI_FORBIDDEN_SOURCE_INDICES,
     ABI_INPUT_MODE_SOURCE_INDICES,
     ABIPatchDataset,
-    ABIPatchIndexRecord,
     INPUT_MODE_ABI_16CH,
     INPUT_MODE_ABI_16CH_PLUS_SZA,
     INPUT_MODE_ABI_THERMAL_10CH,
@@ -31,6 +30,12 @@ from abi_contrail.datasets import (
     build_mit_abi_patch_index,
     load_abi_metadata_rows,
     open_abi_patch_arrays,
+)
+from abi_contrail.record_selection import (
+    BOUNDED_SELECTION_POLICY_NAME,
+    BOUNDED_SELECTION_POLICY_SEED,
+    BOUNDED_SELECTION_POLICY_VERSION,
+    select_representative_records,
 )
 
 
@@ -260,20 +265,40 @@ class ABITrainingAdapter:
         root = self.validate_data_root(data_config)
         input_mode = self._input_mode_from_manifest(resolved_manifest_path)
         source_datasets: list[tuple[_TorchABIPatchDataset, _TorchABIPatchDataset, dict[str, object]]] = []
+        source_selection_summaries: list[dict[str, object]] = []
         for source_config in self._source_data_configs(root, data_config):
             layout = str(source_config["layout"])
             inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
             labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
             arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
             split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
-            train_records = self._limit_records(split_index.train, max_samples)
-            validation_records = self._limit_records(split_index.validation, max_samples)
+            train_selection = select_representative_records(
+                split_index.train,
+                max_samples,
+                dataset_source=layout,  # type: ignore[arg-type]
+                split="train",
+            )
+            validation_selection = select_representative_records(
+                split_index.validation,
+                max_samples,
+                dataset_source=layout,  # type: ignore[arg-type]
+                split="validation",
+            )
             source_datasets.append(
                 (
-                    _TorchABIPatchDataset(ABIPatchDataset(arrays, train_records, input_mode=input_mode)),
-                    _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_records, input_mode=input_mode)),
+                    _TorchABIPatchDataset(ABIPatchDataset(arrays, train_selection.records, input_mode=input_mode)),
+                    _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_selection.records, input_mode=input_mode)),
                     split_index.data_policy_metadata,
                 )
+            )
+            source_selection_summaries.append(
+                {
+                    "dataset_source": layout,
+                    "splits": {
+                        "train": train_selection.metadata,
+                        "validation": validation_selection.metadata,
+                    },
+                }
             )
         if len(source_datasets) == 1:
             train_dataset, validation_dataset, split_metadata = source_datasets[0]
@@ -287,6 +312,14 @@ class ABITrainingAdapter:
             "available_sampling_policies": list(ABI_SAMPLING_POLICIES),
             "positive_patch_preference": self._sampling_config.positive_patch_preference,
             "source_mixture": dict(self._sampling_config.source_mixture),
+            "bounded_record_selection": {
+                "policy_name": BOUNDED_SELECTION_POLICY_NAME,
+                "policy_version": BOUNDED_SELECTION_POLICY_VERSION,
+                "seed": BOUNDED_SELECTION_POLICY_SEED,
+                "requested_cap_per_source_split": max_samples,
+                "cap_scope": "independent_per_dataset_source_and_leakage_safe_split",
+                "source_split_selections": source_selection_summaries,
+            },
         }
         return ResearchProblemDatasets(
             train_dataset=train_dataset,
@@ -602,11 +635,6 @@ class ABITrainingAdapter:
         if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
             raise ValueError("expected a sequence of strings")
         return tuple(str(item) for item in value)
-
-    @staticmethod
-    def _limit_records(records: Sequence[ABIPatchIndexRecord], max_samples: int | None) -> tuple[ABIPatchIndexRecord, ...]:
-        limit = len(records) if max_samples is None else max(1, min(len(records), int(max_samples)))
-        return tuple(records[:limit])
 
     @staticmethod
     def _resolve_required_path(root: Path, data_config: Mapping[str, object], key: str) -> Path:
@@ -975,11 +1003,31 @@ def split_data_policy_metadata() -> dict[str, object]:
         "sampling_policies": list(ABI_SAMPLING_POLICIES),
         "positive_patch_preference_metadata_key": "positive_patch_preference",
         "source_mixture_metadata_key": "source_mixture",
+        "bounded_record_selection": {
+            "policy_name": BOUNDED_SELECTION_POLICY_NAME,
+            "policy_version": BOUNDED_SELECTION_POLICY_VERSION,
+            "seed": BOUNDED_SELECTION_POLICY_SEED,
+            "cap_scope": "independent_per_dataset_source_and_leakage_safe_split",
+            "candidate_configurable": False,
+            "coverage": "positive/negative quotas with MIT scene and Google provenance scene-name spread",
+            "audit_identity": "aggregate counts plus selected-record identity SHA-256; no record list",
+            "record_identity_fields": [
+                "dataset_source",
+                "split",
+                "scene_name",
+                "scene_index",
+                "goes_time",
+                "sample_index",
+                "row",
+                "col",
+            ],
+        },
         "records_include": [
             "dataset_source",
             "scene_name",
             "scene_index",
             "goes_time",
+            "sample_index",
             "row",
             "col",
             "split",

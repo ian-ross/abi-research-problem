@@ -441,6 +441,7 @@ class ABIPatchDataset:
             raise ValueError(f"Unsupported ABI input mode: {input_mode!r}")
         self.arrays = arrays
         self.input_mode = input_mode
+        self._uses_index_records = index_records is not None
         records = tuple(index_records or ())
         if split is not None:
             records = tuple(record for record in records if record.split == split)
@@ -457,11 +458,11 @@ class ABIPatchDataset:
             raise ValueError(f"Input/label sample counts differ: {input_shape[0]} != {label_shape[0]}")
         if len(input_shape) == 3 and input_shape[-3:-1] != label_shape[-2:]:
             raise ValueError(f"Input/label spatial shapes differ: {input_shape[-3:-1]} != {label_shape[-2:]}")
-        if len(input_shape) == 4 and not self.index_records and input_shape[-3:-1] != label_shape[-2:]:
+        if len(input_shape) == 4 and not self._uses_index_records and input_shape[-3:-1] != label_shape[-2:]:
             raise ValueError(f"Input/label spatial shapes differ: {input_shape[-3:-1]} != {label_shape[-2:]}")
 
     def __len__(self) -> int:
-        if self.index_records:
+        if self._uses_index_records:
             return len(self.index_records)
         if len(self.arrays.inputs.shape) == 3:
             return 1

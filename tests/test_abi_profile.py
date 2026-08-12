@@ -82,6 +82,10 @@ def test_generate_dataset_profile_summarizes_mit_and_google_counts(tmp_path: Pat
     assert str(tmp_path) not in json.dumps(profile)
     assert profile["split_policy"]["google_split_policy"] == "respect_google_scene_name_train_validation_provenance"
     assert profile["split_policy"]["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
+    bounded = profile["split_policy"]["bounded_record_selection"]
+    assert bounded["policy_name"] == "abi_representative_scene_positive_hash"
+    assert bounded["candidate_configurable"] is False
+    assert any("capped subsets" in caveat for caveat in profile["known_caveats"])
     assert any("Longitude and latitude" in caveat for caveat in profile["projection_caveats"])
 
 

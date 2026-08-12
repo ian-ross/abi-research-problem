@@ -10,6 +10,7 @@ import yaml
 import torch
 import zarr
 
+import abi_contrail.adapters as adapters_module
 from abi_contrail.adapters import (
     ABITrainingAdapter,
     AUGMENTATION_POLICY_RANDOM_MIRRORING,
@@ -18,6 +19,7 @@ from abi_contrail.adapters import (
     derive_auxiliary_target,
     source_balanced_sampling_weights,
 )
+from abi_contrail.datasets import ABIPatchArrays, ABIPatchIndexRecord, ABIPatchSplitIndex
 from abi_contrail.evaluation import _evaluation_data_config
 from ml_autoresearch.evaluations import evaluate_run
 from ml_autoresearch.research_problems import ResearchProblemProviderConfig, load_research_problem_provider
@@ -48,6 +50,33 @@ def _write_google_fixture(root: Path) -> dict[str, object]:
             {"scene_name": "train-000/patch.zarr", "sample_index": 0, "positive": True},
             {"scene_name": "validation-000/patch.zarr", "sample_index": 1, "positive": True},
         ],
+    }
+
+
+def _write_google_selection_fixture(root: Path) -> dict[str, object]:
+    root.mkdir()
+    inputs_path = root / "inputs.zarr"
+    labels_path = root / "labels.zarr"
+    inputs_group = zarr.open_group(str(inputs_path), mode="w")
+    labels_group = zarr.open_group(str(labels_path), mode="w")
+    inputs_group.create_array("inputs", data=np.zeros((8, 2, 2, 19), dtype=np.float32))
+    labels_group.create_array("labels", data=np.zeros((8, 2, 2), dtype=np.uint8))
+    metadata_rows = []
+    for sample_index in range(8):
+        split = "train" if sample_index < 4 else "validation"
+        metadata_rows.append(
+            {
+                "scene_name": f"{split}-provenance-{sample_index}/patch.zarr",
+                "sample_index": sample_index,
+                "positive": sample_index % 2 == 0,
+            }
+        )
+    return {
+        "dataset_root": str(root),
+        "layout": "google",
+        "inputs_zarr": "inputs.zarr",
+        "labels_zarr": "labels.zarr",
+        "metadata_rows": metadata_rows,
     }
 
 
@@ -146,6 +175,106 @@ def test_training_adapter_loads_google_split_metadata_from_trusted_parquet(tmp_p
     assert datasets.train_dataset.sample_metadata(0)["scene_name"] == metadata_rows[0]["scene_name"].split("/")[0]
     assert datasets.train_dataset.sample_metadata(0)["positive"] is True
     assert datasets.validation_dataset.sample_metadata(0)["positive"] is False
+
+
+def test_training_adapter_records_bounded_selection_metadata_per_source_and_split(tmp_path: Path) -> None:
+    data_config = _write_google_selection_fixture(tmp_path / "fixture")
+
+    datasets = ABITrainingAdapter().build_datasets(
+        data_config=data_config,
+        resolved_manifest_path=tmp_path / "resolved.yaml",
+        max_samples=2,
+    )
+
+    assert len(datasets.train_dataset) == 2
+    assert len(datasets.validation_dataset) == 2
+    bounded = datasets.data_policy_metadata["bounded_record_selection"]
+    assert bounded["requested_cap_per_source_split"] == 2
+    assert bounded["cap_scope"] == "independent_per_dataset_source_and_leakage_safe_split"
+    assert bounded["policy_name"] == "abi_representative_scene_positive_hash"
+    source = bounded["source_split_selections"][0]
+    assert source["dataset_source"] == "google"
+    for split in ("train", "validation"):
+        summary = source["splits"][split]
+        assert summary["available_count"] == 4
+        assert summary["selected_count"] == 2
+        assert summary["selected_positive_count"] == 1
+        assert summary["selected_negative_count"] == 1
+        assert len(summary["selected_record_identity_sha256"]) == 64
+        assert "records" not in summary
+
+
+def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "fixture"
+    root.mkdir()
+    for name in ("mit-inputs", "mit-labels", "google-inputs", "google-labels"):
+        (root / name).touch()
+    data_config = {
+        "dataset_root": str(root),
+        "sources": [
+            {"layout": "mit", "inputs_zarr": "mit-inputs", "labels_zarr": "mit-labels"},
+            {"layout": "google", "inputs_zarr": "google-inputs", "labels_zarr": "google-labels"},
+        ],
+    }
+
+    def fake_arrays(_inputs: Path, _labels: Path, *, layout: str) -> ABIPatchArrays:
+        return ABIPatchArrays(
+            inputs=np.zeros((8, 2, 2, 19), dtype=np.float32),
+            labels=np.zeros((8, 2, 2), dtype=np.uint8),
+            layout=layout,  # type: ignore[arg-type]
+        )
+
+    def fake_split_index(_labels: object, *, root: Path, layout: str, data_config: object) -> ABIPatchSplitIndex:
+        del root, data_config
+
+        def records(split: str) -> tuple[ABIPatchIndexRecord, ...]:
+            offset = 0 if split == "train" else 4
+            return tuple(
+                ABIPatchIndexRecord(
+                    dataset_source=layout,  # type: ignore[arg-type]
+                    split=split,  # type: ignore[arg-type]
+                    scene_name=f"{layout}-{split}-scene-{index}",
+                    scene_index=index,
+                    goes_time=None,
+                    row=0,
+                    col=0,
+                    positive=index % 2 == 0,
+                    sample_index=offset + index if layout == "google" else None,
+                )
+                for index in range(4)
+            )
+
+        return ABIPatchSplitIndex(
+            train=records("train"),
+            validation=records("validation"),
+            data_policy_metadata={"dataset_source": layout, "split_policy": f"trusted-{layout}"},
+        )
+
+    monkeypatch.setattr(adapters_module, "open_abi_patch_arrays", fake_arrays)
+    adapter = ABITrainingAdapter()
+    monkeypatch.setattr(adapter, "_build_split_index", fake_split_index)
+
+    datasets = adapter.build_datasets(
+        data_config=data_config,
+        resolved_manifest_path=tmp_path / "resolved.yaml",
+        max_samples=2,
+    )
+
+    assert len(datasets.train_dataset) == 4
+    assert len(datasets.validation_dataset) == 4
+    assert datasets.data_policy_metadata["dataset_source"] == "combined"
+    assert {policy["dataset_source"] for policy in datasets.data_policy_metadata["source_split_policies"]} == {
+        "mit",
+        "google",
+    }
+    selections = datasets.data_policy_metadata["bounded_record_selection"]["source_split_selections"]
+    assert {selection["dataset_source"] for selection in selections} == {"mit", "google"}
+    for selection in selections:
+        assert set(selection["splits"]) == {"train", "validation"}
+        assert all(summary["selected_count"] == 2 for summary in selection["splits"].values())
 
 
 def test_training_adapter_logs_sampling_policy_metadata(tmp_path: Path) -> None:
@@ -613,6 +742,11 @@ def test_minimal_abi_candidate_smoke_and_tiny_training_run_produce_artifacts(tmp
     assert "val/filtered_recall" in final_metrics
     assert "val/raw_contrail_connectivity" in final_metrics
     assert "val/filtered_contrail_connectivity" in final_metrics
+    bounded_selection = final_metrics["data_policy"]["bounded_record_selection"]
+    assert bounded_selection["requested_cap_per_source_split"] == 1
+    assert bounded_selection["source_split_selections"][0]["splits"]["train"]["selected_count"] == 1
+    run_metadata = json.loads((run.run_dir / "run_metadata.json").read_text())
+    assert run_metadata["data_policy"]["bounded_record_selection"] == bounded_selection
     assert best_metrics["selection_metric"] == "val/filtered_dice"
     validation_index = json.loads((outputs / "validation_postprocessing" / "index.json").read_text())
     validation_report = json.loads((outputs / "validation_postprocessing" / "epoch_001.json").read_text())

@@ -139,6 +139,12 @@ def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
     assert metadata["mit_split_policy"] == "deterministic_whole_scene_train_validation_split_before_windowing"
     assert metadata["sampling_policy_owner"] == "provider/harness"
     assert "combined_source_balanced" in metadata["sampling_policies"]
+    bounded = metadata["bounded_record_selection"]
+    assert bounded["policy_name"] == "abi_representative_scene_positive_hash"
+    assert bounded["policy_version"] == "v1"
+    assert bounded["seed"] == 20260812
+    assert bounded["candidate_configurable"] is False
+    assert "selected-record identity SHA-256" in bounded["audit_identity"]
     assert "positive" in metadata["records_include"]
 
 

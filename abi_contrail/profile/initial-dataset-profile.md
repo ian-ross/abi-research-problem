@@ -26,7 +26,15 @@ The generated JSON contains:
 - ordered Artifact Filter configuration, removed-pixel effects, registry identity, and input checksums;
 - bounded ABI-025 manual canary Run, Post-Run Evaluation, and human-review context.
 
-Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation.
+Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. This profile-statistics sample is separate from bounded training/validation record selection. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation.
+
+## Capped training and validation semantics
+
+A Harness `max_samples` request is a per-Dataset-Source, per-Leakage-Safe-Split cap, not a combined global count. Provider policy `abi_representative_scene_positive_hash` version `v1`, seed `20260812`, selects capped membership from trusted record metadata without using raw prefix order. It preserves positive and negative coverage when the cap permits and spreads each quota over MIT scenes or Google provenance scene names. Uncapped and oversized-cap paths retain all records.
+
+The Run `data_policy.bounded_record_selection` summary is the audit surface. For every source/split it contains requested/effective caps, available/selected and positive/negative counts, scene/provenance group counts, policy identity/version/seed, and an order-independent selected-record identity SHA-256. It intentionally excludes individual scene identifiers, coordinates, record lists, and raw values. Candidate manifests and code cannot configure the selector or its seed. Training epoch sampling is a separate provider/Harness mechanism applied after bounded membership has been fixed.
+
+Limitations: positivity is a binary `labels != 0` stratum rather than a contrail morphology or area stratification; scene/provenance spread does not guarantee geographic, seasonal, or viewing-angle balance; and reproducibility/digest equality applies to a stable mounted dataset snapshot. Small capped subsets remain approximations for reduced-budget architecture comparison, not substitutes for full-data validation.
 
 ## Trusted generation and refresh
 
@@ -67,7 +75,7 @@ After each refresh:
 ## Safety and limitations
 
 - No raw training samples, qualitative pixel examples, longitude/latitude arrays or statistics, model weights, prediction rasters, per-sample metrics, or unrestricted artifact references are serialized.
-- Candidate code does not own generation, data loading, split logic, losses, metrics, Artifact Filters, Baseline Segmenter loading, or sampling.
+- Candidate code does not own generation, data loading, split logic, losses, metrics, Artifact Filters, Baseline Segmenter loading, epoch sampling, or capped-record selection.
 - Bounded channel ranges characterize the selected snapshot sample, not absolute physical validity limits.
 - Contrail Mask histograms summarize binary `labels != 0`; they do not expose instance layers.
 - MCAST and ABI-025 values remain summaries of their identified immutable source artifacts. Promotion remains a separate human decision.

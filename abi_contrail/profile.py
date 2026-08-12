@@ -22,6 +22,10 @@ from abi_contrail.datasets import (
     load_abi_metadata_rows,
     open_abi_patch_arrays,
 )
+from abi_contrail.record_selection import (
+    canonical_record_identity,
+    selected_record_identity_digest,
+)
 
 GENERATOR_VERSION = "abi_contrail.profile.v1"
 CHANNEL_STAT_MAX_RECORDS_PER_SPLIT = 16
@@ -115,6 +119,8 @@ def generate_dataset_profile(data_config: Mapping[str, object]) -> dict[str, Any
             "Counts summarize the local mounted dataset snapshot and may differ from later downloaded or regenerated snapshots.",
             "MIT full-scene arrays are split by whole scene before 256x256 windowing to avoid scene leakage.",
             "Google patch train/validation membership is treated as provenance encoded in scene/file names, not reshuffled.",
+            "Harness-capped Runs use fixed provider-owned representative record selection independently within each Dataset Source and Leakage-Safe Split; this is separate from profile channel-statistics sampling and training epoch sampling.",
+            "Small deterministic capped subsets preserve binary positivity and scene/provenance spread but do not guarantee geographic, seasonal, viewing-angle, or morphology balance.",
             "Projection metadata is not candidate input; candidate models receive only provider-approved ABI channels and optional solar geometry input.",
         ],
     }
@@ -145,7 +151,7 @@ def missing_data_profile(data_config: Mapping[str, object] | None, reason: str) 
             "positive ABI Patch counts and prevalence",
             "per-split Contrail Mask area distributions",
             "bounded safe-range statistics for ABI channels 1-16",
-            "source split policy metadata",
+            "source split and provider-owned capped-record selection policy metadata",
             "input/label array shapes and projection caveats",
         ],
         "known_caveats": [
@@ -373,25 +379,11 @@ def _input_window(record: ABIPatchIndexRecord, inputs: Any) -> Any:
 
 
 def _record_index_digest(records: Sequence[ABIPatchIndexRecord]) -> str:
-    digest = hashlib.sha256()
-    for record in records:
-        digest.update(_record_identity(record).encode() + b"\n")
-    return digest.hexdigest()
+    return selected_record_identity_digest(records)
 
 
 def _record_identity(record: ABIPatchIndexRecord) -> str:
-    return "|".join(
-        (
-            record.dataset_source,
-            record.split,
-            record.scene_name,
-            str(record.scene_index),
-            str(record.sample_index),
-            str(record.row),
-            str(record.col),
-            "1" if record.positive else "0",
-        )
-    )
+    return canonical_record_identity(record)
 
 
 def _abi_channel_semantics() -> list[dict[str, Any]]:

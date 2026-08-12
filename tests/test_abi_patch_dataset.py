@@ -145,6 +145,15 @@ def test_input_mode_dataset_selection_is_provider_owned() -> None:
     np.testing.assert_array_equal(sample["inputs"][-1], channel_last[:, :, 15])
 
 
+def test_explicit_empty_index_does_not_fall_back_to_all_backing_array_records(tmp_path) -> None:
+    inputs_path, labels_path = _write_google_groups(tmp_path)
+    arrays = open_google_abi_patch_arrays(inputs_path, labels_path)
+
+    dataset = ABIPatchDataset(arrays, ())
+
+    assert len(dataset) == 0
+
+
 def test_build_dataset_runs_against_tiny_local_fixtures_without_data_symlink(tmp_path) -> None:
     inputs_path, labels_path = _write_google_groups(tmp_path)
 
