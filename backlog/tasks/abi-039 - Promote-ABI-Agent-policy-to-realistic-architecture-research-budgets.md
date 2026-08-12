@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 16:35'
+updated_date: '2026-08-12 20:08'
 labels:
   - harness
   - autonomy
@@ -50,3 +50,13 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 10. Run focused ABI and Harness policy/boundary/handoff/batch tests followed by the full ABI suite and relevant Harness suite. Prove no Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step was launched by comparing Run/Evaluation/ledger action counts before and after.
 11. Record validation, residual risks, approved values, and the recommended scope for a separate first calibration-Run backlog task. Stop after policy activation and boundary verification; do not create or execute the real model Run within ABI-039.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Evidence audit: mounted snapshot has 25,457 train records (MIT 4,928; Google 20,529) and 3,088 validation records (MIT 1,232; Google 1,856).
+- Accelerated ABI-037 bounded Run measured 73.88 train samples/s and 23.88 validation samples/s with 14.33M parameters, batch 4, ~958MB CUDA reserved, and 44.65s total for 3x(256 train + 256 val).
+- ABI-029 approves batch 8/concurrency 2 only for comparable 2.54M spectral ResUNets; materially different architectures remain sequential.
+- Current Harness clamps max_samples but does not clamp CLI max_prediction_samples and has no trusted workspace max_batch_size; these are likely minimal enforcement gaps.
+- Subagent audit was unavailable because the local pi-subagents runtime is missing typebox/compile; continuing with direct repository inspection.
+<!-- SECTION:NOTES:END -->
