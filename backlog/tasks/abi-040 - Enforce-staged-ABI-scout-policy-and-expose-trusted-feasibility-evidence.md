@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 20:27'
-updated_date: '2026-08-12 20:31'
+updated_date: '2026-08-12 21:02'
 labels:
   - harness
   - provider
@@ -25,15 +25,15 @@ Implement the trusted Harness, ABI provider, and Agent-visible capabilities requ
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Trusted Workspace Configuration supports a maximum Candidate batch size and enforceable scheduler/early-stopping constraints without transferring policy ownership to Candidate code
-- [ ] #2 Direct and config-driven Candidate Runs, managed continuation/reconciliation, Agent handoff ingestion, Autonomy Steps, and Experiment Batches consistently enforce sample, epoch, timeout, parameter, batch, prediction-artifact, prediction-policy, scheduler, early-stopping, and parallel-Run ceilings
-- [ ] #3 Command options cannot raise the configured prediction-artifact ceiling or substitute a disallowed prediction policy, and focused tests prove clamping or rejection alongside the existing sample and epoch behavior
-- [ ] #4 Generated Agent Workspace configuration and AGENTS.md expose the effective sample, epoch, timeout, parameter, batch, prediction, scheduler, early-stopping, and concurrency policy consistently
-- [ ] #5 Trusted ABI epoch-validation evidence records bounded raw and filtered predicted-positive counts or fractions together with aggregate and MIT/Google metrics needed to identify collapse and improvement
-- [ ] #6 A provider-owned scout assessment summarizes finite/resource state, recent loss and metric trends, source-specific behavior, and prediction degeneracy without using a strict top-k or single absolute-Dice elimination rule; ambiguous or improving low-scoring curves remain extension-eligible
-- [ ] #7 The Research Problem Brief and Agent-visible guidance define the one-epoch resource pilot, representative ABI-038 scout semantics, asymmetric elimination rule, sequential treatment of new architecture families, and the distinction between scout evidence and focused full-data evidence
-- [ ] #8 Focused Harness and ABI tests cover configuration bounds, direct and handoff no-bypass paths, batches, generated boundary content, positive-count evidence, curve assessment, slow-starter/ambiguous trajectories, and hard-failure/collapse trajectories
-- [ ] #9 No promoted machine-local policy is activated and no scientific execution action is launched by this task; activation remains in ABI-039
+- [x] #1 Trusted Workspace Configuration supports a maximum Candidate batch size and enforceable scheduler/early-stopping constraints without transferring policy ownership to Candidate code
+- [x] #2 Direct and config-driven Candidate Runs, managed continuation/reconciliation, Agent handoff ingestion, Autonomy Steps, and Experiment Batches consistently enforce sample, epoch, timeout, parameter, batch, prediction-artifact, prediction-policy, scheduler, early-stopping, and parallel-Run ceilings
+- [x] #3 Command options cannot raise the configured prediction-artifact ceiling or substitute a disallowed prediction policy, and focused tests prove clamping or rejection alongside the existing sample and epoch behavior
+- [x] #4 Generated Agent Workspace configuration and AGENTS.md expose the effective sample, epoch, timeout, parameter, batch, prediction, scheduler, early-stopping, and concurrency policy consistently
+- [x] #5 Trusted ABI epoch-validation evidence records bounded raw and filtered predicted-positive counts or fractions together with aggregate and MIT/Google metrics needed to identify collapse and improvement
+- [x] #6 A provider-owned scout assessment summarizes finite/resource state, recent loss and metric trends, source-specific behavior, and prediction degeneracy without using a strict top-k or single absolute-Dice elimination rule; ambiguous or improving low-scoring curves remain extension-eligible
+- [x] #7 The Research Problem Brief and Agent-visible guidance define the one-epoch resource pilot, representative ABI-038 scout semantics, asymmetric elimination rule, sequential treatment of new architecture families, and the distinction between scout evidence and focused full-data evidence
+- [x] #8 Focused Harness and ABI tests cover configuration bounds, direct and handoff no-bypass paths, batches, generated boundary content, positive-count evidence, curve assessment, slow-starter/ambiguous trajectories, and hard-failure/collapse trajectories
+- [x] #9 No promoted machine-local policy is activated and no scientific execution action is launched by this task; activation remains in ABI-039
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -59,4 +59,37 @@ Implement the trusted Harness, ABI provider, and Agent-visible capabilities requ
   - Representative tests are `test_candidate_execution_config.py`, `test_research_loop_operations.py`, `test_agent_boundary.py`, `test_agent_handoff_ingestion.py`, `test_autonomy_step.py`, `test_experiment_batches.py`, plus ABI training/provider tests.
   - The local pi-subagents context-builder could not run because its installation lacks `typebox/compile`; direct audit findings above replace that attempted handoff.
 - Approved design intent: the provider-owned scout assessment is conservative decision support, not an automatic top-k ranker. Strong negative evidence is required for elimination; low but improving, source-balanced, novel, noisy, or ambiguous trajectories remain extension-eligible.
+
+- Added Harness-owned max batch size, scheduler allowlist, and early-stopping policy with manifest validation across direct, managed, handoff, autonomy, and batch paths.
+- Clamped prediction artifact requests and rejected prediction-policy substitution before Run creation.
+- Extended generated Agent Workspace config/instructions with the full effective policy and staged scout guidance.
+- Added bounded aggregate/source predicted-positive evidence and provider-owned conservative scout assessment artifacts.
+- Updated the ABI brief with resource-pilot, representative scout, asymmetric elimination, sequential-family, extension, and full-data semantics.
+- Verified machine-local promoted ceilings were not changed and launched no scientific execution action.
+- Validation: ABI full suite 133 passed; focused Harness policy/boundary suites 186 passed; full Harness 581 passed, 2 skipped, with one known unrelated external GVCCS fake-allowlist failure; compileall and git diff checks passed. Ruff is not installed in either uv environment.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented staged ABI scout policy enforcement and trusted feasibility evidence across the reusable Harness and ABI provider.
+
+Harness:
+- Added Workspace max batch size, scheduler allowlist, and early-stopping constraints.
+- Enforced training policy across direct Runs, stable continuation/reconciliation, Agent handoffs, Autonomy Steps, and Experiment Batches.
+- Clamped prediction artifact requests, rejected policy substitution, and exposed the complete policy in generated boundary config/guidance.
+
+ABI provider:
+- Added aggregate and MIT/Google raw/filtered predicted-positive counts and fractions to epoch evidence.
+- Added conservative finite/resource, trend, source, and prediction-degeneracy scout assessment with no top-k or absolute-Dice elimination rule.
+- Documented staged pilot/scout/extension/full-data semantics and asymmetric elimination.
+
+Validation:
+- uv run pytest -q: 133 passed (ABI)
+- Focused Harness suites: 186 passed
+- Full Harness: 581 passed, 2 skipped, 1 known unrelated external GVCCS characterization failure
+- compileall and git diff --check passed
+- Ruff unavailable in the project environments
+
+No promoted machine-local policy was activated and no scientific execution action was launched.
+<!-- SECTION:FINAL_SUMMARY:END -->
