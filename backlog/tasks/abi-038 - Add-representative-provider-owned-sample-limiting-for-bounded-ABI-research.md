@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 16:25'
+updated_date: '2026-08-12 16:29'
 labels:
   - provider
   - data
@@ -23,13 +23,13 @@ Replace deterministic prefix truncation for capped ABI training and validation d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Capped MIT and Google train/validation records are selected reproducibly without relying on raw record-prefix order
-- [ ] #2 The trusted selection policy preserves Dataset Source and Leakage-Safe Split boundaries and defines representative scene/provenance and Contrail Mask-positive coverage
-- [ ] #3 Candidate code and manifests cannot implement, override, seed, or inspect the trusted record-selection mechanism beyond approved aggregate metadata
-- [ ] #4 Run metadata records the requested and effective caps, policy identity/version, seed, source/split counts, positive counts, and a stable selected-record identity digest
-- [ ] #5 Unit tests cover determinism, order-bias resistance, source/split isolation, positivity edge cases, cap behavior, and full-dataset behavior using tiny fixtures
-- [ ] #6 Durable provider and Agent-visible documentation explains the capped-sampling semantics and limitations without depending on planning-inputs or external training data
-- [ ] #7 No real model training is performed as part of implementation or validation
+- [x] #1 Capped MIT and Google train/validation records are selected reproducibly without relying on raw record-prefix order
+- [x] #2 The trusted selection policy preserves Dataset Source and Leakage-Safe Split boundaries and defines representative scene/provenance and Contrail Mask-positive coverage
+- [x] #3 Candidate code and manifests cannot implement, override, seed, or inspect the trusted record-selection mechanism beyond approved aggregate metadata
+- [x] #4 Run metadata records the requested and effective caps, policy identity/version, seed, source/split counts, positive counts, and a stable selected-record identity digest
+- [x] #5 Unit tests cover determinism, order-bias resistance, source/split isolation, positivity edge cases, cap behavior, and full-dataset behavior using tiny fixtures
+- [x] #6 Durable provider and Agent-visible documentation explains the capped-sampling semantics and limitations without depending on planning-inputs or external training data
+- [x] #7 No real model training is performed as part of implementation or validation
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -55,4 +55,23 @@ Replace deterministic prefix truncation for capped ABI training and validation d
 - Added tiny fixture coverage for determinism, order resistance, source/split isolation, positivity/cap edge cases, combined-source metadata, candidate boundary rejection, and full-data behavior.
 - Updated provider brief, dataset-profile guidance, profile generator caveats, and provider policy metadata.
 - Validation so far: uv run pytest -q (123 passed); focused ABI-038 tests (43 passed); relevant Harness metadata dispatch test passed. Full Harness dispatch file had 1 unrelated environment-sensitive failure because CUDA was selected where its test asserted CPU.
+
+- Fixed explicit-empty ABIPatchIndex handling so an empty selected split cannot fall back to all backing-array records.
+- Final ABI validation: uv run pytest -q -> 126 passed, 16 existing multiprocessing deprecation warnings.
+- Relevant Harness validation: test_run_candidate_trains_through_generic_research_problem_provider passed; full dispatch file was 5 passed/1 unrelated CUDA-vs-CPU environment assertion failure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented fixed provider-owned representative record selection for bounded ABI Runs. Capped membership is deterministic and raw-order independent, preserves Dataset Source and Leakage-Safe Split boundaries, allocates positive/negative coverage, and spreads over MIT scenes or Google provenance scene names. The adapter now records bounded aggregate audit metadata and stable selected-record identity digests through final_metrics.json and run_metadata.json without exposing record lists or coordinates. Added candidate-boundary, combined-source, empty-split, cap/full-data, determinism, and documentation/profile tests.
+
+Tests:
+- uv run pytest -q (126 passed)
+- uv run pytest -q ../ml-autoresearch/tests/test_research_problem_training_dispatch.py::test_run_candidate_trains_through_generic_research_problem_provider (passed)
+- uv run python -m compileall -q abi_contrail tests
+- git diff --check
+
+Validation note:
+- The full Harness dispatch file produced 5 passes and one unrelated environment-sensitive failure because CUDA was available while that test asserts CPU. No real dataset training was performed; validation used tiny fixtures/smoke tests only.
+<!-- SECTION:FINAL_SUMMARY:END -->
