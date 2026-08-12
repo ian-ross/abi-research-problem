@@ -13,6 +13,7 @@ labels:
   - gpu
   - candidates
 dependencies:
+  - ABI-038
   - ABI-040
 priority: high
 ---
