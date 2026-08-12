@@ -4,13 +4,15 @@ title: Enforce staged ABI scout policy and expose trusted feasibility evidence
 status: To Do
 assignee: []
 created_date: '2026-08-12 20:27'
+updated_date: '2026-08-12 20:27'
 labels:
   - harness
   - provider
   - policy
   - agent-boundary
   - tests
-dependencies: []
+dependencies:
+  - ABI-038
 priority: high
 ---
 
