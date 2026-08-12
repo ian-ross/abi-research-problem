@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 20:08'
+updated_date: '2026-08-12 20:14'
 labels:
   - harness
   - autonomy
@@ -59,4 +59,7 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 - ABI-029 approves batch 8/concurrency 2 only for comparable 2.54M spectral ResUNets; materially different architectures remain sequential.
 - Current Harness clamps max_samples but does not clamp CLI max_prediction_samples and has no trusted workspace max_batch_size; these are likely minimal enforcement gaps.
 - Subagent audit was unavailable because the local pi-subagents runtime is missing typebox/compile; continuing with direct repository inspection.
+
+- Human policy-gate evidence: operator reports canonical MCAST 2.1 trained for 100 epochs in approximately 3.7 hours on this machine/A100. This invalidates the proposed 20-epoch full-data confirmation as likely under-training and motivates staged feasibility scouting followed by focused 100-epoch training only for promoted architectures.
+- Proposed staged interpretation: non-ranking 1-epoch resource pilot; fixed-budget representative 12-epoch scout with no early stopping; later full-data focused training up to 100 epochs with scheduler/early stopping, separately calibrated and authorized.
 <!-- SECTION:NOTES:END -->
