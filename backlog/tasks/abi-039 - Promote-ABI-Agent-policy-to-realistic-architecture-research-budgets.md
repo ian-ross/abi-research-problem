@@ -1,10 +1,11 @@
 ---
 id: ABI-039
 title: Promote ABI Agent policy to realistic architecture-research budgets
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 16:02'
+updated_date: '2026-08-12 16:35'
 labels:
   - harness
   - autonomy
