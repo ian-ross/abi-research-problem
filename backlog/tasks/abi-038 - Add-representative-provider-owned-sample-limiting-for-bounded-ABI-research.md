@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 16:07'
+updated_date: '2026-08-12 16:25'
 labels:
   - provider
   - data
@@ -46,3 +46,13 @@ Replace deterministic prefix truncation for capped ABI training and validation d
 9. Update the Research Problem Brief, dataset-profile guidance, and generated Agent-facing guidance with the capped-selection semantics, reproducibility guarantees, distinctions from epoch sampling, and known limitations. Keep durable context out of `planning-inputs/`.
 10. Validate with focused ABI provider/training tests, any affected Harness dispatch/artifact tests, then `uv run pytest -q` in ABI and the relevant `uv run pytest ...` Harness suites. Run only tiny fixtures and static/boundary smoke checks; perform no real model training. Record evidence, residual risks, acceptance checks, and final summary in ABI-038.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Implemented provider-owned hash-ranked, positivity-aware scene/provenance-spread record selection with fixed v1 policy/seed and order-independent identity digests.
+- Replaced prefix truncation in ABITrainingAdapter and added per-source/per-split audit metadata propagated through final_metrics.json and run_metadata.json.
+- Added tiny fixture coverage for determinism, order resistance, source/split isolation, positivity/cap edge cases, combined-source metadata, candidate boundary rejection, and full-data behavior.
+- Updated provider brief, dataset-profile guidance, profile generator caveats, and provider policy metadata.
+- Validation so far: uv run pytest -q (123 passed); focused ABI-038 tests (43 passed); relevant Harness metadata dispatch test passed. Full Harness dispatch file had 1 unrelated environment-sensitive failure because CUDA was selected where its test asserted CPU.
+<!-- SECTION:NOTES:END -->
