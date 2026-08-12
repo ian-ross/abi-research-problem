@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 20:14'
+updated_date: '2026-08-12 20:17'
 labels:
   - harness
   - autonomy
@@ -62,4 +62,7 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 
 - Human policy-gate evidence: operator reports canonical MCAST 2.1 trained for 100 epochs in approximately 3.7 hours on this machine/A100. This invalidates the proposed 20-epoch full-data confirmation as likely under-training and motivates staged feasibility scouting followed by focused 100-epoch training only for promoted architectures.
 - Proposed staged interpretation: non-ranking 1-epoch resource pilot; fixed-budget representative 12-epoch scout with no early stopping; later full-data focused training up to 100 epochs with scheduler/early stopping, separately calibrated and authorized.
+
+- Policy refinement: a 12-epoch, 1,024-per-source scout sees 24,576 training observations, roughly 1% of the 2,545,700 record-exposures in a 100-epoch pass over the mounted 25,457-record training snapshot. It is therefore a failure/feasibility screen, not a reliable final architecture ranking.
+- Proposed slow-starter protection: asymmetric successive-halving decisions. Reject at 12 epochs only for hard failure, collapse, or convincing plateau/divergence; extend low-scoring models with positive tail slope, stable finite optimization, source-balanced signal, or ambiguous/noisy trajectories to a longer scout. Do not use a strict top-k or absolute Dice cutoff.
 <!-- SECTION:NOTES:END -->
