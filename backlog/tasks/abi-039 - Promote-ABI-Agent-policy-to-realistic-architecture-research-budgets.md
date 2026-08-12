@@ -1,11 +1,11 @@
 ---
 id: ABI-039
 title: Promote ABI Agent policy to realistic architecture-research budgets
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:59'
-updated_date: '2026-08-12 21:25'
+updated_date: '2026-08-12 21:26'
 labels:
   - harness
   - autonomy
@@ -78,3 +78,17 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 - Non-training preflight passed for data, ancillary, baselines, Runs, rootless Docker, pinned idle A100, no containers, no pause, and no open Harness action.
 - Validation: ABI 133 passed; focused Harness 186 passed; full configured Harness 581 passed/2 skipped/1 known unrelated GVCCS fake-allowlist failure. No Run, Evaluation, Batch, handoff, or Autonomy action count changed.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Activated and validated the trusted ABI architecture-scout envelope. Workspace and Agent-visible policy now enforce 1,024 representative samples per Dataset Source and Leakage-Safe Split, 12 epochs, 3,600 seconds, batch size 4, four first_n predictions, 25M parameters, constant LR, disabled early stopping, and one sequential Run. Added the durable ABI-039 campaign authorization, updated the Experiment Index and Research Ledger, rebuilt runtime images for Harness c346f07, regenerated the Agent Control Boundary, and completed non-training operational preflight. The 32/source/split one-epoch resource pilot is the next separately authorized execution; 36-epoch extension and 100-epoch full-data stages remain inactive.
+
+Validation:
+- uv run pytest -q: 133 passed
+- Focused Harness policy/boundary/handoff/batch suites: 186 passed
+- Full configured Harness: 581 passed, 2 skipped, 1 known unrelated GVCCS fake-allowlist failure
+- Runtime image, Docker CUDA/A100, boundary reload/snapshot, dry-run open-action, and git diff checks passed
+- No Candidate Run, Evaluation, Experiment Batch, handoff, or Autonomy Step was launched; only authorization/report ledger events were added
+- Activation commit 7d2cd27 pushed to origin/main
+<!-- SECTION:FINAL_SUMMARY:END -->
