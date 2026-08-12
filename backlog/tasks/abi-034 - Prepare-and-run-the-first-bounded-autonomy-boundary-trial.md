@@ -1,9 +1,11 @@
 ---
 id: ABI-034
 title: Prepare and run the first bounded autonomy boundary trial
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-12 10:31'
+updated_date: '2026-08-12 10:32'
 labels:
   - harness
   - autonomy
@@ -28,3 +30,14 @@ Reconcile the approved Gate 5 campaign state, add trusted test-run execution cei
 - [ ] #5 One Autonomy Step completes without --execute-next-action; no Candidate training, evaluation, or other Harness-owned next action executes
 - [ ] #6 Focused and full validation pass, and the trial handoff/result artifacts and residual risks are recorded durably
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Reconcile Gate 5 and current campaign status in durable Agent-visible records.
+2. Add Harness-owned max_epochs and Candidate training wall-clock configuration, tests, and boundary guidance; configure ABI test limits at 128 samples/source, 3 epochs, concurrency 1, and 1800 seconds.
+3. Validate the Mailjet fields and send one notification test to iross@mit.edu without logging credentials.
+4. Run Harness and ABI validation, rebuild/revalidate runtime identities if required, and refresh the unchanged-policy Agent Control Boundary.
+5. Run exactly one autonomy-step without --execute-next-action, inspect the handoff and prove that no Candidate/evaluation action executed.
+6. Record evidence, obtain independent review, complete acceptance criteria, and summarize residual risks.
+<!-- SECTION:PLAN:END -->
