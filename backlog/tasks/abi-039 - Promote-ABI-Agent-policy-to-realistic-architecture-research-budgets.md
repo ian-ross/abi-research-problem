@@ -4,6 +4,7 @@ title: Promote ABI Agent policy to realistic architecture-research budgets
 status: To Do
 assignee: []
 created_date: '2026-08-12 15:59'
+updated_date: '2026-08-12 16:02'
 labels:
   - harness
   - autonomy
@@ -32,3 +33,19 @@ Define, review, and activate a realistic trusted Agent/Harness policy envelope f
 - [ ] #7 Preflight confirms configured data, ancillary, baseline, Runs, Docker, and pinned-A100 resources are available for a later calibration Run
 - [ ] #8 No scientific Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step is launched by this task; the first calibrated real model Run requires a separate backlog task
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Confirm ABI-038 is complete and read its approved capped-selection contract and validation evidence. Re-baseline the clean ABI/Harness revisions, current 128-sample/3-epoch policy, full mounted Dataset Source counts, canonical validation size, prior A100 resource profiles, accelerated-validation timings, timeout/recovery behavior, and latest finite/non-degenerate and collapsed Results.
+2. Draft a policy decision table for two modes: representative reduced-budget architecture scouts using ABI-038 selection, and later full-data confirmation Runs. For each mode propose exact sample ceilings, epoch ceiling, wall-clock timeout, prediction-artifact bound, parameter ceiling, batch-size/resource-class rule, scheduler guidance, early-stopping guidance, and whether parallel Runs are permitted. Derive runtime/headroom estimates explicitly from measured evidence and identify assumptions.
+3. Hold a human policy gate before changing configuration. Obtain approval for the exact values and retained stop conditions. Default new or materially different architecture families to sequential execution; retain `max_parallel_runs = 1` unless trusted enforcement can prove that every concurrent Candidate belongs to a compatible ABI-029-profiled resource class. Do not turn the measured concurrency-two result into an unrestricted global Agent allowance.
+4. Audit trusted enforcement across direct/config-driven Candidate Runs, managed continuation/reconciliation, Agent handoff ingestion, Autonomy Steps, and Experiment Batches. Add only the smallest Harness changes needed to make approved ceilings clamp or reject consistently and to expose scheduler/early-stopping and resource-class guidance without transferring policy ownership to Candidate code.
+5. Add or update focused Harness tests for configuration parsing/bounds, command-option clamping, manifest epoch rejection, timeout propagation, parameter and prediction limits, batch concurrency, handoff ingestion, generated boundary configuration/guidance, and no-bypass behavior. Add ABI workspace tests that assert the promoted local/example policy shape without making portable tests depend on machine-local paths or secrets.
+6. Apply the approved values to the machine-local `ml-autoresearch.toml` and update `ml-autoresearch.toml.example` comments/guidance where portable. Preserve pinned A100 device 0, rootless Docker execution, read-only named data roots, the longitude/latitude prohibition, provider-owned data/loss/metric/filter/sampling policy, exactly-once reconciliation, and human stops for policy/contract changes, failures, promotion, and unbounded actions.
+7. Write a durable policy-promotion campaign report containing the evidence, exact scout/full-data envelopes, enforcement semantics, resource-class/concurrency rules, stop conditions, and explicit statement that this task launches no scientific work. Update `EXPERIMENT_INDEX.md` and record the linked validated Research Ledger authorization/resume event only after human approval.
+8. Rebuild runtime images only if the Harness, provider dependencies, image recipes, or validation identity require it; otherwise revalidate the existing images against the new Workspace Configuration. Run `prepare-agent-boundary` and inspect generated `agent-work/ml-autoresearch.toml`, `agent-work/AGENTS.md`, `/reference` snapshots, and ledger history to prove the Agent sees one consistent promoted policy and ABI-038 sampling semantics.
+9. Perform non-training operational preflight: verify clean/pushed revision identities as required by the authorization, configured training/ancillary/baseline/Run roots, canonical baseline registry/assets, Docker runner, Agent image, pinned idle A100, no managed containers, no unresolved campaign pause/capability request, and no open Harness action that could execute unexpectedly. Use dry-run/status commands only.
+10. Run focused ABI and Harness policy/boundary/handoff/batch tests followed by the full ABI suite and relevant Harness suite. Prove no Candidate Run, Post-Run Evaluation, Experiment Batch, or Autonomy Step was launched by comparing Run/Evaluation/ledger action counts before and after.
+11. Record validation, residual risks, approved values, and the recommended scope for a separate first calibration-Run backlog task. Stop after policy activation and boundary verification; do not create or execute the real model Run within ABI-039.
+<!-- SECTION:PLAN:END -->
