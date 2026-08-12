@@ -1,10 +1,11 @@
 ---
 id: ABI-035
 title: Execute the first bounded autonomous Candidate and continue the autonomy loop
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-12 11:39'
-updated_date: '2026-08-12 11:54'
+updated_date: '2026-08-12 11:55'
 labels:
   - harness
   - autonomy
