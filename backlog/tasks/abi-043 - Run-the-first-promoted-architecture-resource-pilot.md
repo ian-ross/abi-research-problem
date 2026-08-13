@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-13 09:33'
-updated_date: '2026-08-13 10:10'
+updated_date: '2026-08-13 13:10'
 labels:
   - autonomy
   - candidates
@@ -50,3 +50,12 @@ Prepare, authorize, and execute the first post-ABI-039 real architecture-researc
 7. Collect trusted lifecycle and resource evidence: finite state, parameter count, throughput, wall time, peak GPU allocation/reservation, batch compatibility, source-stratified metrics, prediction non-degeneracy, selected-record policy identity, and timeout headroom. Interpret it only as contract/resource/finite/non-degeneracy evidence.
 8. Update the durable report, Experiment Index, Research Ledger, validation results, residual risks, and task metadata; obtain an independent fresh-context review, address blockers, verify no second Run or downstream evaluation/scout was launched, and close only when every acceptance criterion is evidenced.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Human approved the implementation/execution plan after confirming main was pushed.
+- Preregistered full-spectral DeepLabV3+ ResNet-18 as the single materially different family and activated the machine-local trusted 32/source/split, one-epoch Workspace cap.
+- Added an exact-32 provider fixture regression; ABI full suite passed (133), focused Harness policy/autonomy/reconciliation suite passed (135).
+- Recorded the linked pilot report and campaign resume authorization; no Autonomy Step or Candidate Run has been launched yet.
+<!-- SECTION:NOTES:END -->
