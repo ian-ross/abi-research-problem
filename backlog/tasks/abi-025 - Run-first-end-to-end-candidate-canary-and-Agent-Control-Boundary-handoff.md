@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-09 21:13'
-updated_date: '2026-08-11 10:30'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - candidates
@@ -131,7 +131,7 @@ This task is deliberately staged with explicit Human Review Gates. Agent steps m
 - Training became non-finite after two batches of epoch 1 and remained non-finite. The selected checkpoint has 2,539,889 non-finite parameter values out of 2,539,921 tensor values; the full Working Validation evaluation `eval_20260811_054134_51fc4c` predicted zero positive pixels across 3,088 samples.
 - Provider-owned acceptance report is tied to verified registry `abi-mcast-working-validation-v1` and flags aggregate baseline failure, recall regression, and catastrophic MIT and Google source failures. Promotion remains human_review_required.
 - Boundary/artifact validation passed: canonical and Run Candidate copies match byte-for-byte; static validation passes; model summary permits only ABI channels 1-16 and forbids longitude/latitude; trusted mounts are recorded read-only; expected Run/evaluation/ledger artifacts and four bounded diagnostic samples/eight GeoTIFFs exist.
-- Wrote final Gate 6 report `campaign-reports/abi-025-agent-handoff-canary.md`. Recommendation for Human Final Gate 7 is no-go until trusted non-finite fail-fast checks and robust detached/synchronous Run finalization are addressed. Final human go/no-go decision is not yet recorded.
+- Wrote final Gate 6 report `campaign-reports/agent-handoff-canary.md`. Recommendation for Human Final Gate 7 is no-go until trusted non-finite fail-fast checks and robust detached/synchronous Run finalization are addressed. Final human go/no-go decision is not yet recorded.
 
 - Human Final Gate 7 recorded **NO-GO** on attempting a fully automatic autonomy iteration. Required Harness hardening is tracked in ABI-030: fail closed on non-finite Candidate training and provide supported observable/idempotent long-Docker-Run finalization.
 - A future positive-control Candidate canary is recommended after ABI-030, using an MCAST-like architecture without Candidate access to baseline weights or the baselines root; scope remains a separate human-reviewed task.
@@ -157,7 +157,7 @@ Agent-generated Candidate result:
 
 Final decision:
 - Human Final Gate 7 recorded NO-GO on fully automatic autonomy. ABI-030 tracks required trusted non-finite fail-fast and long Docker Run recovery/finalization fixes.
-- Final campaign evidence is recorded in `campaign-reports/abi-025-agent-handoff-canary.md`.
+- Final campaign evidence is recorded in `campaign-reports/agent-handoff-canary.md`.
 
 Validation:
 - Candidate static validation passed.
