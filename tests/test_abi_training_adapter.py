@@ -204,7 +204,7 @@ def test_training_adapter_records_bounded_selection_metadata_per_source_and_spli
         assert "records" not in summary
 
 
-def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
+def test_combined_adapter_applies_32_record_pilot_cap_independently_by_source_and_split(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -222,8 +222,8 @@ def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
 
     def fake_arrays(_inputs: Path, _labels: Path, *, layout: str) -> ABIPatchArrays:
         return ABIPatchArrays(
-            inputs=np.zeros((8, 2, 2, 19), dtype=np.float32),
-            labels=np.zeros((8, 2, 2), dtype=np.uint8),
+            inputs=np.zeros((80, 2, 2, 19), dtype=np.float32),
+            labels=np.zeros((80, 2, 2), dtype=np.uint8),
             layout=layout,  # type: ignore[arg-type]
         )
 
@@ -231,7 +231,7 @@ def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
         del root, data_config
 
         def records(split: str) -> tuple[ABIPatchIndexRecord, ...]:
-            offset = 0 if split == "train" else 4
+            offset = 0 if split == "train" else 40
             return tuple(
                 ABIPatchIndexRecord(
                     dataset_source=layout,  # type: ignore[arg-type]
@@ -244,7 +244,7 @@ def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
                     positive=index % 2 == 0,
                     sample_index=offset + index if layout == "google" else None,
                 )
-                for index in range(4)
+                for index in range(40)
             )
 
         return ABIPatchSplitIndex(
@@ -260,21 +260,26 @@ def test_combined_adapter_keeps_selection_audits_isolated_by_source_and_split(
     datasets = adapter.build_datasets(
         data_config=data_config,
         resolved_manifest_path=tmp_path / "resolved.yaml",
-        max_samples=2,
+        max_samples=32,
     )
 
-    assert len(datasets.train_dataset) == 4
-    assert len(datasets.validation_dataset) == 4
+    assert len(datasets.train_dataset) == 64
+    assert len(datasets.validation_dataset) == 64
     assert datasets.data_policy_metadata["dataset_source"] == "combined"
     assert {policy["dataset_source"] for policy in datasets.data_policy_metadata["source_split_policies"]} == {
         "mit",
         "google",
     }
-    selections = datasets.data_policy_metadata["bounded_record_selection"]["source_split_selections"]
+    selection_metadata = datasets.data_policy_metadata["bounded_record_selection"]
+    assert selection_metadata["requested_cap_per_source_split"] == 32
+    assert selection_metadata["cap_scope"] == "independent_per_dataset_source_and_leakage_safe_split"
+    selections = selection_metadata["source_split_selections"]
     assert {selection["dataset_source"] for selection in selections} == {"mit", "google"}
     for selection in selections:
         assert set(selection["splits"]) == {"train", "validation"}
-        assert all(summary["selected_count"] == 2 for summary in selection["splits"].values())
+        assert all(summary["selected_count"] == 32 for summary in selection["splits"].values())
+        assert all(summary["selected_positive_count"] > 0 for summary in selection["splits"].values())
+        assert all(summary["selected_negative_count"] > 0 for summary in selection["splits"].values())
 
 
 def test_training_adapter_logs_sampling_policy_metadata(tmp_path: Path) -> None:

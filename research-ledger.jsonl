@@ -92,3 +92,5 @@
 {"created_at":"2026-08-12T21:18:18Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-039-architecture-scout-policy-promotion.md"}
 {"created_at":"2026-08-12T21:18:18Z","event_type":"campaign_resumed","reason":"architecture_scout_policy_authorized_after_abi040","report_path":"campaign-reports/abi-039-architecture-scout-policy-promotion.md"}
 {"created_at":"2026-08-12T21:25:28Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-039-architecture-scout-policy-promotion.md"}
+{"created_at":"2026-08-13T13:10:07Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-043-first-promoted-architecture-resource-pilot.md"}
+{"created_at":"2026-08-13T13:10:07Z","event_type":"campaign_resumed","reason":"abi043_fullspectral_deeplabv3plus_resource_pilot_authorized","report_path":"campaign-reports/abi-043-first-promoted-architecture-resource-pilot.md"}
