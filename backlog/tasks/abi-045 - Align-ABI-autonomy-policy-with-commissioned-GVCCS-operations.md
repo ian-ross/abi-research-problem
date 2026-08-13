@@ -3,10 +3,11 @@ id: ABI-045
 title: >-
   Simplify ABI autonomous research policy and remove issue-oriented campaign
   guidance
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-13 15:54'
-updated_date: '2026-08-13 19:59'
+updated_date: '2026-08-13 20:01'
 labels:
   - autonomy
   - policy
@@ -58,4 +59,6 @@ Implementation must start from local `main` at `6707824`. The commits, diffs, fi
 - Planning revision requested by the operator.
 - Local `main` is `6707824`; `origin/main` is ahead, but that change range is explicitly excluded as an implementation source.
 - No implementation, merge, rebase, cherry-pick, Harness edit, or research execution is part of this task update.
+
+- Implementation started from the local task-update lineage based on `6707824`. Harness baseline is `b2d8345`; it will remain unchanged.
 <!-- SECTION:NOTES:END -->
