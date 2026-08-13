@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-13 13:36'
-updated_date: '2026-08-13 14:15'
+updated_date: '2026-08-13 14:45'
 labels:
   - autonomy
   - candidates
@@ -54,4 +54,9 @@ Authorize, prepare, and execute exactly one genuine post-ABI-043 representative-
 <!-- SECTION:NOTES:BEGIN -->
 - Re-baselined completed ABI-039/040/043 policy and lifecycle evidence; Harness remains clean at c346f07 and the ABI task-plan commit is one commit ahead of origin.
 - Began read-only policy/enforcement/operations reconnaissance. No Autonomy Step, Candidate Run, Evaluation, Batch, or GPU work has been launched.
+
+- Prepared and pushed durable ABI-044 authorization/index/brief/test changes at ABI 2483509; restored the ignored machine-local Workspace policy to 1,024 records/source/split and 12 epochs.
+- Hardened and pushed Harness b2d8345 so autonomy-step requires the Runtime Image Validation Stamp; added stale-stamp and explicit-bypass regressions.
+- Validation: ABI 135 passed; focused Harness 201 passed; full Harness 581 passed/2 skipped with the known unrelated GVCCS fake-allowlist failure. Rebuilt and validated runtime images for Harness fingerprint b8f7a78000a5354f and Workspace SHA cf417a0; generated pending-authorization boundary reload passed.
+- No Autonomy Step, Candidate Run, Evaluation, Batch, or GPU training has launched. Explicit human execution approval is still required.
 <!-- SECTION:NOTES:END -->
