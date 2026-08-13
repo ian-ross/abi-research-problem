@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-13 09:33'
-updated_date: '2026-08-13 09:49'
+updated_date: '2026-08-13 20:16'
 labels:
   - tooling
   - pi-subagents
@@ -45,7 +45,7 @@ Diagnose and fix the local pi-subagents runtime failure caused by the unresolved
 - Reproduced detached-runner failure with pi-subagents@0.35.1 missing optional peer typebox/compile (run cf76106e-e28d-4da1-8d02-a85ebb0d13e9).
 - Updated the unpinned user package through `pi update npm:pi-subagents` to 0.48.0, which installs typebox@1.1.38 as a production dependency.
 - Passed managed-resolution, separate new-parent-session ordinary launch, schema-bound structured-output, and fresh-context reviewer smoke checks.
-- Persisted diagnosis and independent review in campaign-reports/abi-042-pi-subagents-runtime-repair.md and campaign-reports/abi-042-fresh-context-review.md.
+- Persisted diagnosis and independent review in campaign-reports/pi-subagents-runtime-repair.md and campaign-reports/pi-subagents-runtime-independent-review.md.
 - No scientific policy or candidate/training paths changed; no Candidate Run was launched and no NODE_PATH workaround was used.
 <!-- SECTION:NOTES:END -->
 
