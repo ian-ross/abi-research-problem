@@ -1,7 +1,7 @@
 ---
 id: ABI-044
 title: Run the first representative architecture-scout Autonomy Step
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-13 13:36'
