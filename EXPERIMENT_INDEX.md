@@ -26,6 +26,8 @@ The resource pilot is contract, finite/non-degeneracy, and resource evidence onl
 
 | `candidates/abi043_fullspectral_deeplabv3plus_resource_pilot_v1` | [`README.md`](candidates/abi043_fullspectral_deeplabv3plus_resource_pilot_v1/README.md) — One-epoch resource pilot for a full-spectral DeepLabV3+ ResNet-18 family. | [`campaign-reports/abi-043-first-promoted-architecture-resource-pilot.md`](campaign-reports/abi-043-first-promoted-architecture-resource-pilot.md) | `run_20260813_131515_ff53ab` | Exactly one trusted 32-record/source/split, one-epoch pilot completed finite and non-degenerate at batch 4 with 12.37M parameters, 528MB peak CUDA reservation, and zero retries. Resource/contract evidence only; do not rank, promote, eliminate for low score, authorize concurrency, or start a scout without separate authorization. |
 
+| `candidates/abi044_fullspectral_deeplabv3plus_representative_scout_v1` | [`README.md`](candidates/abi044_fullspectral_deeplabv3plus_representative_scout_v1/README.md) — Twelve-epoch representative scout for the full-spectral DeepLabV3+ family. | [`campaign-reports/abi-044-first-representative-architecture-scout.md`](campaign-reports/abi-044-first-representative-architecture-scout.md) | `run_20260813_145951_a64a37` | Exactly one trusted 1,024-record/source/split, 12-epoch scout completed finite and source-balanced at batch 4. Aggregate filtered Dice improved through epoch 12 to 0.1244 (MIT 0.1125; Google 0.1522); provider assessment found no elimination evidence and classified the trajectory extension-eligible. This is capped feasibility evidence only; no extension, full-data training, Evaluation, promotion, concurrency, or follow-up step is active. |
+
 ## Chronological Research Notes
 
 No Research Notes have been recorded yet.

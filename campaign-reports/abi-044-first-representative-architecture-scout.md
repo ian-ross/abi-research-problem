@@ -106,6 +106,46 @@ Independent preparation review found the authorization and hard-stop language so
 
 The final clean/pushed ABI identity gate, durable approval ledger events, post-approval boundary regeneration, and immediate launch-time preflight remain pending. The Harness is clean and pushed; the ABI repository still contains preparation changes and is intentionally not yet eligible for launch.
 
-## Execution, result, independent review, and residual risks
+## Execution and stable-Run reconciliation
 
-Human execution approval was granted at `2026-08-13T14:55:37Z`; durable ledger recording, final commit/push, boundary regeneration, and immediate preflight are the remaining launch gates. No Autonomy Step, Candidate handoff, Candidate Run, Post-Run Evaluation, Experiment Batch, extension, or GPU training had been launched at approval time. This section will record only directly observed launch, stable-Run, reconciliation, scientific, independent-review, residual-risk, and final stop-state evidence.
+Human execution approval was granted at `2026-08-13T14:55:37Z`. The linked `campaign_report_written` and `campaign_resumed(reason=abi044_first_representative_scout_authorized)` events were committed and pushed at ABI `79016b16f97a5a52ffcf6715efd95f0b595fc40f`. The final generated boundary contained the approved index, ledger tail, and 1,024/12 policy. Immediate preflight confirmed clean pushed ABI and Harness `b2d8345b12433b2dbb4c0ffa942db9362c7d9578`, no open action, no managed Candidate container or compute process, available named roots/assets, and A100 GPU 0 at 0 MiB/0% utilization. Baselines were 15 Runs, three Evaluations, 105 ledger events, five handoffs, 15 Candidate submissions/starts, and one historical Experiment Batch.
+
+Exactly one launch command was invoked:
+
+```bash
+uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
+```
+
+It returned code 0, produced and ingested exactly one Candidate Submission `abi044_fullspectral_deeplabv3plus_representative_scout_v1`, and started stable Run `run_20260813_145951_a64a37`. The Agent preregistered the ABI-043 DeepLabV3+ ResNet-18 architecture with provider-owned `combined_source_balanced` traversal and `random_mirroring`, trusted `bce_dice`, AdamW at 0.0003, batch 4, constant LR, disabled early stopping, and 12 epochs. No launch command was repeated. After the single container exited 0 and was removed, two explicit `reconcile-run` observations both returned the same completed Run idempotently without adding another terminal event.
+
+The lifecycle ledger contains exactly one ABI-044 `agent_handoff_ingested`, `proposal_created`, `candidate_created`, `candidate_submitted`, `run_started`, and `run_completed` event and no ABI-044 failure event. Postflight has 16 Runs, three Evaluations, and 111 ledger events. No Experiment Batch, Post-Run Evaluation, replacement, second Run, or second Autonomy Step was launched. No open action, managed container, or GPU compute process remains.
+
+## Trusted evidence and scout interpretation
+
+The immutable Candidate completed 12 epochs at batch 4 with 12,370,065 parameters and accepted only source indices 0-15; model evidence explicitly prohibits longitude/latitude indices 16/17. The trusted selector `abi_representative_scene_positive_hash` v1, seed `20260812`, selected exactly 1,024 records in every source/split stratum:
+
+| Dataset Source / split | Available | Selected | Positive / negative | Selection identity SHA-256 |
+| --- | ---: | ---: | ---: | --- |
+| MIT train | 4,928 | 1,024 | 441 / 583 | `7f573509ebc2b5352efd4e71f17c0c790f755dc6e48521ff7c1e240e64721f29` |
+| MIT validation | 1,232 | 1,024 | 443 / 581 | `2a2ec50eb239f5c568a63dddc726881553e7fba020948f3f31b565d34473a29b` |
+| Google train | 20,529 | 1,024 | 462 / 562 | `a5ebe021858d209c30b66e74ea8e8bf5c18fc00225f6c37a37c6fbcf3d8ae7e0` |
+| Google validation | 1,856 | 1,024 | 305 / 719 | `f2792f2ae16f496faea9c04b45116d24197407909d37deb998f24dd8a692658f` |
+
+The sole resource attempt completed with zero retries. It processed 24,576 training and 24,576 validation observations at 120.07 and 26.17 samples/s. Profiled work took 1,146.47 seconds, leaving 2,453.53 seconds (68.15%) of the trusted 3,600-second timeout. Peak CUDA allocation/reservation was 463,730,688 / 528,482,304 bytes with 41,855,287,296 bytes free at start. This supports the authorized sequential batch-4 envelope only and does not authorize concurrency.
+
+A recursive audit found 25,850 finite numeric JSON/JSONL values. The best checkpoint contained 183 tensors and 12,383,918 finite values. Final aggregate raw/filtered Dice was 0.1290/0.1244, with raw/filtered predicted-positive fractions 0.002064/0.001961. Source-stratified final filtered evidence was:
+
+| Source | Filtered Dice | Precision | Recall | Predicted-positive fraction |
+| --- | ---: | ---: | ---: | ---: |
+| MIT | 0.11249 | 0.18254 | 0.08129 | 0.002405 |
+| Google | 0.15216 | 0.16871 | 0.13857 | 0.001517 |
+
+The four bounded prediction masks contained 9, 7, 0, and 0 positive pixels out of 65,536. Two first records were all-negative, a qualitative residual, but aggregate/source epoch evidence remained non-degenerate. The provider-owned `abi_scout_assessment.v1` found all 25,260 trajectory numeric values finite, no persistent prediction collapse, no strong negative evidence, and improving recent slopes for training loss, aggregate filtered Dice, MIT filtered Dice, and Google filtered Dice. Aggregate filtered Dice rose from the numerical floor through epoch 3 to 0.1244 at epoch 12; its recent epoch-9-to-12 slope was +0.00550/epoch, while training loss improved by -0.00353/epoch. The assessment recommendation is `extension_eligible`, not elimination.
+
+Under ABI-039's asymmetric rule, this Run provides finite, source-balanced, improving feasibility evidence. It does not support eliminating the family, and its low absolute score is not an elimination rule. It also does not automatically authorize extension: ABI-044 stops here. A roughly 36-epoch extension, full-data training, Post-Run Evaluation, promotion, concurrency, policy change, or subsequent Autonomy Step requires separate authorization.
+
+## Independent review and residual risks
+
+Fresh-context independent closeout review is recorded in [`campaign-reports/abi-044-independent-review.md`](abi-044-independent-review.md). It found no blocker or high-severity issue and assessed ACs 1-9 satisfied after review/task metadata persistence. Its only medium finding was the expected procedural closeout gap: task status/checklists/notes and this review section had not yet been synchronized. No additional Autonomy Step, Run, Evaluation, Batch, or reconciliation was warranted.
+
+Residual risks are: the deterministic representative subset remains only a capped feasibility screen; the final predicted-positive fractions are low and two of four bounded masks are all-negative despite non-collapsed aggregate/source evidence; filtered Dice was still improving at epoch 12, so the scout does not establish convergence; resource retry support remains structurally enabled despite zero retries; and provider revision metadata is expectedly dirty after authorized handoff/index/ledger mutation. The A100 was idle at ABI-044 preflight and immediate Run postflight, but unrelated `concord-projection-comparison` processes began using it later during closeout; they are not managed ABI containers or follow-up work and no ABI action was launched in response.

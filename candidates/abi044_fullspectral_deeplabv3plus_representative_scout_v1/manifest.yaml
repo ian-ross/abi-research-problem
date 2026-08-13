@@ -1,0 +1,15 @@
+name: abi044_fullspectral_deeplabv3plus_representative_scout_v1
+description: Twelve-epoch representative scout for the full-spectral DeepLabV3+ family.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
