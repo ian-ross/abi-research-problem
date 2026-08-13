@@ -1,9 +1,11 @@
 ---
 id: ABI-043
 title: Run the first promoted architecture resource pilot
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-13 09:33'
+updated_date: '2026-08-13 10:10'
 labels:
   - autonomy
   - candidates
@@ -35,3 +37,16 @@ Prepare, authorize, and execute the first post-ABI-039 real architecture-researc
 - [ ] #8 A durable report, Experiment Index and Research Ledger updates, validation results, independent review, and residual risks are recorded before closeout
 - [ ] #9 The task stops before a 12-epoch representative scout; continuation, 36-epoch extension, full-data training, promotion, and policy-limit changes require their applicable separate authorization
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Re-baseline ABI-039/ABI-042 completion, inspect the promoted authorization, candidate families, autonomy-step workflow, Harness sampling controls, current git/Harness identities, and prior run/index/ledger state; do not launch training during preparation.
+2. Select exactly one new or materially different Candidate architecture family and draft a preregistration covering the hypothesis, controlled factors, trusted 32-record-per-source-and-split one-epoch budget, success evidence, interpretation limits, and hard stop conditions.
+3. Implement or configure the smallest trusted Harness/Workspace-only reduced-pilot mechanism needed to enforce exactly 32 representative records per Dataset Source and Leakage-Safe Split and one epoch, with focused no-bypass tests proving Candidate source/manifest cannot raise, select, or evade the budget.
+4. Prepare the durable pilot authorization/report and obtain the required human approval before execution; preserve sequential execution, pinned A100 GPU 0, no retries or replacement Runs, and explicit prohibition on scouts, extensions, promotion, concurrency, or policy-limit changes.
+5. Validate focused and relevant full ABI/Harness suites, runtime images, generated Agent Control Boundary, and synchronized authorization. Establish clean pushed ABI and Harness revisions without discarding unrelated work, then run operational preflight for named roots, idle GPU 0, Docker/container state, open actions, and run/evaluation/batch baselines.
+6. Invoke exactly one Autonomy Step with next-action execution enabled. Observe without issuing duplicate/retry execution, reconcile the stable Run idempotently, and stop with no unresolved action.
+7. Collect trusted lifecycle and resource evidence: finite state, parameter count, throughput, wall time, peak GPU allocation/reservation, batch compatibility, source-stratified metrics, prediction non-degeneracy, selected-record policy identity, and timeout headroom. Interpret it only as contract/resource/finite/non-degeneracy evidence.
+8. Update the durable report, Experiment Index, Research Ledger, validation results, residual risks, and task metadata; obtain an independent fresh-context review, address blockers, verify no second Run or downstream evaluation/scout was launched, and close only when every acceptance criterion is evidenced.
+<!-- SECTION:PLAN:END -->
