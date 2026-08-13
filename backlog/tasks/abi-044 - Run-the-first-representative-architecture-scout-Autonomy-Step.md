@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-13 13:36'
-updated_date: '2026-08-13 13:48'
+updated_date: '2026-08-13 14:15'
 labels:
   - autonomy
   - candidates
@@ -48,3 +48,10 @@ Authorize, prepare, and execute exactly one genuine post-ABI-043 representative-
 7. Observe any stable Run and reconcile it idempotently. Collect exactly-once lifecycle, finite/resource, source-stratified, predicted-positive/non-degeneracy, selected-record-policy, trajectory, and timeout-headroom evidence, with no unresolved action. Apply only ABI-039 asymmetric scout conclusions and do not automatically extend.
 8. Update the durable report, Experiment Index, Research Ledger, validation evidence, residual risks, and task metadata. Obtain independent fresh-context review, resolve blockers, verify the campaign stopped after this one step, and close only when every acceptance criterion is evidenced.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Re-baselined completed ABI-039/040/043 policy and lifecycle evidence; Harness remains clean at c346f07 and the ABI task-plan commit is one commit ahead of origin.
+- Began read-only policy/enforcement/operations reconnaissance. No Autonomy Step, Candidate Run, Evaluation, Batch, or GPU work has been launched.
+<!-- SECTION:NOTES:END -->
