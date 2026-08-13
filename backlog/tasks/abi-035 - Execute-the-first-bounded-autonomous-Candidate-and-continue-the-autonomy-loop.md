@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 11:39'
-updated_date: '2026-08-12 13:12'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - autonomy
@@ -76,7 +76,7 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-- Phase 0 protocol committed at 51c3f24: campaign-reports/abi-035-first-bounded-autonomous-candidate-protocol.md
+- Phase 0 protocol committed at 51c3f24: campaign-reports/bounded-autonomous-candidate-protocol.md
 - Preserved ABI execution-bearing revision c8adf5c and Harness a38ad74; runtime identity/config SHA revalidated
 - Candidate tree fbcf6294e7350286bfa734382d63b45ad0ed466f86d6e359b07253fdf6adf333 is architecture-equivalent to ABI-031 apart from names/docstrings; manifest changes trusted loss bce_dice to focal_tversky
 - Dry run found exactly one open run_candidate action at ledger index 73; baseline remains 12 Runs, 3 Evaluations, 74 ledger lines; no Candidate executed
@@ -86,7 +86,7 @@ Execute the existing open run_candidate action for abi032_mcast11_focal_tversky_
 - Human Gate 0 authorized exactly one execute-next-action invocation and explicitly forbade duplicate submission, retry, replacement Run, and a second Candidate
 - Exactly one invocation created stable Run run_20260812_121722_8d6cd3; one Docker/A100-0 container completed and was removed; two same-Run reconciliations were idempotent
 - Reliability gate passed: 3 epochs, 128 train/validation observations per source per epoch, batch 4, no timeout/retry, all structured numerics and 184 checkpoint tensors finite, both bounded masks non-degenerate, source Dice above 0.0001
-- Directional report committed/pushed at 6fe98c7 and linked by campaign_report_written: campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md
+- Directional report committed/pushed at 6fe98c7 and linked by campaign_report_written: campaign-reports/bounded-autonomous-candidate-run.md
 - Human Gate 1 remains pending; no boundary refresh, subsequent Autonomy Step, evaluation, or second Candidate was launched
 
 - Human Gate 1 approved one boundary refresh and one autonomy-step with execution enabled
@@ -104,8 +104,8 @@ Executed ABI-035 as a bounded autonomy reliability trial. Preregistered and push
 After Human Gate 1, refreshed the unchanged Agent boundary and ran exactly one autonomy-step with execution enabled. The Agent conservatively returned no_handoff/stop_for_human because interactive approval was not yet durable in Agent-visible state; no action executed, counts stayed 13 Runs/3 Evaluations, and no second step ran.
 
 Evidence:
-- campaign-reports/abi-035-first-bounded-autonomous-candidate-protocol.md
-- campaign-reports/abi-035-first-bounded-autonomous-candidate-run.md
+- campaign-reports/bounded-autonomous-candidate-protocol.md
+- campaign-reports/bounded-autonomous-candidate-run.md
 - Run run_20260812_121722_8d6cd3
 - agent-work/autonomy-step-result.json
 - ABI launch commit 51126c4; Harness a38ad74; final review commit d36a226
