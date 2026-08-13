@@ -29,6 +29,10 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
     assert {source["layout"] for source in sources} == {"mit", "google"}
     assert all(source["metadata_parquet"].endswith("metadata.parquet") for source in sources)
     execution = data["candidate_execution"]
+    assert execution["backend"] == "docker"
+    assert execution["docker_enable_gpu"] is True
+    assert execution["docker_gpu_device"] == "0"
+    assert execution["docker_rootless_container_root"] is True
     assert execution["max_samples"] == 1024
     assert execution["max_parameters"] == 25_000_000
     assert execution["max_epochs"] == 12
@@ -45,6 +49,28 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
     assert any(requirement.startswith("pyarrow") for requirement in requirements)
     assert any(requirement.startswith("scipy") for requirement in requirements)
     assert "mailjet" not in data
+
+
+def test_abi044_authorization_retains_one_step_scout_boundaries() -> None:
+    report = Path("campaign-reports/abi-044-first-representative-architecture-scout.md").read_text()
+
+    for required in (
+        "At most 1,024 per Dataset Source and Leakage-Safe Split",
+        "At most 12",
+        "At most 4",
+        "3,600 seconds",
+        "At most four using fixed `first_n`",
+        "At most 25,000,000",
+        "`constant_lr` only",
+        "Early stopping | Disabled",
+        "Parallel Runs | One",
+        "pinned to A100 device 0",
+        "at most one Harness-owned sequential Candidate Run",
+        "not protocol deviations merely because they differ",
+        "Low score alone does not",
+        "stops after this single representative-scout step",
+    ):
+        assert required in report
 
 
 def test_workspace_bootstrap_files_exist() -> None:

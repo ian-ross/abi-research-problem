@@ -3,6 +3,7 @@ __pycache__
 /data
 .envrc
 .pi-subagents
+/.pi/
 planning-inputs
 notebooks/
 

@@ -143,6 +143,8 @@ def test_research_problem_brief_defines_staged_scout_semantics() -> None:
     assert "Representative scout evidence is a feasibility screen" in brief
     assert "full-data training and evaluation" in brief
     assert "effective only after the generated Workspace Configuration activates them" in brief
+    assert "the Agent may preregister and choose learning rate" in brief
+    assert "not a protocol deviation merely because it differs from a prior Candidate" in brief
 
 
 def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
