@@ -101,3 +101,5 @@
 {"candidate_id":"abi043_fullspectral_deeplabv3plus_resource_pilot_v1","created_at":"2026-08-13T13:15:23Z","event_type":"run_started","run_id":"run_20260813_131515_ff53ab"}
 {"created_at":"2026-08-13T13:15:44Z","event_type":"run_completed","metrics_path":"/data/iross/abi-ml-autoresearch/runs/run_20260813_131515_ff53ab/outputs/final_metrics.json","run_id":"run_20260813_131515_ff53ab"}
 {"created_at":"2026-08-13T13:23:36Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-043-first-promoted-architecture-resource-pilot.md"}
+{"created_at":"2026-08-13T14:55:56Z","event_type":"campaign_report_written","report_path":"campaign-reports/abi-044-first-representative-architecture-scout.md"}
+{"created_at":"2026-08-13T14:55:56Z","event_type":"campaign_resumed","reason":"abi044_first_representative_scout_authorized","report_path":"campaign-reports/abi-044-first-representative-architecture-scout.md"}

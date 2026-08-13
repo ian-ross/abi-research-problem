@@ -2,7 +2,7 @@
 
 ## Status and authorization gate
 
-This report prepares exactly one post-ABI-043 representative-scout Autonomy Step under the ABI-039 envelope. Preparation and non-training validation are in progress. **The Autonomy Step and Candidate Run are not yet authorized for execution.** Before the single irreversible launch, the operator must explicitly approve this report after the implementation, test, runtime-image, boundary, identity, and operational preflight gates pass.
+This report prepares exactly one post-ABI-043 representative-scout Autonomy Step under the ABI-039 envelope. Preparation and non-training validation are complete. At `2026-08-13T14:55:37Z`, the operator explicitly approved proceeding with the single irreversible execution after reviewing the prepared gate summary. This approval becomes executable only after the linked report/resume ledger events are committed and pushed, the Agent Control Boundary is regenerated, and immediate preflight passes.
 
 Once approved and durably recorded, the authorization permits exactly one invocation of:
 
@@ -108,4 +108,4 @@ The final clean/pushed ABI identity gate, durable approval ledger events, post-a
 
 ## Execution, result, independent review, and residual risks
 
-Pending explicit human execution approval. No Autonomy Step, Candidate handoff, Candidate Run, Post-Run Evaluation, Experiment Batch, extension, or GPU training has been launched by ABI-044. This section will record only directly observed launch, stable-Run, reconciliation, scientific, independent-review, residual-risk, and final stop-state evidence.
+Human execution approval was granted at `2026-08-13T14:55:37Z`; durable ledger recording, final commit/push, boundary regeneration, and immediate preflight are the remaining launch gates. No Autonomy Step, Candidate handoff, Candidate Run, Post-Run Evaluation, Experiment Batch, extension, or GPU training had been launched at approval time. This section will record only directly observed launch, stable-Run, reconciliation, scientific, independent-review, residual-risk, and final stop-state evidence.
