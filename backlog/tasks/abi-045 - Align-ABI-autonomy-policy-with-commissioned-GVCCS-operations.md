@@ -1,7 +1,7 @@
 ---
 id: ABI-045
 title: Align ABI autonomy policy with commissioned GVCCS operations
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-13 15:54'
