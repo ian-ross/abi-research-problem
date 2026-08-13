@@ -1,4 +1,4 @@
-# ABI-021 canonical baseline comparison targets
+# Canonical baseline comparison targets
 
 ## Canonical registry
 

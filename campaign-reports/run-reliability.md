@@ -1,8 +1,8 @@
-# ABI-030 Candidate Run reliability hardening
+# Candidate Run reliability hardening
 
 ## Scope
 
-ABI-030 addresses two trusted Harness failures exposed by ABI-025: non-finite Candidate training continued to artifact-complete success, and caller disconnection left a completed Docker operation with stale Run metadata and no terminal Research Ledger event.
+The Run-reliability work addresses two trusted Harness failures exposed by the Agent handoff canary: non-finite Candidate training continued to artifact-complete success, and caller disconnection left a completed Docker operation with stale Run metadata and no terminal Research Ledger event.
 
 ## Implemented Harness semantics
 
@@ -23,16 +23,16 @@ Harness fixture tests cover first-batch non-finite failure, smoke outputs/loss/g
 
 - Harness commit: `175c8a3` (`Harden Candidate Run numerical and execution lifecycle`).
 - Focused reliability/lifecycle validation: 114 passed.
-- Full Harness suite with the external test provider configured: 554 passed, 2 skipped, and one unrelated GVCCS characterization failure because a committed external Candidate uses `focal_bce_dice` while that test's fake Spec allows only `bce_dice`.
+- Full Harness suite with the external test provider configured: 554 passed, 2 skipped, and one unrelated external fixture characterization failure caused by a stale fake Spec allowlist.
 - ABI unit suite: 104 passed.
 - ABI runtime image: `ml-autoresearch-runner:abi-research-problem-9579186fcab90ca0-13b99524f1`, validated against clean Harness commit `175c8a3`.
 - Workspace Docker smoke: accepted with `trained: false`; the rebuilt runner's `run-status` CLI help was also exercised without data or GPU training.
 
 No ABI scientific Candidate or real training data was used during implementation.
 
-## Human Execution Gate 1 evidence
+## Lightweight GPU validation evidence
 
-Human approval was given for the two lightweight GPU validations. Bounded evidence is retained under `/data/iross/abi-ml-autoresearch/validation/abi030-gate1-20260811/validation-summary.json` and the corresponding isolated Runs and Research Ledger.
+The operator ran two lightweight GPU validations. Bounded evidence is retained in the validation summary and corresponding isolated Runs and Research Ledger.
 
 1. **Non-finite validation — passed.** Run `run_20260811_125755_2e8cbf` used the validated runner on A100 device 0 and failed at epoch 1, batch 0, before processing another batch. The diagnostic classified `candidate_bug` / `non_finite_training_state`, identified `output.mask_logits`, and counted 65,536 NaNs without values or samples. The failed resource profile recorded zero processed training samples, no Resource Failure retry log exists, the container was removed, and two subsequent reconciliations left exactly one `run_failed` event.
 2. **Caller-interruption validation — passed.** Run `run_20260811_130321_8530cf` had its foreground caller terminated with exit 143 while the managed training container was running. Immediate `run-status` reported `training`, a live supervisor, and a running container for the same Run ID. The Run then completed 2 training and 2 validation samples on A100 device 0. Two subsequent reconciliations both returned `completed`; the isolated ledger contains exactly one `run_completed` event and the recorded container was removed.
@@ -49,6 +49,6 @@ The validation sequence made three bounded setup/observation attempts in additio
 
 These findings do not invalidate long-training durability, finite-state rejection, or exactly-once reconciliation, but the configured-image CLI default and pre-managed smoke phase should be considered follow-up hardening before relying on caller interruption during submission/smoke.
 
-## Human Review Gate 2 decision
+## Review decision
 
-Human Review Gate 2 accepted the evidence on 2026-08-11 and approved ABI-030 as complete. ABI-031 may begin Phase 0 planning and preregistration only; this decision does not authorize its Candidate implementation, fixture checks, GPU pilot, main Run, evaluation, or scientific training. ABI-032 tracks the non-blocking configured-image and pre-managed-smoke hardening required before relying on caller interruption during submission/smoke or resuming fully automatic autonomy.
+Review on 2026-08-11 accepted the Run-reliability evidence as complete. The resulting stable-identity, finite-state, and reconciliation behavior supported the subsequent MCAST-lineage positive-control work. Configured-image and pre-managed-smoke hardening remained separate reliability work.

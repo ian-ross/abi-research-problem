@@ -1,4 +1,4 @@
-# ABI-025 manual canary
+# Manual Candidate Execution canary
 
 This manually authored Candidate Experiment is a minimal, legitimate test of the ABI Candidate Execution lifecycle. It defines only a small PyTorch model architecture. The trusted provider and Harness retain ownership of data loading, splits, sampling, augmentation, loss, optimization, metrics, Artifact Filters, Baseline Segmenters, execution, and research records.
 

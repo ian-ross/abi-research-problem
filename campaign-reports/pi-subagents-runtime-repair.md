@@ -1,4 +1,4 @@
-# ABI-042 pi-subagents runtime repair
+# Pi-subagents runtime repair
 
 ## Scope
 
@@ -54,8 +54,8 @@ This is a persistent package-manager repair recorded in the npm manifest and loc
 All focused validation completed without `MODULE_NOT_FOUND`:
 
 1. **Managed dependency resolution:** `npm ls --prefix /home/iross/.pi/agent/npm pi-subagents typebox --all` reports `pi-subagents@0.48.0` with child `typebox@1.1.38`. Running `require.resolve("typebox/compile")` from the installed `pi-subagents` root resolves `/home/iross/.pi/agent/npm/node_modules/typebox/build/compile/index.mjs`.
-2. **New-parent-session ordinary path:** a separate `pi --no-session --mode json` process loaded the repaired package and launched a fresh `delegate` child. The child exited 0 and returned `ABI_042_NEW_SESSION_CHILD_OK`. The captured parent event stream is `/tmp/abi-042-new-parent-session.jsonl`, and the ephemeral child session was `/tmp/pi-subagent-session-euIQc4/826aa9ca/run-0/session.jsonl`. Project-local smoke artifacts were removed after validation.
-3. **Structured-output path:** async chain run `feae7b2d-5175-4229-9029-2c0def79d988` completed a schema-bound delegate step and returned the required object with marker `ABI_042_STRUCTURED_OUTPUT_OK`. Its concise artifact is `/tmp/abi-042-structured-smoke.md`; the run status and schema-owned output are under `/tmp/pi-subagents-uid-247397/async-subagent-runs/feae7b2d-5175-4229-9029-2c0def79d988`.
-4. **Fresh-context repository review:** reviewer run `ed50ee52-4b7c-4305-b9c4-90de9a783154` completed read-only with no blocker. The persisted result is `campaign-reports/abi-042-fresh-context-review.md`.
+2. **New-parent-session ordinary path:** a separate `pi --no-session --mode json` process loaded the repaired package and launched a fresh `delegate` child. The child exited 0 and returned the expected success marker. The ephemeral child session was recorded under `/tmp/pi-subagent-session-euIQc4/826aa9ca/run-0/session.jsonl`; project-local smoke artifacts were removed after validation.
+3. **Structured-output path:** async chain run `feae7b2d-5175-4229-9029-2c0def79d988` completed a schema-bound delegate step and returned the required success object. The run status and schema-owned output were recorded under `/tmp/pi-subagents-uid-247397/async-subagent-runs/feae7b2d-5175-4229-9029-2c0def79d988`.
+4. **Fresh-context repository review:** reviewer run `ed50ee52-4b7c-4305-b9c4-90de9a783154` completed read-only with no blocker. The persisted result is `campaign-reports/pi-subagents-runtime-independent-review.md`.
 
-The separate new-session and ordinary reviewer probes used no `NODE_PATH` or shell initialization override. The only repository files added by this task are the diagnosis and review reports. No Candidate Run or training command was launched.
+The separate new-session and ordinary reviewer probes used no `NODE_PATH` or shell initialization override. The repair added only the diagnosis and review reports to this repository. No Candidate Run or training command was launched.

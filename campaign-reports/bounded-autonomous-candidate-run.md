@@ -1,10 +1,10 @@
-# ABI-035 first bounded autonomous Candidate Run
+# Bounded autonomous Candidate Run
 
-## Decision and scope
+## Execution scope
 
-Human Gate 0 authorized exactly one execution of the existing open `run_candidate` action for `abi032_mcast11_focal_tversky_v1`. The authorization explicitly forbade duplicate submission, automatic retry, a replacement Run, a second Candidate, Post-Run Evaluation, or another Autonomy Step.
+The existing open `run_candidate` action for `abi032_mcast11_focal_tversky_v1` was executed exactly once. It created no duplicate submission, automatic retry, replacement Run, second Candidate, Post-Run Evaluation, or second Autonomy Step.
 
-The preregistered protocol is [`abi-035-first-bounded-autonomous-candidate-protocol.md`](abi-035-first-bounded-autonomous-candidate-protocol.md). This report reviews Run `run_20260812_121722_8d6cd3` against that protocol. It is directional autonomy/reliability evidence only, not promotion-grade scientific evidence.
+The preregistered protocol is [`bounded-autonomous-candidate-protocol.md`](bounded-autonomous-candidate-protocol.md). This report reviews Run `run_20260812_121722_8d6cd3` against that protocol. It is directional autonomy/reliability evidence only, not promotion-grade scientific evidence.
 
 ## Launch identity and exactly-once execution
 
@@ -18,7 +18,7 @@ Immediately before execution:
 - counts were 12 Runs, 3 Evaluations, and 74 Research Ledger events;
 - the dry run still showed exactly one open action: ledger index 73, `run_candidate`, Candidate `abi032_mcast11_focal_tversky_v1`, canonical path `candidates/abi032_mcast11_focal_tversky_v1`.
 
-The authorized command was invoked exactly once:
+The command was invoked exactly once:
 
 ```bash
 uv run ml-autoresearch execute-next-action --workspace-root .
@@ -38,7 +38,7 @@ No launch command was invoked again. The same Run ID was observed with `run-stat
 
 The immutable Run snapshot has Candidate tree SHA-256 `fbcf6294e7350286bfa734382d63b45ad0ed466f86d6e359b07253fdf6adf333`, equal to the reviewed canonical tree. `model.py` SHA-256 is `e9b6b3bba8de5f5a1f1ea89039b0742f0b08af0f6003d1e2b3b0825ec221518b`.
 
-The resolved manifest records clean ABI commit `51126c4740e45fb11c22b0567f273f392e61b6ca`, trusted `focal_tversky`, AdamW at 0.001, batch size 4, three epochs, `combined_source_balanced`, all target frames, and no augmentation. The executable architecture remains the ABI-031 MCAST 1.1-lineage model apart from Candidate/class names and docstrings. Random initialization uses `encoder_weights=None`.
+The resolved manifest records clean ABI commit `51126c4740e45fb11c22b0567f273f392e61b6ca`, trusted `focal_tversky`, AdamW at 0.001, batch size 4, three epochs, `combined_source_balanced`, all target frames, and no augmentation. The executable architecture remains the MCAST 1.1-lineage positive-control model apart from Candidate/class names and docstrings. Random initialization uses `encoder_weights=None`.
 
 The model summary records 14,328,209 parameters against the trusted 25,000,000 limit. It accepts only `abi_16ch` source indices 0-15 and explicitly forbids longitude, latitude, and provider source indices 16 and 17. Candidate code owns no data loading, loss, metrics, Artifact Filters, Baseline Segmenter loading, sampling, optimization, retries, device policy, or training loop.
 
@@ -94,11 +94,11 @@ Each epoch has an atomic validation postprocessing report. Postprocessing used `
 
 Training, ancillary, and baseline roots are all recorded as read-only named mounts. Required resolved manifest, immutable Candidate, model summary, final/best metrics, 195-record metric log, finite checkpoint, resource profiles, three postprocessing reports/index, smoke/supervisor/training/validation logs, and two complete bounded prediction artifact sets are present.
 
-## Directional comparison with ABI-031
+## Directional comparison with the MCAST-lineage positive control
 
-ABI-031's main Run used 1,024 training and validation samples per source, eight times ABI-035's 128-per-source cap. Direct score comparison is therefore not scientifically controlled.
+The MCAST-lineage positive control's main Run used 1,024 training and validation samples per source, eight times the bounded autonomous Candidate trial's 128-per-source cap. Direct score comparison is therefore not scientifically controlled.
 
-Directionally, focal Tversky shifted the bounded Run toward recall and away from precision relative to ABI-031's larger Run:
+Directionally, focal Tversky shifted the bounded Run toward recall and away from precision relative to the MCAST-lineage positive control's larger Run:
 
 - aggregate filtered recall: 0.2925 versus 0.0926;
 - Google filtered recall: 0.4357 versus 0.1093;
@@ -122,56 +122,42 @@ This is consistent with the proposed recall-oriented shift but also with substan
 | Both bounded predictions contain both classes | Pass |
 | Artifact, provenance, mount, coordinate, resource, postprocessing, and ledger evidence complete | Pass |
 
-**Gate decision: reliability continuation gate passed.** This decision means Candidate execution and exactly-once lifecycle behavior were reliable under the bounded policy. It is not a promotion decision.
+**Reliability decision: passed.** Candidate execution and exactly-once lifecycle behavior were reliable under the bounded policy. This is not a promotion decision.
 
-## Residual risks and Human Gate 1
+## Residual risks
 
-- The 128-versus-1,024 per-source budget mismatch prevents promotion-grade comparison with ABI-031.
+- The 128-versus-1,024 per-source budget mismatch prevents promotion-grade comparison with the MCAST-lineage positive control.
 - The recall increase comes with much lower precision, Dice, and connectivity; a larger controlled Run would be required to characterize the scientific tradeoff.
 - The two `first_n` qualitative samples are intentionally bounded and are not representative full-validation evidence.
 - `resolved_manifest.yaml` correctly captures clean launch commit `51126c4`; later `run_metadata.json` reports the same commit as dirty because trusted submission appended tracked Research Ledger events before training metadata refresh. Preflight evidence and the immutable resolved manifest establish the clean launch identity, but the mutable metadata presentation remains a provenance clarity risk.
 - The 1,800-second timeout did not fire, so this Run validates successful bounded execution, not the timeout termination path.
-- Trusted Resource Failure retry support remained structurally enabled with a maximum of three retries even though Gate 0 prohibited an automatic retry for this trial. The observed retry count was zero and there was exactly one attempt, so the exactly-once criterion passed in fact; future reliability trials should add a trusted policy switch that disables retry rather than relying only on the stop contract.
+- Trusted Resource Failure retry support remained structurally enabled with a maximum of three retries even though the preregistered protocol prohibited an automatic retry for this trial. The observed retry count was zero and there was exactly one attempt, so the exactly-once criterion passed in fact; future reliability trials should add a trusted policy switch that disables retry rather than relying only on the stop contract.
 
-## Human Gate 1 and one conditional continuation step
+## Subsequent boundary-control observation
 
-Human Gate 1 approved one boundary refresh and exactly one subsequent bounded Autonomy Step with next-action execution enabled. It did not authorize an arbitrary loop, automatic evaluation, retry, second Autonomy Step, or more than the one Harness-owned action belonging to the approved step.
+A later boundary refresh used clean workspace commit `f5a6e9c3ce57e678ddac6c552fce72260e569ad4` and Harness commit `a38ad742e187e23b1fa13f7b0ec8bd21da7ad637`. Runtime validation passed with the same Harness fingerprint, runner, and Workspace Configuration checksum. Counts remained 13 Runs, three Evaluations, and 80 ledger events, with no open Harness action, GPU process, or managed container.
 
-Before the step, ABI commit `f5a6e9c3ce57e678ddac6c552fce72260e569ad4` and Harness commit `a38ad742e187e23b1fa13f7b0ec8bd21da7ad637` were clean, pushed, and at zero upstream divergence. Runtime validation passed again at `2026-08-12T12:57:43Z` with the same Harness fingerprint, runner, and Workspace Configuration checksum. Counts were 13 Runs, 3 Evaluations, and 80 ledger events; no open Harness action, GPU process, or managed container existed. All prior primary handoffs had ingestion markers.
-
-`prepare-agent-boundary` refreshed the boundary while retaining egress and the full read-only `/history/runs` mount. Agent-visible state included Run `run_20260812_121722_8d6cd3` through `/history/runs`, its ledger events through `/history/research-ledger.jsonl`, and its report identity/status through the refreshed `/reference/EXPERIMENT_INDEX.md` and `campaign_report_written` ledger event. The configured ceilings remained 128 samples per source, three epochs, concurrency one, two `first_n` predictions, and a 1,800-second trusted Docker training budget.
-
-Exactly one approved command was invoked:
+`prepare-agent-boundary` exposed the Run and ledger evidence through the read-only history mounts. Exactly one subsequent command was invoked:
 
 ```bash
 uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
 ```
 
-The Agent returned code 0 and deliberately created no handoff. It observed that the refreshed Experiment Index still said Human Gate 1 was pending and that no later operator approval existed in the Research Ledger. Rather than infer approval or create another Candidate, it stopped for human review. `agent-work/autonomy-step-result.json` records:
-
-- `status: no_handoff`;
-- `ingestion.status: no_handoff`;
-- `next_action: stop_for_human`;
-- `executed_next_action: false`;
-- `ledger_events: []`;
-- `execution: null`;
-- written at `2026-08-12T13:01:13Z`.
-
-This conservative stop obeyed the one-outcome boundary. No Candidate, Experiment Batch, evaluation, or Harness-owned action executed; no Run/Evaluation/ledger count changed; no executable action remains. No second Autonomy Step was launched. The reason is a durable-control sequencing gap: Gate 1 approval was given interactively but was not written to Agent-visible campaign state before the refresh. The outcome is still a successful autonomy safety result—ambiguous authorization caused a stop rather than unauthorized work—but it produced no scientific handoff. A future task must durably record operator authorization before expecting an Agent to act on it; ABI-035 does not rerun the step.
+The Agent returned code 0 and created no handoff because the decision expected by its snapshot was absent from Agent-visible state. `agent-work/autonomy-step-result.json` records `status: no_handoff`, `next_action: stop_for_human`, `executed_next_action: false`, no ledger events, and no execution. No Candidate, Experiment Batch, Evaluation, or Harness-owned action executed, and no lifecycle count changed. This was a safe boundary-control observation rather than a scientific result.
 
 ## Validation
 
 - Full ABI suite: 114 passed.
 - Focused Harness autonomy, boundary, handoff, submission, configuration, reconciliation, and research-loop suite: 123 passed.
-- Correctly configured full Harness suite: 570 passed, 2 skipped, and one known unrelated GVCCS characterization failure. The stale fake GVCCS Spec permits only `bce_dice`, while an external committed Candidate uses `focal_bce_dice`; ABI-034 recorded the same unrelated failure.
-- An initial unconfigured full Harness invocation also reported two missing external test-package environment variables. Rerunning with `ML_AUTORESEARCH_GVCCS_PROBLEM_ROOT=../gvccs-research-problem` and `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=../test-research-problem` removed those configuration failures and left only the known GVCCS failure above.
+- Correctly configured full Harness suite: 570 passed, 2 skipped, and one known unrelated external fixture characterization failure caused by a stale fake Spec allowlist.
+- An initial unconfigured full Harness invocation also reported two missing external test-package environment variables; the configured rerun removed those setup failures.
 - Runtime-image validation, static Candidate validation, terminal artifact audit, finite checkpoint audit, two idempotent reconciliations, post-step count/action inspection, and post-step idle-GPU/container inspection passed.
 
 ## Independent final review
 
-A separate read-only Pi session reviewed the ABI-035 task, protocol, report, index, ledger, continuation result, and terminal Run artifacts with only the `read` tool enabled. It found no blocker in the Candidate Run's numerical, resource, coordinate, mount, or exactly-once outcome and assessed AC1-AC8 as passed (AC8 with no action applicable). Its one high finding was incomplete/inconsistent task closeout: AC7-AC9 and notes had not yet been synchronized and no final review/PR-style summary was recorded. That finding is addressed by this final report update and the Backlog CLI closeout.
+A separate read-only Pi session reviewed the protocol, report, index, ledger, continuation result, and terminal Run artifacts. It found no blocker in the Candidate Run's numerical, resource, coordinate, mount, or exactly-once outcome.
 
-The reviewer also identified three medium residual risks already bounded here: Resource Failure retries were structurally enabled although none occurred; interactive Gate 1 approval was not durably Agent-visible before the step; and mutable Run metadata presents the clean launch commit as dirty after tracked ledger mutation while the immutable resolved manifest correctly records the clean launch state. It confirmed that no additional Candidate or Autonomy Step is warranted.
+The reviewer identified three residual risks already bounded here: Resource Failure retries were structurally enabled although none occurred; the expected decision state was absent from the refreshed Agent snapshot; and mutable Run metadata presents the clean launch commit as dirty after tracked ledger mutation while the immutable resolved manifest correctly records the clean launch state.
 
 ## Commands
 

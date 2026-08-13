@@ -1,8 +1,8 @@
-# ABI-032 configured Docker defaults and pre-training recovery
+# Configured Docker defaults and pre-training recovery
 
 ## Scope
 
-ABI-032 closes the submission-phase gaps observed during ABI-030. Omitted host `run-candidate` Docker options must use the validated ABI Workspace Configuration, caller loss during smoke must leave one observable Run, and failures in trusted image, provider, or data bootstrap must not be labeled as Candidate bugs.
+The configured Docker and pre-training recovery work closes the submission-phase gaps observed during the Run-reliability work. Omitted host `run-candidate` Docker options must use the validated ABI Workspace Configuration, caller loss during smoke must leave one observable Run, and failures in trusted image, provider, or data bootstrap must not be labeled as Candidate bugs.
 
 ## Implemented Harness semantics
 
@@ -19,8 +19,8 @@ Harness commit `9fcf046` (`Manage Candidate Runs from smoke bootstrap`) provides
 No ABI scientific Candidate, external ABI data, GPU operation, or real model training was used.
 
 - Focused Harness lifecycle/default/bootstrap suite: 75 passed.
-- Full Harness suite with `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=../test-research-problem`: 562 passed, 2 skipped, with one pre-existing unrelated GVCCS characterization failure because an external Candidate selects `focal_bce_dice` while that test's fake Spec allows only `bce_dice`.
+- Full Harness suite with the external test provider configured: 562 passed, 2 skipped, with one pre-existing unrelated external fixture characterization failure caused by a stale fake Spec allowlist.
 - Python compile validation: `uv run python -m compileall -q src tests`.
 - ABI unit suite: 104 passed.
 
-The prior ABI-030 attempts remain historical evidence of the old behavior. This change removes the fixed-image and synchronous-smoke gaps for future Runs; it does not rewrite those Run records or authorize a new scientific/GPU Run.
+Prior Run-reliability attempts remain evidence of the old behavior. This change removes the fixed-image and synchronous-smoke gaps for future Runs without rewriting those Run records.

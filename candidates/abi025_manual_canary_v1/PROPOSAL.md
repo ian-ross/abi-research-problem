@@ -1,4 +1,4 @@
-# ABI-025 Manual Candidate Execution Canary
+# Manual Candidate Execution canary
 
 ## Hypothesis
 
@@ -42,9 +42,9 @@ Use an approximately 1,169-parameter fully convolutional model: a 3x3 convolutio
 1. Candidate static validation and controlled smoke testing succeed.
 2. The bounded Run completes and writes expected Harness artifacts and Research Ledger events.
 3. Full Post-Run Evaluation writes provider-owned raw, filtered, source-stratified, connectivity, threshold, and bounded diagnostic artifacts.
-4. The acceptance report names the canonical registry and remains explicitly human-reviewed.
+4. The acceptance report names the canonical registry and remains an input to operator review.
 5. Run evidence confirms ABI channels 1-16 are the only candidate inputs and trusted data roots are boundary-owned and read-only.
 
 ## Fallback Next Decision
 
-If validation or execution fails, stop and classify the failure before any retry. Repair only a demonstrated candidate contract or architecture defect with explicit lineage. Treat data, mount, registry, artifact, or Harness failures as trusted-boundary issues rather than weakening the Candidate Experiment contract. Do not proceed to the Agent Control Boundary phase until the manual lifecycle evidence is reviewed and approved.
+If validation or execution fails, stop and classify the failure before any retry. Repair only a demonstrated candidate contract or architecture defect with explicit lineage. Treat data, mount, registry, artifact, or Harness failures as trusted-boundary issues rather than weakening the Candidate Experiment contract. Use the manual lifecycle evidence before proceeding to the Agent Control Boundary phase.

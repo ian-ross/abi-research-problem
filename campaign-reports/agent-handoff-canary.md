@@ -1,8 +1,8 @@
-# ABI-025 Agent Control Boundary handoff campaign report
+# Agent Control Boundary handoff campaign report
 
 ## Scope
 
-Human Execution Gate 6 authorized separate execution of the previously reviewed Agent-generated Candidate Submission `abi_spectral_resunet_scout_v1`. Trusted Harness configuration enforced a maximum of 1,024 samples per Dataset Source. The Candidate requested 12 epochs and batch size 4.
+The operator separately executed the previously reviewed Agent-generated Candidate Submission `abi_spectral_resunet_scout_v1`. Trusted Harness configuration enforced a maximum of 1,024 samples per Dataset Source. The Candidate requested 12 epochs and batch size 4.
 
 ## Run and evaluation
 
@@ -50,7 +50,7 @@ The Run contains validation and smoke logs, `metrics.jsonl`, `final_metrics.json
 
 The Research Ledger records proposal creation, Candidate creation/submission, Run start/completion, evaluation request, and evaluation completion. No open executable action remains.
 
-## Residual risks and final-gate recommendation
+## Residual risks and outcome
 
 - The trusted training path did not reject non-finite loss or non-finite model parameters, so it spent approximately 8.8 hours completing a hopeless Run and still classified the artifact-complete Run as `completed`.
 - The synchronous caller timeout can orphan host-side finalization while Docker continues; this Run required one explicit reconciliation after container completion.
@@ -59,4 +59,4 @@ The Research Ledger records proposal creation, Candidate creation/submission, Ru
 - `acceptance_report.json` remains provider-owned but is not listed in evaluation metadata or separately ledger-recorded.
 - Provider Git provenance records a dirty working tree.
 
-**Recommendation for Human Final Gate 7: no-go on a fully automatic autonomy iteration until trusted non-finite fail-fast validation and robust detached/synchronous Run finalization are addressed and validated.** This recommendation does not itself record the required human decision.
+**Outcome:** fully automatic iteration remained paused until trusted non-finite fail-fast validation and robust detached/synchronous Run finalization were addressed and validated.

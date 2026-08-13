@@ -1,4 +1,4 @@
-# ABI-043 Full-Spectral DeepLabV3+ Resource Pilot v1
+# Full-Spectral DeepLabV3+ Resource Pilot v1
 
 ## Proposal classification
 
@@ -6,7 +6,7 @@
 
 ## Hypothesis
 
-A DeepLabV3+ encoder-decoder that receives normalized Full ABI Channel Input can combine local low-level detail with atrous multi-scale context, a useful inductive bias for separating thin coherent contrails from cloud edges. Before scientific scouting, the authorized bounded pilot should establish that this family is contract-valid, finite, operationally trainable, and compatible with the current sequential batch/resource envelope.
+A DeepLabV3+ encoder-decoder that receives normalized Full ABI Channel Input can combine local low-level detail with atrous multi-scale context, a useful inductive bias for separating thin coherent contrails from cloud edges. Before scientific scouting, the bounded pilot should establish that this family is contract-valid, finite, operationally trainable, and compatible with the current sequential batch/resource envelope.
 
 ## Comparison Target
 
@@ -22,7 +22,7 @@ All losses, logits, gradients, parameters, and checkpoint state should remain fi
 - Use an SMP DeepLabV3+ model with a randomly initialized ResNet-18 encoder, output stride 16, a 256-channel decoder, atrous rates 12/24/36, and one mask-logit output.
 - Select provider-owned `combined_source_balanced` sampling and `random_mirroring` augmentation.
 - Select trusted `bce_dice`, AdamW at 0.0003, batch size 4, and one epoch.
-- Request sequential execution only; this new family has no concurrency authorization.
+- Request sequential execution only; this new family has no measured concurrent resource class.
 
 ## Contract Features Used
 
@@ -36,7 +36,7 @@ All losses, logits, gradients, parameters, and checkpoint state should remain fi
 
 One sequential one-epoch resource pilot using at most 32 training and 32 validation ABI Patches per Dataset Source, batch size 4, at most four Harness-selected prediction artifacts, the 25,000,000-parameter smoke ceiling, and the 3,600-second trusted training timeout. No Experiment Batch or parallel execution is requested.
 
-If the pilot passes, a representative scout is a separately authorized later policy stage. This proposal does not request or imply full-data training.
+If the pilot passes, a representative scout is an evidence-driven later stage under the active Workspace Configuration. This proposal does not request or imply full-data training.
 
 ## Success Criteria
 
@@ -48,8 +48,8 @@ If the pilot passes, a representative scout is a separately authorized later pol
 
 ## Continuation and hard stop
 
-After a successful pilot, retain this family as eligible for one separately authorized representative scout using trusted provider-selected records. Do not infer concurrency safety from parameter count or pilot completion. Stop and classify before further family work if the pilot has a hard contract failure, persistent non-finite behavior, an irreparable output-shape mismatch, or a resource failure that cannot fit the current batch/resource envelope. A low one-epoch score alone is not a hard stop.
+After a successful pilot, retain this family as eligible for a representative scout using trusted provider-selected records. Do not infer concurrency safety from parameter count or pilot completion. Stop and classify before further family work if the pilot has a hard contract failure, persistent non-finite behavior, an irreparable output-shape mismatch, or a resource failure that cannot fit the current batch/resource envelope. A low one-epoch score alone is not a hard stop.
 
 ## Fallback Next Decision
 
-If the pilot exposes a narrow candidate implementation defect while the hypothesis remains intact, prepare one explicit Repair Candidate in a later Autonomy Step. If the architecture exceeds trusted resource or contract capability, classify the failure and request reviewed capability rather than implementing a workaround. If the pilot succeeds, await separate representative-scout authorization and evidence before any scientific comparison.
+If the pilot exposes a narrow candidate implementation defect while the hypothesis remains intact, prepare one explicit Repair Candidate in a later Autonomy Step. If the architecture exceeds trusted resource or contract capability, classify the failure and request reviewed capability rather than implementing a workaround. If the pilot succeeds, use representative-scout evidence before making any scientific comparison.

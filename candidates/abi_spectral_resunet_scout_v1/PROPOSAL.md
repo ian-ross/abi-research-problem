@@ -10,7 +10,7 @@ A compact residual U-Net that combines normalized Full ABI Channel Input, explic
 
 ## Comparison Target
 
-The promotion reference is canonical MCAST 2.1 at aggregate filtered Dice 0.3873 on registry `abi-mcast-working-validation-v1`, with MCAST 1.1 as a connectivity-oriented comparator. The immediate family-scout reference is the ABI-025 lifecycle canary, whose near-zero Dice resulted from all-negative predictions and was not a scientific baseline. Decisions will inspect raw and filtered Dice, recall, Contrail Connectivity Metric, source-stratified MIT and Google metrics, threshold behavior, and learning curves.
+The promotion reference is canonical MCAST 2.1 at aggregate filtered Dice 0.3873 on registry `abi-mcast-working-validation-v1`, with MCAST 1.1 as a connectivity-oriented comparator. The immediate family-scout reference is the manual lifecycle canary, whose near-zero Dice resulted from all-negative predictions and was not a scientific baseline. Decisions will inspect raw and filtered Dice, recall, Contrail Connectivity Metric, source-stratified MIT and Google metrics, threshold behavior, and learning curves.
 
 ## Expected Effect
 

@@ -1,10 +1,8 @@
-# ABI-037 first post-onboarding bounded Autonomy Step
+# BCE-Dice-clDice bounded Autonomy Step
 
-## Scope and authorization
+## Execution scope
 
-ABI-036 durably authorized routine bounded autonomy without per-step chat approval while retaining trusted ceilings and human stops for policy changes, unbounded actions, promotion, and numerical/lifecycle/contract failures. The operator then requested one boundary refresh and one Autonomy Step.
-
-This task invoked exactly one:
+The operator invoked one bounded Autonomy Step under the trusted Workspace Configuration:
 
 ```bash
 uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
@@ -19,11 +17,11 @@ Before the step:
 - ABI commit `240fef02de53a86dde205bf9c1d745ab5405c1cf` was clean, pushed, and at zero upstream divergence;
 - Harness commit `a38ad742e187e23b1fa13f7b0ec8bd21da7ad637` was clean, pushed, and at zero upstream divergence;
 - runtime validation passed at `2026-08-12T15:11:41Z` for Harness fingerprint `4ee2c56b94e3a8e8`, runner `ml-autoresearch-runner:abi-research-problem-4ee2c56b94e3a8e8-13b99524f1`, and Workspace Configuration SHA-256 `28586fdcc017ae955829f8658f6baa407910434645417e92f4e4d2bf0a23a430`;
-- the Research Ledger ended with `campaign_resumed(reason=bounded_autonomy_authorized_after_abi035_onboarding)` linked to `campaign-reports/abi-036-bounded-autonomy-authorization.md`;
+- the Research Ledger contained the active campaign state and linked bounded-autonomy control report;
 - there were 13 Runs, 3 Evaluations, 83 ledger events, no open Harness action, no GPU process, and no managed container;
 - all existing primary handoffs had ingestion markers.
 
-`prepare-agent-boundary` refreshed `/reference` and `/history`. Inspection proved that `/reference/EXPERIMENT_INDEX.md` exposed the active authorization and `/history/research-ledger.jsonl` contained its resume event. Egress and the full read-only `/history/runs` mount remained unchanged.
+`prepare-agent-boundary` refreshed `/reference` and `/history`. Inspection proved that `/reference/EXPERIMENT_INDEX.md` exposed the active policy and `/history/research-ledger.jsonl` contained the campaign state. Egress and the full read-only `/history/runs` mount remained unchanged.
 
 The generated Agent policy retained:
 
@@ -42,9 +40,9 @@ The Agent returned code 0 and created exactly one Candidate Submission:
 - Candidate: `abi037_mcast11_bce_dice_cldice_v1`;
 - handoff source: `agent-work/submissions/abi037_mcast11_bce_dice_cldice_v1`;
 - canonical path: `candidates/abi037_mcast11_bce_dice_cldice_v1`;
-- requested experiment: change trusted loss from ABI-032 `focal_tversky` to `bce_dice_cldice` while retaining architecture, inputs, sampling, optimizer, learning rate, batch size, and epochs.
+- requested experiment: change trusted loss from the focal-Tversky bounded Candidate `focal_tversky` to `bce_dice_cldice` while retaining architecture, inputs, sampling, optimizer, learning rate, batch size, and epochs.
 
-Static validation passed. The Candidate tree SHA-256 is `f6f5adb84d0376561249d0c2a57874961eddd7bb4fd5e3056263e3aa0e4ae61c`; the immutable Run snapshot matches it. `model.py` differs from ABI-032 only in names/docstrings and remains executable-architecture equivalent. The manifest's sole experimental factor is trusted loss `focal_tversky` to `bce_dice_cldice`.
+Static validation passed. The Candidate tree SHA-256 is `f6f5adb84d0376561249d0c2a57874961eddd7bb4fd5e3056263e3aa0e4ae61c`; the immutable Run snapshot matches it. `model.py` differs from the focal-Tversky bounded Candidate only in names/docstrings and remains executable-architecture equivalent. The manifest's sole experimental factor is trusted loss `focal_tversky` to `bce_dice_cldice`.
 
 The Harness ingested the handoff and executed its one `run_candidate` action. `agent-work/autonomy-step-result.json` records:
 
@@ -94,11 +92,11 @@ The Run was operationally reliable but scientifically poor under the bounded com
 | Google | ~7.72e-12 | ~7.14e-10 | ~7.81e-12 | 0.523438 |
 | MIT | 0.000154 | 0.114286 | 0.0000770 | 0.500016 |
 
-Compared with ABI-032 under the same 128-per-source/three-epoch policy, aggregate filtered Dice fell from 0.0462 to 0.000123, filtered precision fell from 0.0251 to 0.0229, and filtered recall collapsed from 0.2925 to 0.0000618. Google raw/filtered Dice is at the all-negative numerical floor. Both bounded prediction masks contain zero positive and 65,536 negative pixels.
+Compared with the focal-Tversky bounded Candidate under the same 128-per-source/three-epoch policy, aggregate filtered Dice fell from 0.0462 to 0.000123, filtered precision fell from 0.0251 to 0.0229, and filtered recall collapsed from 0.2925 to 0.0000618. Google raw/filtered Dice is at the all-negative numerical floor. Both bounded prediction masks contain zero positive and 65,536 negative pixels.
 
 The reported connectivity near 0.5 is not evidence of useful connected contrails in this state: ordinary Dice/recall and the bounded masks show near-total/all-negative collapse. Connectivity must not be interpreted independently of non-degeneracy evidence.
 
-The Candidate's preregistered success criteria fail and its hard stop applies to this exact `bce_dice_cldice` branch. Do not repeat or promote this Candidate. The result is finite and contract-compliant, so it remains valid negative scientific evidence rather than a Harness failure. A future bounded Autonomy Step may broaden to a separately proposed augmentation, input policy, or architecture family under the existing ABI-036 authorization; ABI-037 itself does not launch that step.
+The Candidate's preregistered success criteria fail and its hard stop applies to this exact `bce_dice_cldice` branch. Do not repeat or promote this Candidate. The result is finite and contract-compliant, so it remains valid negative scientific evidence rather than a Harness failure. A later bounded hypothesis may broaden to a different augmentation, input policy, or architecture family. This exact `bce_dice_cldice` branch should not be repeated.
 
 ## Residual risks
 
@@ -113,10 +111,10 @@ The Candidate's preregistered success criteria fail and its hard stop applies to
 - Full ABI suite: 114 passed.
 - Focused Harness autonomy, boundary, handoff, submission, configuration, reconciliation, and research-loop suite: 123 passed.
 - Static Candidate validation: passed.
-- Normalized AST comparison with ABI-032: executable architecture equal after Candidate/class-name and docstring normalization.
-- Runtime identity, boundary authorization visibility, terminal artifact, finite numeric/checkpoint, prediction-mask, ledger exactly-once, post-step open-action, GPU-idle, and container-cleanup inspections passed.
+- Normalized AST comparison with the focal-Tversky bounded Candidate: executable architecture equal after Candidate/class-name and docstring normalization.
+- Runtime identity, boundary-policy visibility, terminal artifact, finite numeric/checkpoint, prediction-mask, ledger exactly-once, post-step open-action, GPU-idle, and container-cleanup inspections passed.
 
-A separate read-only Pi session reviewed the authorization, task, report, index, ledger, handoff result, Candidate, and terminal artifacts. It found no blocker/high issue and assessed all five ABI-037 acceptance criteria as passed after normal task metadata synchronization. Its low findings are retained as residual risks: `autonomy-step-result.json` captures the initial managed-running state rather than terminal reconciliation; provider revision metadata is dirty after expected handoff/ledger mutations; resource-retry support remained enabled with zero retries; and the reviewed evidence has no separate immutable Autonomy Step ID beyond the singleton result, one ingestion event, and one Run lifecycle. The reviewer agreed that the scientific state is near-total/all-negative collapse, the high connectivity value is not useful evidence in that regime, and this exact loss branch should stop.
+A separate read-only Pi session reviewed the report, index, ledger, handoff result, Candidate, and terminal artifacts. It found no blocker or high-severity issue. Its residual findings were that `autonomy-step-result.json` captures the initial managed-running state rather than terminal reconciliation, provider revision metadata is dirty after expected handoff/ledger mutations, resource-retry support remained enabled with zero retries, and the evidence has no separate immutable Autonomy Step ID beyond the singleton result, one ingestion event, and one Run lifecycle. The reviewer agreed that the scientific state is near-total/all-negative collapse, the high connectivity value is not useful evidence in that regime, and this exact loss branch should stop.
 
 ## Commands
 

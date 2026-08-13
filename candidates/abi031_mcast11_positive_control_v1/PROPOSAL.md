@@ -1,12 +1,12 @@
-# ABI-031 MCAST 1.1-lineage positive-control proposal
+# MCAST 1.1-lineage positive-control proposal
 
 ## Hypothesis
 
-A manually authored, randomly initialized MCAST 1.1-lineage architecture will remain finite and produce non-degenerate predictions through the complete trusted Candidate Execution path, distinguishing Harness reliability from the failed ABI-025 Agent-generated architecture.
+A manually authored, randomly initialized MCAST 1.1-lineage architecture will remain finite and produce non-degenerate predictions through the complete trusted Candidate Execution path, distinguishing Harness reliability from the failed Agent-generated spectral residual architecture.
 
 ## Comparison Target
 
-The reliability criteria are preregistered in `campaign-reports/abi-031-positive-control-protocol.md`. Canonical MCAST 1.1 and 2.1 from registry `abi-mcast-working-validation-v1` provide provenance and scientific context, but the positive control is not required to beat either baseline.
+The reliability criteria are preregistered in `campaign-reports/positive-control-protocol.md`. Canonical MCAST 1.1 and 2.1 from registry `abi-mcast-working-validation-v1` provide provenance and scientific context, but the positive control is not required to beat either baseline.
 
 ## Expected Effect
 
@@ -33,4 +33,4 @@ All required losses, metrics, gradients, parameters, and checkpoint tensors are 
 
 ## Fallback Next Decision
 
-Any static, numerical, resource, lifecycle, or non-degeneracy failure stops the campaign for human review. A recorded failed positive control blocks planning for fully automatic autonomy; it does not trigger an automatic repair or rerun.
+Any static, numerical, resource, lifecycle, or non-degeneracy failure stops this experiment sequence. A recorded failed positive control remains reliability evidence and does not trigger an automatic repair or rerun.

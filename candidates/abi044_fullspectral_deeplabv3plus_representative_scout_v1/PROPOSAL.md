@@ -1,28 +1,28 @@
-# ABI-044 Full-Spectral DeepLabV3+ Representative Scout v1
+# Full-Spectral DeepLabV3+ Representative Scout v1
 
 ## Proposal classification
 
-**Family scout, representative-scout stage.** This is the first scientific feasibility screen for the materially different atrous encoder-decoder family that passed the ABI-043 one-epoch resource pilot. It is not full-data or promotion evidence.
+**Family scout, representative-scout stage.** This is the first scientific feasibility screen for the materially different atrous encoder-decoder family that passed the one-epoch resource pilot. It is not full-data or promotion evidence.
 
 ## Hypothesis
 
-A DeepLabV3+ encoder-decoder receiving normalized Full ABI Channel Input can learn thin-contrail features by combining low-level spatial detail with atrous multi-scale context. With 12 epochs over provider-selected representative records, the family should remain finite and non-degenerate while improving its filtered Dice trajectory beyond the one-epoch ABI-043 resource pilot, with useful signal on both MIT and Google Dataset Sources.
+A DeepLabV3+ encoder-decoder receiving normalized Full ABI Channel Input can learn thin-contrail features by combining low-level spatial detail with atrous multi-scale context. With 12 epochs over provider-selected representative records, the family should remain finite and non-degenerate while improving its filtered Dice trajectory beyond the one-epoch resource pilot, with useful signal on both MIT and Google Dataset Sources.
 
 ## Comparison Target
 
-The family baseline is ABI-043 Run `run_20260813_131515_ff53ab`, which completed the 32-record/source/split resource pilot with 12.37M parameters, 528 MB peak CUDA reservation, aggregate `val/filtered_dice` 0.004403, MIT filtered Dice 0.006732, Google filtered Dice 0.001829, and non-degenerate filtered predicted-positive fraction 0.1270. The current best completed candidate Run remains `run_20260811_160920_07a7f4` (`abi031_mcast11_positive_control_v1`), with bounded `val/dice` 0.1070; canonical MCAST 2.1 filtered Dice 0.3873 is promotion context. The mature comparators are not strict score gates for this first representative family scout.
+The family baseline is resource-pilot Run `run_20260813_131515_ff53ab`, which completed the 32-record/source/split resource pilot with 12.37M parameters, 528 MB peak CUDA reservation, aggregate `val/filtered_dice` 0.004403, MIT filtered Dice 0.006732, Google filtered Dice 0.001829, and non-degenerate filtered predicted-positive fraction 0.1270. The current best completed candidate Run remains `run_20260811_160920_07a7f4` (`abi031_mcast11_positive_control_v1`), with bounded `val/dice` 0.1070; canonical MCAST 2.1 filtered Dice 0.3873 is promotion context. The mature comparators are not strict score gates for this first representative family scout.
 
 ## Expected Effect
 
-Relative to ABI-043, the larger trusted record set and 12-epoch budget should reduce the pilot's broad overprediction, improve precision and filtered Dice, and establish whether learning remains directional on both Dataset Sources. The architecture should preserve finite/resource behavior at batch size 4. The scout is diagnostically successful if it yields a finite, source-balanced, non-collapsed trajectory that either improves through the final epochs or exposes a convincing family-specific optimization limit.
+Relative to the resource pilot, the larger trusted record set and 12-epoch budget should reduce the pilot's broad overprediction, improve precision and filtered Dice, and establish whether learning remains directional on both Dataset Sources. The architecture should preserve finite/resource behavior at batch size 4. The scout is diagnostically successful if it yields a finite, source-balanced, non-collapsed trajectory that either improves through the final epochs or exposes a convincing family-specific optimization limit.
 
 ## Implementation Sketch
 
-- Preserve the ABI-043 randomly initialized SMP DeepLabV3+ ResNet-18 architecture, output stride 16, 256-channel decoder, atrous rates 12/24/36, and one mask-logit output.
+- Preserve the resource pilot's randomly initialized SMP DeepLabV3+ ResNet-18 architecture, output stride 16, 256-channel decoder, atrous rates 12/24/36, and one mask-logit output.
 - Accept only provider-approved `abi_16ch` tensors and retain the pilot's rounded trusted campaign-context normalization constants.
 - Preserve provider-owned `combined_source_balanced` traversal and `random_mirroring` augmentation.
-- Preserve trusted `bce_dice`, AdamW at learning rate 0.0003, and batch size 4 so the controlled change is the authorized representative record/epoch budget.
-- Request one sequential Run only; no concurrency is authorized for this architecture family.
+- Preserve trusted `bce_dice`, AdamW at learning rate 0.0003, and batch size 4 so the controlled change is the representative record/epoch budget.
+- Request one sequential Run only; this architecture family has no measured concurrent resource class.
 
 ## Contract Features Used
 
@@ -47,8 +47,8 @@ One sequential 12-epoch representative scout using at most 1,024 training and 1,
 
 ## Continuation and hard stop
 
-Low Dice alone does not eliminate this immature family. A finite, improving, source-balanced, novel, noisy, or ambiguous trajectory remains eligible for a separately authorized family-development continuation or extended scout. Eliminate or repair before further family work only for hard execution failure, persistent non-finite behavior, persistent prediction collapse, clear optimization failure, convincing plateau/divergence at the scout budget, irreparable output-shape mismatch, or resource failure outside the trusted envelope. No scout result automatically authorizes extension, concurrency, full-data training, or promotion.
+Low Dice alone does not eliminate this immature family. A finite, improving, source-balanced, novel, noisy, or ambiguous trajectory remains eligible for continued family development or an extended scout when supported by the active Workspace Configuration. Eliminate or repair before further family work only for hard execution failure, persistent non-finite behavior, persistent prediction collapse, clear optimization failure, convincing plateau/divergence at the scout budget, irreparable output-shape mismatch, or resource failure outside the trusted envelope. A scout result does not by itself establish concurrency safety, full-data performance, or promotion evidence.
 
 ## Fallback Next Decision
 
-If a narrow implementation defect occurs while the hypothesis remains intact, classify it and prepare at most one explicit Repair Candidate in a later Autonomy Step. If the Run is finite but ambiguous or still improving, stop and seek separate authorization for one bounded continuation. If it shows a hard stop, document family evidence and broaden the architecture frontier in a later step. If it is unexpectedly strong, request separately authorized focused full-data evidence rather than making a promotion claim from capped data.
+If a narrow implementation defect occurs while the hypothesis remains intact, classify it and prepare at most one explicit Repair Candidate in a later Autonomy Step. If the Run is finite but ambiguous or still improving, select one bounded continuation under the active Workspace Configuration. If it shows a hard stop, document family evidence and broaden the architecture frontier in a later step. If it is unexpectedly strong, request focused full-data evidence under an appropriate trusted configuration rather than making a promotion claim from capped data.

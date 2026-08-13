@@ -6,6 +6,23 @@ Root for [`ml-autoresearch`](../ml-autoresearch).
 Provider target: `abi_contrail.research_problem:build_spec`
 Research Problem id: `goes_abi_contrail_segmentation`
 
+## Operator workflow
+
+Direct operator invocation of either command is sufficient authority for the bounded, in-contract work performed by that command:
+
+```bash
+# One Autonomy Step and at most one Harness-owned next action.
+uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
+
+# Successive Autonomy Steps until the step limit or a Harness stop condition.
+uv run ml-autoresearch run-autonomous-iteration \
+  --workspace-root . \
+  --max-steps <N> \
+  --notify-email <address>
+```
+
+The commands prepare the Agent Control Boundary and enforce the active trusted Workspace Configuration and Research Problem contract. An explicit `campaign_paused` state and Harness stop/failure conditions stop autonomous iteration. Candidate and Agent code cannot raise configured limits, introduce longitude or latitude inputs, change trusted ownership boundaries, or bypass data, metric, Artifact Filter, sampling, execution, or exactly-once lifecycle controls.
+
 ## Local configuration
 
 `ml-autoresearch.toml` is machine-local because it contains host data paths,
@@ -198,7 +215,7 @@ Omitted `run-candidate` Docker image, GPU/device, and ownership options resolve 
 
 Trusted smoke, training, validation, checkpoint, and terminal-artifact paths fail closed on non-finite numerical state. A Candidate output/loss/gradient/parameter failure is normally `candidate_bug`; trusted Docker image/runtime, Research Problem provider, data bootstrap, or provider aggregate-metric failures are `harness_failure`. Neither is a Resource Failure, and neither receives batch-size retry. Inspect the bounded `outputs/nonfinite_diagnostic.json`; it contains counts and execution location only, never raw ABI Patches, coordinates, or tensor values.
 
-These reliability semantics do not authorize a scientific Candidate Run, GPU validation, or fully automatic autonomy iteration without the task-specific human gate.
+These reliability semantics apply to operator-invoked autonomous research. Caller disconnection, stale state, and failed execution retain the same stable Run identity and never create a duplicate or replacement Run.
 
 ## MCAST baseline evaluation
 

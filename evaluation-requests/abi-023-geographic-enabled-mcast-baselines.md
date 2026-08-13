@@ -5,7 +5,7 @@
 Completed by ABI-022. The immutable geographic-enabled artifacts are at
 `/data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2`;
 validation and timings are recorded in
-`campaign-reports/abi-022-accelerated-evaluation.md`.
+`campaign-reports/accelerated-evaluation.md`.
 
 The existing MCAST 1.1/2.1 artifacts at
 `/data/iross/abi-ml-autoresearch/baselines/initial-20260807` are scanline-only.

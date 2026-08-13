@@ -1,10 +1,10 @@
-# ABI-043 first promoted architecture resource pilot
+# Full-spectral DeepLabV3+ resource pilot
 
-## Status and authorization
+## Execution scope
 
-This report preregisters exactly one post-ABI-039 architecture-family resource pilot. The operator approved the ABI-043 implementation and execution plan in chat after confirming that `main` was pushed. That approval authorizes preparation, the trusted reduced-budget activation, and exactly one Autonomy Step with next-action execution after all preflight gates pass.
+This report records the preregistration and completed execution of one architecture-family resource pilot under a trusted reduced Workspace Configuration. The operator invoked one Autonomy Step with next-action execution. It produced one Candidate Submission and one Harness-owned Candidate Run.
 
-The only authorized primary outcome is one Candidate Submission for the family below and at most one Harness-owned Candidate Run. No second Autonomy Step, replacement Candidate, retry-driven second Run, direct `run-candidate`, non-dry-run open-action execution, Experiment Batch, Post-Run Evaluation, 12-epoch representative scout, 36-epoch extension, full-data training, promotion decision, concurrency change, or policy-limit increase is authorized.
+The execution created no replacement Candidate, retry-driven second Run, Experiment Batch, Post-Run Evaluation, representative scout, extension, full-data training, promotion decision, concurrency change, or policy-limit increase.
 
 ## Preregistered Candidate family
 
@@ -21,17 +21,17 @@ The implementation should use `segmentation_models_pytorch.DeepLabV3Plus` with `
 
 ## Controlled factors
 
-The outer protocol intended architecture and input representation as the only scientific changes relative to the ABI-031 reliability control, with provider-owned `combined_source_balanced` sampling, `all_target_frames`, no augmentation, trusted `bce_dice`, AdamW at `0.001`, batch 4, constant learning rate, disabled early stopping, `abi_16ch`, and one `mask_logits` output.
+The comparison design intended architecture and input representation as the only scientific changes relative to the MCAST-lineage positive control, with provider-owned `combined_source_balanced` sampling, `all_target_frames`, no augmentation, trusted `bce_dice`, AdamW at `0.001`, batch 4, constant learning rate, disabled early stopping, `abi_16ch`, and one `mask_logits` output.
 
 The Agent created its concrete `PROPOSAL.md` and corresponding `proposal_created` event at `2026-08-13T13:15:15Z`, before `candidate_submitted` at `13:15:22Z` and `run_started` at `13:15:23Z`. That step-local preregistration retained the family, source-balanced sampling, frame policy, loss, optimizer, batch, scheduler, early-stopping, input/output, GPU, and sequential controls, but explicitly selected provider-owned `random_mirroring` and learning rate `0.0003`. The Harness accepted both from existing trusted allowlists/contract surfaces.
 
-This is a documented protocol deviation from the outer comparison intent, not an undisclosed post-result change. It limits clean architecture-only comparison but does not invalidate the pilot's contract/resource/finite purpose. No score comparison or scientific family decision is made. Any later scout must separately preregister whether to retain these two controls or restore the ABI-031 values.
+This is a documented protocol deviation from the outer comparison intent, not an undisclosed post-result change. It limits clean architecture-only comparison but does not invalidate the pilot's contract/resource/finite purpose. No score comparison or scientific family decision is made. A later scout should preregister whether it retains these two controls or restores the MCAST-lineage positive-control values.
 
 Fixed normalization constants are declared in Candidate source and reuse the already documented spectral-family channel means/scales rather than pilot-record inspection. They are architecture preprocessing, not permission to select or inspect records.
 
 ## Trusted reduced budget
 
-For this pilot the machine-local trusted Workspace Configuration is reduced from the general ABI-039 scout ceiling to:
+For this pilot the machine-local trusted Workspace Configuration was reduced from the general architecture-scout ceiling to:
 
 - exactly 32 selected training records from each Dataset Source and its Leakage-Safe training split;
 - exactly 32 selected validation records from each Dataset Source and its Leakage-Safe validation split;
@@ -46,7 +46,7 @@ For this pilot the machine-local trusted Workspace Configuration is reduced from
 
 `max_epochs = 1` is trusted Workspace policy. Candidate manifests require at least one epoch and are rejected above the Workspace maximum, so the only accepted manifest value is one. The Candidate cannot own the training loop or raise this value.
 
-The portable `ml-autoresearch.toml.example` continues to document the separately authorized 1,024/12 general scout ceiling. The ignored machine-local `ml-autoresearch.toml`, its generated Agent boundary, its runtime checksum, and terminal Run artifacts are the authoritative activation evidence for this one pilot.
+The portable `ml-autoresearch.toml.example` documented the 1,024/12 general scout ceiling. The ignored machine-local `ml-autoresearch.toml`, its generated Agent boundary, its runtime checksum, and terminal Run artifacts recorded the effective reduced values for this pilot.
 
 ## Success evidence
 
@@ -64,9 +64,9 @@ A low Dice score does not fail this pilot by itself. One epoch over 32 records p
 
 ## Stop conditions
 
-Stop for human review without retry, replacement, or continuation on any contract violation, coordinate exposure, missing required artifact, non-finite value, failed checkpoint audit, timeout or forced termination, OOM, resource retry, second Run, duplicate lifecycle event, unexpected GPU/container state, unresolved action, source/split selection count other than 32, selector-policy mismatch, or inability to establish clean pushed identities and synchronized authorization before launch.
+The pilot was configured to stop without replacement execution on contract violation, coordinate exposure, missing required artifacts, non-finite values, failed checkpoint audit, timeout or forced termination, OOM, resource retry, duplicate lifecycle events, unexpected GPU/container state, unresolved action, a source/split selection count other than 32, or selector-policy mismatch.
 
-Gross all-negative/all-positive or source-specific collapse is recorded as pilot non-degeneracy evidence and stops automatic continuation, but does not authorize eliminating the architecture family from a one-epoch score alone. Even a fully passing pilot stops before the 12-epoch representative scout. Any scout, extension, full-data training, promotion, or policy change requires its own applicable authorization.
+Gross all-negative/all-positive or source-specific collapse would be recorded as pilot non-degeneracy evidence rather than architecture-family elimination evidence. A one-epoch score is insufficient to eliminate the family.
 
 ## Preflight and execution record
 
@@ -75,7 +75,7 @@ Immediately before launch:
 - ABI commit `156efe56e5372b994a4f1cab5bda174fbc0eebb8` and Harness commit `c346f07aa4c837cdefcccf3fbe5fb675186efa2a` were clean, pushed, on `main`, and at zero upstream divergence;
 - runtime validation passed for Harness fingerprint `44aa1c67f09ecad7`, runner `ml-autoresearch-runner:abi-research-problem-44aa1c67f09ecad7-13b99524f1`, and pilot Workspace SHA-256 `bc19a80c754bcfdec47a501f67b92a85fa2dcff91e74884c0172c5b88c7990b5`;
 - Docker GPU validation saw PyTorch 2.5.1+cu121, CUDA 12.1, and the A100;
-- the generated boundary reloaded trusted values 32 samples/source/split, one epoch, batch 4, 25M parameters, 3,600 seconds, four `first_n` predictions, concurrency one, and GPU 0; its Experiment Index and ledger snapshots exactly matched the committed authorization and latest `campaign_resumed(reason=abi043_fullspectral_deeplabv3plus_resource_pilot_authorized)` event;
+- the generated boundary reloaded trusted values 32 samples/source/split, one epoch, batch 4, 25M parameters, 3,600 seconds, four `first_n` predictions, concurrency one, and GPU 0;
 - configured training, ancillary, baseline, and Runs roots and every required canonical MCAST/Natural Earth asset existed;
 - trusted provider preflight found MIT train 4,928/validation 1,232 and Google train 20,529/validation 1,856 records, then selected exactly 32 positive/negative-covering records in every source/split with the same identity digests later recorded by the Run;
 - baseline counts were 14 Run directories, 96 ledger events, 14 `candidate_submitted`, 14 `run_started`, 13 `run_completed`, one historical `run_failed`, four ingested handoffs, three requested/completed Evaluations, and one historical created/completed Experiment Batch;
@@ -102,7 +102,7 @@ The trusted provider recorded selector `abi_representative_scene_positive_hash` 
 | Google train | 20,529 | 32 | 14 / 18 | `05c126fcbd1ee4c0107f706b741e499ecb64ddecb1d2f46667398b796bfe4a67` |
 | Google validation | 1,856 | 32 | 10 / 22 | `812539ecec5ccf91ab876942d20cf625550329662481831cb9afa70451d5d637` |
 
-Exactly one epoch processed 64 training and 64 validation observations at effective batch 4. The sole resource attempt completed without OOM or retry (`retry_count: 0`), and the sole container exited 0 and was removed. Training throughput was 38.26 samples/s over 1.67 seconds; validation throughput was 14.79 samples/s over 4.33 seconds; profiled Run work took 8.06 seconds. The managed operation ran from `13:15:22.083485Z` to `13:15:45.760536Z` (23.68 seconds), leaving 3,576.32 seconds or 99.34% of the 3,600-second timeout. Peak CUDA allocation/reservation was 463,730,688 / 528,482,304 bytes with 41,855,287,296 bytes free at start, so batch 4 is compatible with substantial single-Run A100 headroom. This does not authorize concurrency.
+Exactly one epoch processed 64 training and 64 validation observations at effective batch 4. The sole resource attempt completed without OOM or retry (`retry_count: 0`), and the sole container exited 0 and was removed. Training throughput was 38.26 samples/s over 1.67 seconds; validation throughput was 14.79 samples/s over 4.33 seconds; profiled Run work took 8.06 seconds. The managed operation ran from `13:15:22.083485Z` to `13:15:45.760536Z` (23.68 seconds), leaving 3,576.32 seconds or 99.34% of the 3,600-second timeout. Peak CUDA allocation/reservation was 463,730,688 / 528,482,304 bytes with 41,855,287,296 bytes free at start, so batch 4 is compatible with substantial single-Run A100 headroom. This evidence covers one sequential Run and does not establish a concurrent resource class.
 
 A recursive audit parsed 27 JSON/JSONL records and 516 numeric values with no non-finite value. The selected checkpoint contained 183 tensors and 12,383,918 values, all finite; no non-finite diagnostic exists.
 
@@ -118,7 +118,7 @@ All four bounded masks contained both classes: positive counts 4,685; 30,153; 3,
 
 The ledger has exactly one `agent_handoff_ingested`, `candidate_submitted`, `run_started`, and `run_completed` event for this Candidate/Run and no `run_failed`. Lifecycle postflight counts were 15 Runs and 102 ledger events; final reviewed report registration added one `campaign_report_written` event for 103 total. Evaluation and Batch counts did not change. No open action, managed container, or GPU process remains.
 
-The pilot therefore passes its contract, resource, finite-state, batch-compatibility, and gross non-degeneracy purpose. It is not used to rank, promote, eliminate for low score, authorize concurrency, or start another stage. ABI-043 stops here before any 12-epoch scout.
+The pilot therefore passed its contract, resource, finite-state, batch-compatibility, and gross non-degeneracy purpose. It is not architecture-ranking, promotion, low-score elimination, concurrency, or representative-scout evidence.
 
 ## Validation, independent review, and residual risks
 
@@ -128,6 +128,6 @@ Validation completed:
 - focused Harness research-loop, Candidate policy, Autonomy Step, boundary, and reconciliation suite: 135 passed;
 - exact-32 provider fixture, Candidate sampling/no-bypass boundary tests, trusted config reload, static Candidate validation, runtime image validation, Docker CUDA validation, generated-boundary snapshot comparison, finite/checkpoint audit, prediction-mask audit, open-action check, and postflight GPU/container checks: passed.
 
-Independent fresh-context review is recorded in [`campaign-reports/abi-043-independent-review.md`](abi-043-independent-review.md). It found no substantive blocker and assessed ACs 1-7 and 9 satisfied, with AC 8 satisfied once the review and closeout metadata are persisted. It classified the augmentation/learning-rate difference as a residual comparison risk rather than a pilot acceptance blocker because the concrete Candidate proposal and `proposal_created` event preceded submission and execution, both settings used trusted contract surfaces, and no architecture-ranking claim is made.
+Independent fresh-context review is recorded in [`campaign-reports/full-spectral-deeplabv3plus-resource-pilot-independent-review.md`](full-spectral-deeplabv3plus-resource-pilot-independent-review.md). It found no substantive blocker in the contract, resource, lifecycle, finite-state, or interpretation evidence. It classified the augmentation/learning-rate difference as a residual comparison risk rather than a pilot acceptance blocker because the concrete Candidate proposal and `proposal_created` event preceded submission and execution, both settings used trusted contract surfaces, and no architecture-ranking claim is made.
 
 Residual risks are: the outer protocol's no-augmentation/0.001 intent differed from the Agent's pre-run `random_mirroring`/0.0003 proposal, preventing clean architecture-only comparison; one epoch is too short for meaningful ranking; four bounded masks cannot establish broad non-degeneracy; structural Resource Failure retry remains enabled although retry count was zero; resource evidence supports batch 4 for one sequential A100 Run but not concurrency; some finite/operational audits are durable report attestations rather than standalone machine-readable artifacts; and provider revision metadata is expectedly dirty after handoff/index/ledger mutation despite the preserved clean pushed preflight identity.

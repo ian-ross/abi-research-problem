@@ -1,8 +1,8 @@
-# ABI-033 accelerated training validation
+# Accelerated training validation
 
 ## Problem
 
-ABI-031 Run `run_20260811_160920_07a7f4` exposed that epoch validation still moved accumulated logits to CPU and called the ABI Artifact Filter pipeline one sample at a time. Three validation passes consumed 7,995.87 of 8,047.34 measured seconds (0.768 samples/s), while training consumed 49.21 seconds. The operator observed about 3% GPU consumption. The accelerated ABI-022 postprocessor was already used for Post-Run Evaluation but not training-time validation.
+The MCAST-lineage positive-control Run `run_20260811_160920_07a7f4` exposed that epoch validation still moved accumulated logits to CPU and called the ABI Artifact Filter pipeline one sample at a time. Three validation passes consumed 7,995.87 of 8,047.34 measured seconds (0.768 samples/s), while training consumed 49.21 seconds. The operator observed about 3% GPU consumption. The accelerated evaluation postprocessor was already used for Post-Run Evaluation but not training-time validation.
 
 ## Implementation
 
@@ -21,7 +21,7 @@ The rebuilt validated runner is `ml-autoresearch-runner:abi-research-problem-c9e
 ## Validation
 
 - ABI full suite: 114 passed.
-- Harness full suite with `ML_AUTORESEARCH_TEST_PROBLEM_ROOT=/home/iross/code/test-research-problem`: 565 passed, 2 skipped, 1 known unrelated GVCCS characterization failure (`focal_bce_dice` versus its stale fake Spec allowlist).
+- Harness full suite with the external test provider configured: 565 passed, 2 skipped, with one known unrelated external fixture characterization failure caused by a stale fake Spec allowlist.
 - Focused Harness lifecycle/non-finite/reconciliation suites: 43 passed.
 - Runtime image build and identity validation passed.
 - Isolated no-data/no-GPU Docker check exercised the installed enhanced ABI adapter: `torch_cpu`, configured/max batch 1, all metrics finite, and 24 source-stratified keys.
@@ -30,4 +30,4 @@ Tests cover legacy fallback, exact Harness-selected device delivery, live log vi
 
 ## Decision and residual risk
 
-The implementation is complete without a real-data or real-shape GPU benchmark. Structural and fixture evidence proves bounded device batches, but does not measure production-shape CUDA peak allocation or end-to-end throughput. Any real-data benchmark remains separately human-gated. Until such a benchmark exists, ABI-031's legacy 0.768 samples/s is the comparison baseline rather than a claimed speedup.
+The implementation is complete without a real-data or real-shape GPU benchmark. Structural and fixture evidence proves bounded device batches, but does not measure production-shape CUDA peak allocation or end-to-end throughput. A real-data benchmark remains necessary before making a production-shape throughput claim. Until such a benchmark exists, the MCAST-lineage positive control's legacy 0.768 samples/s is the comparison baseline rather than a claimed speedup.

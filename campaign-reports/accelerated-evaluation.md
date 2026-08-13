@@ -1,4 +1,4 @@
-# ABI-022 accelerated evaluation report
+# Accelerated evaluation report
 
 ## Outcome
 
@@ -8,13 +8,7 @@ and the 19-threshold diagnostic sweep through bounded torch CPU/CUDA batches.
 Only eight ABI Patches are transferred to the configured device at once in the
 production run; the full validation split remains on CPU.
 
-Geographic-enabled MCAST artifacts are immutable at:
-
-`/data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2`
-
-The shared timestamped log is
-`/data/iross/abi-ml-autoresearch/baselines/geographic-enabled-20260807-abi022-r2/baseline_evaluation.log`.
-Both baseline directories contain aggregate, per-sample, threshold-sweep,
+The completed geographic-enabled MCAST output root is immutable. Its shared timestamped `baseline_evaluation.log` and both baseline directories contain aggregate, per-sample, threshold-sweep,
 diagnostic, metadata, and run-manifest artifacts for 3,088 ABI Patches.
 
 ## Performance

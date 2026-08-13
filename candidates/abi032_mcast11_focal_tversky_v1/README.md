@@ -1,4 +1,4 @@
-# ABI-032 MCAST 1.1 focal-Tversky continuation
+# MCAST 1.1 focal-Tversky continuation
 
 This Candidate Experiment is a one-factor family-development continuation of `abi031_mcast11_positive_control_v1`.
 

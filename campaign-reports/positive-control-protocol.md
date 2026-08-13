@@ -1,12 +1,12 @@
-# ABI-031 MCAST-lineage positive-control protocol
+# MCAST-lineage positive-control protocol
 
-## Status and authorization boundary
+## Protocol scope
 
-This is the Phase 0 preregistration draft for ABI-031. ABI-030 and ABI-032 are complete. Approval of this protocol authorizes trusted Harness/provider changes, Candidate authoring, and controlled non-data checks only. It does **not** authorize the A100 resource pilot, bounded main Run, Working Validation evaluation, or an automatic autonomy iteration; those remain separately human-gated.
+This report records preregistration, controlled checks, resource pilots, the bounded main Run, and canonical evaluation for the MCAST-lineage positive control. Each execution phase used trusted Harness/provider controls and stable Run or Evaluation identities.
 
 ## Positive-control hypothesis
 
-A manually authored, randomly initialized MCAST 1.1-lineage architecture should train through the trusted Candidate Execution path with finite state and produce non-degenerate predictions on the canonical Working Validation Split. This tests Candidate Execution reliability independently of the failed ABI-025 Agent-generated architecture. Beating canonical MCAST 1.1 or 2.1 is not required.
+A manually authored, randomly initialized MCAST 1.1-lineage architecture should train through the trusted Candidate Execution path with finite state and produce non-degenerate predictions on the canonical Working Validation Split. This tests Candidate Execution reliability independently of the failed Agent-generated spectral residual architecture. Beating canonical MCAST 1.1 or 2.1 is not required.
 
 ## Candidate architecture and boundary
 
@@ -49,11 +49,11 @@ The present smoke limit is a hard-coded Harness constant of 10,000,000 parameter
 6. Candidate manifests and Candidate code cannot declare, select, or raise this value.
 7. Parameter count does not confer a resource class. New or materially different models remain sequential and require measured resource evidence regardless of count.
 
-The ABI runner must also add pinned `segmentation-models-pytorch==0.5.0` and compatible `torchvision` support as trusted runtime dependencies. The current validated ABI runner does not contain SMP, so it cannot be used for ABI-031. A new runner will be built and validated from clean Harness/provider commits before Candidate execution.
+The ABI runner must also add pinned `segmentation-models-pytorch==0.5.0` and compatible `torchvision` support as trusted runtime dependencies. The current validated ABI runner does not contain SMP, so it cannot be used for the MCAST-lineage positive control. A new runner will be built and validated from clean Harness/provider commits before Candidate execution.
 
 ## Controlled pre-execution checks
 
-Before any real-data authorization:
+Before real-data execution:
 
 1. Run static Candidate validation with proposal and README requirements.
 2. Audit the complete Candidate source and imports for file I/O, checkpoint loading, baseline imports/root access, coordinates, and forbidden policy ownership.
@@ -63,11 +63,11 @@ Before any real-data authorization:
 6. Run a tiny provider-owned fixture training test without external ABI data, asserting finite state, output shape, checkpoint readability, and no Candidate-owned training behavior.
 7. Run focused Harness parameter-budget/smoke tests, the Harness suite required by the change, and the ABI unit suite.
 
-Any failure returns to human review. Controlled checks do not automatically start the pilot.
+Any failure stops the controlled sequence. Controlled checks do not themselves start the pilot.
 
-### Gate 1 controlled-check evidence
+### Controlled-check evidence
 
-Human Gate 1 approved controlled non-data checks on 2026-08-11. No external ABI data or GPU training was used.
+Controlled non-data checks completed on 2026-08-11. No external ABI data or GPU training was used.
 
 - Reviewed Candidate checksum: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
 - Static Candidate validation with required proposal and README: valid.
@@ -75,16 +75,16 @@ Human Gate 1 approved controlled non-data checks on 2026-08-11. No external ABI 
 - Pilot preparation and positive-control report fixtures: 3 tests passed.
 - Full ABI suite: 111 passed.
 - Harness focused parameter/smoke/runner tests: 49 passed; broader focused set: 104 passed.
-- Full Harness suite: 563 passed, 2 skipped, with one known unrelated external GVCCS characterization failure (`focal_bce_dice` in a committed external Candidate versus that test's fake Spec allowing only `bce_dice`).
+- Full Harness suite: 563 passed, 2 skipped, with one known unrelated external fixture characterization failure caused by a stale fake Spec allowlist.
 - Clean Harness commit `0524fdd` built runner `ml-autoresearch-runner:abi-research-problem-46ee69c350b0a037-13b99524f1`; runtime-image validation passed with Workspace Configuration SHA-256 `1e3d1e466fefd20de74a6d63396f9add28d149ce23f438d1ea71a3a1068aafea`.
 - Runner dependency probe: SMP 0.5.0, torch 2.5.1+cu121, torchvision 0.20.1+cu121.
-- Isolated Docker smoke Run `run_20260811_154950_b78993` was accepted without data/training; its copied source checksum matches Gate 1, output is finite `[2,1,256,256]`, and `model_summary.json` records 14,328,209 parameters against the trusted 25,000,000 limit with only ABI source indices 0-15 and explicit longitude/latitude exclusion.
+- Isolated Docker smoke Run `run_20260811_154950_b78993` was accepted without data/training; its copied source checksum matches the reviewed Candidate, output is finite `[2,1,256,256]`, and `model_summary.json` records 14,328,209 parameters against the trusted 25,000,000 limit with only ABI source indices 0-15 and explicit longitude/latitude exclusion.
 
-This evidence authorizes review for Gate 2 only. It does not authorize the A100 pilot.
+This evidence supported proceeding to a bounded A100 resource pilot.
 
-### Gate 2 first pilot attempt
+### First pilot attempt
 
-Human Gate 2 authorized one pilot on 2026-08-11. Run `run_20260811_155607_5a9ea1` used the reviewed byte-identical one-epoch derivative, 32 train and 32 validation samples per Dataset Source, batch size 4, A100 device 0, and no concurrent GPU process. Training and validation completed once with finite losses/metrics and a finite checkpoint, but the Run failed during bounded qualitative-artifact selection because the preregistered `adjacent_and_scattered` Harness policy is not implemented by the ABI training adapter.
+One pilot ran on 2026-08-11. Run `run_20260811_155607_5a9ea1` used the reviewed byte-identical one-epoch derivative, 32 train and 32 validation samples per Dataset Source, batch size 4, A100 device 0, and no concurrent GPU process. Training and validation completed once with finite losses/metrics and a finite checkpoint, but the Run failed during bounded qualitative-artifact selection because the preregistered `adjacent_and_scattered` Harness policy is not implemented by the ABI training adapter.
 
 - 64 training and 64 validation samples processed; no Resource Failure retry.
 - Train loss `1.7150806487`; validation loss `2.0541212559`.
@@ -96,11 +96,11 @@ Human Gate 2 authorized one pilot on 2026-08-11. Run `run_20260811_155607_5a9ea1
 - Exactly one `run_failed` event remained after two reconciliations; container cleanup completed and no duplicate Run was launched.
 - Missing outputs: `final_metrics.json` and qualitative prediction artifacts. The late trusted-policy failure was incorrectly classified `candidate_bug`; Candidate source did not cause it.
 
-Per the preregistered stop rule, no repair or second pilot was launched. Gate 2 review chose the minimal correction: retain the failed Run as evidence and authorize one deliberate replacement using the already-supported trusted `first_n` policy. Full Working Validation diagnostics retain their separate provider-owned failure-bucket selection.
+Per the preregistered stop rule, no immediate repair or automatic retry was launched. The recorded follow-up chose the minimal correction: retain the failed Run as evidence and run one deliberate replacement using the already-supported trusted `first_n` policy. Full Working Validation diagnostics retain their separate provider-owned failure-bucket selection.
 
-### Gate 2 replacement pilot result
+### Replacement pilot result
 
-Human review authorized the replacement, and Run `run_20260811_160407_9067ea` completed exactly once on 2026-08-11.
+The deliberate replacement Run `run_20260811_160407_9067ea` completed exactly once on 2026-08-11.
 
 - Reviewed canonical/pilot Candidate tree checksums: `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103` / `1e2f1f364b5822f2f7f84da3f299d90a1f1886f6d6b785c561aaa665efde654e`; canonical and pilot `model.py` SHA-256 both `f40b484c079b31a30287d3d4b521d26712ee295995e365349fe0c674700ae854`.
 - Status `completed`; exactly one `run_completed` event remained after two reconciliations; one container attempt exited successfully and cleanup removed it.
@@ -113,11 +113,11 @@ Human review authorized the replacement, and Run `run_20260811_160407_9067ea` co
 - Training/validation throughput: 56.974 / 0.984 samples/s; measured operation wall time 68.31 seconds.
 - Required final metrics, best metrics/checkpoint, model summary, resource profile, and four bounded qualitative artifact sets are present. Training, ancillary, and baselines mounts are recorded read-only; the model summary records ABI source indices 0-15 and excludes longitude/latitude.
 
-The pilot meets its numerical, resource, artifact, provenance, and lifecycle criteria. Batch size 4 is recommended for Gate 3. The main Run remains unauthorized. Because ABI still does not support `adjacent_and_scattered`, the proposed main command below is corrected to `first_n`; Gate 3 must explicitly approve that correction.
+The pilot met its numerical, resource, artifact, provenance, and lifecycle criteria. It supported batch size 4 for the main Run. Because the training adapter did not support `adjacent_and_scattered`, the main command used the trusted `first_n` policy.
 
 ## Sequential A100 resource pilot
 
-After a separate execution approval, prepare an operator-authored pilot derivative that keeps `model.py` byte-for-byte identical and changes only Candidate identity and `max_epochs` to 1. Use no Experiment Batch and no concurrent GPU work.
+The resource pilot used an operator-authored derivative that keeps `model.py` byte-for-byte identical and changes only Candidate identity and `max_epochs` to 1. Use no Experiment Batch and no concurrent GPU work.
 
 Preflight:
 
@@ -130,7 +130,7 @@ Launch through the managed detached lifecycle using the newly validated configur
 
 ```bash
 uv run ml-autoresearch run-candidate \
-  --candidate /tmp/abi031-positive-control-pilot \
+  --candidate /tmp/mcast11-positive-control-pilot \
   --workspace-root . \
   --max-samples 32 \
   --max-prediction-samples 4 \
@@ -145,7 +145,7 @@ uv run ml-autoresearch run-status --workspace-root . --run-id <PILOT_RUN_ID>
 uv run ml-autoresearch reconcile-run --workspace-root . --run-id <PILOT_RUN_ID>
 ```
 
-The configured backend must resolve to Docker, A100 device 0, rootless-container-root ownership, and the ABI-031 validated runner. The pilot uses 32 training and 32 validation samples **per Dataset Source**, one epoch, batch size 4, and at most four qualitative samples. Expected wall time is approximately 3-10 minutes; this is an estimate, not a timeout.
+The configured backend resolved to Docker, A100 device 0, rootless-container-root ownership, and the validated positive-control runner. The pilot uses 32 training and 32 validation samples **per Dataset Source**, one epoch, batch size 4, and at most four qualitative samples. Expected wall time is approximately 3-10 minutes; this is an estimate, not a timeout.
 
 Pilot acceptance requires:
 
@@ -158,11 +158,11 @@ Pilot acceptance requires:
 - recorded effective batch size, peak allocated/reserved memory, throughput, wall time, mount policy, model summary, Candidate checksum, and container cleanup;
 - peak reserved/process GPU memory at or below 70% of the 40 GiB A100 with at least 8 GiB free.
 
-An OOM, automatic batch-size retry, non-finite failure, all-constant prediction, missing artifact, or lifecycle inconsistency stops the campaign for review. Pilot success does not automatically launch the main Run. Human review selects batch size 4 or a lower measured value.
+An OOM, automatic batch-size retry, non-finite failure, all-constant prediction, missing artifact, or lifecycle inconsistency was a stop condition. The measured pilot supported batch size 4.
 
 ## Bounded positive-control Run
 
-After pilot review and explicit approval, launch the canonical three-epoch Candidate sequentially:
+The canonical three-epoch Candidate ran sequentially:
 
 ```bash
 uv run ml-autoresearch run-candidate \
@@ -174,13 +174,13 @@ uv run ml-autoresearch run-candidate \
   --detach
 ```
 
-The provider applies the cap per Dataset Source: at most 2,048 combined training samples and 2,048 combined validation samples per epoch, for at most three epochs. Expected wall time is approximately 2-4 hours based on ABI-025 validation throughput; no caller-side timeout authorizes relaunch. Status and idempotent reconciliation use only the returned Run ID.
+The provider applies the cap per Dataset Source: at most 2,048 combined training samples and 2,048 combined validation samples per epoch, for at most three epochs. Expected wall time is approximately 2-4 hours based on the Agent handoff canary validation throughput; no caller-side timeout authorizes relaunch. Status and idempotent reconciliation use only the returned Run ID.
 
-Before evaluation, the terminal Run must have exactly one terminal event, finite logged train/validation metrics, a finite readable best checkpoint, a complete resource profile, correct sample/source counts, expected read-only mounts, no forbidden coordinate inputs, the reviewed Candidate source checksum, and bounded qualitative artifacts. Any non-finite or non-degenerate prerequisite failure blocks evaluation pending human review.
+Before evaluation, the terminal Run must have exactly one terminal event, finite logged train/validation metrics, a finite readable best checkpoint, a complete resource profile, correct sample/source counts, expected read-only mounts, no forbidden coordinate inputs, the reviewed Candidate source checksum, and bounded qualitative artifacts. Any non-finite or non-degenerate prerequisite failure blocks evaluation.
 
-### Gate 3 main Run result
+### Main Run result
 
-Human Gate 3 authorized the corrected `first_n` command, and Run `run_20260811_160920_07a7f4` completed exactly once on 2026-08-11.
+The corrected `first_n` command produced Run `run_20260811_160920_07a7f4` completed exactly once on 2026-08-11.
 
 - Canonical source and immutable Run snapshot both have Candidate tree SHA-256 `33a410b52aaac2ea207c8b112965d9099781da8e295e0d421dbd08e85d01b103`.
 - Three epochs processed 6,144 training and 6,144 validation observations in total (2,048 per split per epoch; 1,024 from each Dataset Source), with batch size 4 and no retry.
@@ -193,18 +193,18 @@ Human Gate 3 authorized the corrected `first_n` command, and Run `run_20260811_1
 - Exactly one `run_completed` event remains after two reconciliations. The sole container exited 0, was removed, and left GPU 0 with no process/memory allocation.
 - Final/best metrics, checkpoint, model summary, completed resource profile, logs, and four bounded qualitative artifact sets are present. Data/baseline/ancillary mounts are recorded read-only, and the model summary excludes longitude/latitude.
 
-The main Run satisfies the finite, non-degenerate training prerequisites for Gate 4 review. It does not itself establish the full positive-control hypothesis. The unexpectedly opaque and slow CPU-only epoch postprocessing path is tracked as `ABI-033`; it did not alter the completed Run's trusted metric semantics. Canonical Working Validation evaluation remains separately human-gated.
+The main Run satisfied the finite, non-degenerate training prerequisites for canonical evaluation. It did not itself establish the full positive-control hypothesis. The unexpectedly opaque and slow CPU-only epoch postprocessing path did not alter the completed Run's trusted metric semantics.
 
 ## Canonical Working Validation evaluation
 
-After a separate evaluation approval, evaluate the completed checkpoint once without retraining:
+The completed checkpoint was evaluated once without retraining:
 
 ```bash
 uv run ml-autoresearch evaluate-run \
   --run /data/iross/abi-ml-autoresearch/runs/<MAIN_RUN_ID> \
   --split val \
   --backend docker \
-  --docker-image <ABI031_VALIDATED_RUNNER_IMAGE> \
+  --docker-image <VALIDATED_RUNNER_IMAGE> \
   --docker-enable-gpu \
   --docker-rootless-container-root \
   --workspace-root . \
@@ -214,7 +214,7 @@ uv run ml-autoresearch evaluate-run \
 
 The evaluation must contain all 3,088 canonical Working Validation samples (MIT 1,232; Google 1,856), use registry `abi-mcast-working-validation-v1`, apply the provider-owned raw and ordered Artifact-Filtered assessment, and write no more than four diagnostic samples/eight GeoTIFFs. Expected wall time is approximately 5-15 minutes.
 
-After evaluation, generate both the ordinary promotion-oriented acceptance report and the separate preregistered positive-control report using the Candidate checksum approved at Gate 1:
+After evaluation, generate both the ordinary promotion-oriented acceptance report and the separate preregistered positive-control report using the reviewed Candidate checksum:
 
 ```bash
 uv run abi-positive-control-report \
@@ -240,11 +240,11 @@ The hypothesis passes only if all of the following are true:
 7. Required Run, evaluation, model summary, resource, threshold-sweep, bounded diagnostic, canonical-registry, source-stratified, Research Ledger, index, and provenance artifacts are present and consistently linked.
 8. Run source and provenance prove random initialization and no MCAST checkpoint/baseline-root access by Candidate code.
 
-The report records every observed value and an explicit pass/fail reason. A failed hypothesis remains a valid durable experimental outcome and blocks resuming fully automatic autonomy planning. Passing does not promote the Candidate, claim parity with MCAST, or launch autonomy.
+The report records every observed value and an explicit pass/fail reason. A failed hypothesis remains a valid durable experimental outcome. Passing does not promote the Candidate or claim parity with MCAST.
 
-### Gate 4 canonical evaluation result
+### Canonical evaluation result
 
-Human Gate 4 authorized one evaluation, and `eval_20260811_194238_7183db` completed once against Run `run_20260811_160920_07a7f4` without retraining.
+Evaluation `eval_20260811_194238_7183db` completed once against Run `run_20260811_160920_07a7f4` without retraining.
 
 - Registry: `abi-mcast-working-validation-v1`; sample count 3,088 (MIT 1,232; Google 1,856), totaling 202,375,168 evaluated pixels.
 - All numeric values in aggregate, threshold, diagnostic, request/metadata, acceptance, positive-control, and 3,088 per-sample records are finite.
@@ -270,13 +270,12 @@ The provider-owned `positive_control_report.json` passes all eight preregistered
 | Artifact and ledger completeness | Pass |
 | Candidate boundary and provenance | Pass |
 
-The positive-control hypothesis passes. Human Gate 5 subsequently approved resuming **planning** for fully automatic autonomy. That planning-only decision did not promote this Candidate or authorize an automatic iteration.
+The positive-control hypothesis passes. This result established that Candidate Execution was sufficiently reliable for subsequent bounded research. It did not promote the Candidate.
 
-## Human gates
+## Execution phases
 
-- **Gate 0 — protocol/design:** approve architecture, ABI-wide 25M trusted budget, 100M config ceiling, runtime dependency addition, training policy, thresholds, commands, bounds, and artifacts.
-- **Gate 1 — source/control review:** review the exact Candidate and trusted Harness/provider diff; authorize controlled checks only.
-- **Gate 2 — pilot execution:** review controlled evidence and authorize one bounded A100 pilot.
-- **Gate 3 — main execution:** review pilot resource/numerical evidence and select batch size; authorize one bounded main Run.
-- **Gate 4 — evaluation:** review terminal training evidence and authorize one canonical Working Validation evaluation.
-- **Gate 5 — campaign decision:** complete. Human review found Candidate Execution trustworthy enough to resume planning for fully automatic autonomy. This planning-only approval did not launch an iteration, promote the positive-control Candidate, or waive ordinary acceptance gates.
+1. Protocol and Candidate-boundary design.
+2. Controlled non-data source and runtime checks.
+3. Bounded A100 resource pilot and deliberate trusted-policy correction.
+4. Bounded three-epoch main Run.
+5. Canonical Working Validation evaluation and positive-control decision.

@@ -1,4 +1,4 @@
-# ABI-037 MCAST 1.1 BCE-Dice-clDice continuation
+# MCAST 1.1 BCE-Dice-clDice continuation
 
 This Candidate Experiment is a one-factor family-development continuation of `abi032_mcast11_focal_tversky_v1`.
 

@@ -1,4 +1,4 @@
-# ABI-024 named data-root Geographic Feature Filter smoke
+# Named data-root Geographic Feature Filter smoke
 
 Date: 2026-08-07
 Status: passed
@@ -16,8 +16,8 @@ The workspace uses distinct trusted host directories:
 
 The existing Natural Earth bundle is installed directly at
 `/data/iross/abi-ml-autoresearch/ancillary/natural-earth`. The disposable
-`/data/iross/abi-ml-autoresearch/abi-023-smoke-data` symlink wrapper has been
-removed and neither smoke depends on a writable training directory.
+smoke-data symlink wrapper has been removed and neither smoke depends on a
+writable training directory.
 
 Offline verification:
 

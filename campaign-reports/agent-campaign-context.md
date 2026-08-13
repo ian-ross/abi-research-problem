@@ -1,14 +1,14 @@
-# ABI-026 Agent Campaign Context validation
+# Agent Campaign Context validation
 
 ## Generated artifact
 
 - schema: `abi_agent_campaign_context/v1`
 - artifact: `abi_contrail/profile/agent-campaign-context.v1.json`
 - canonical registry: `abi-mcast-working-validation-v1`
-- ABI-025 Run: `run_20260810_110532_b465cf`
-- ABI-025 Post-Run Evaluation: `eval_20260810_110644_c0d61d`
+- manual lifecycle canary Run: `run_20260810_110532_b465cf`
+- manual lifecycle canary Post-Run Evaluation: `eval_20260810_110644_c0d61d`
 
-The JSON records its generation timestamp, generator version, Workspace Configuration checksum, canonical registry checksum, ABI-025 source-artifact checksums, dataset record/sample digests, and MCAST aggregate/threshold artifact checksums.
+The JSON records its generation timestamp, generator version, Workspace Configuration checksum, canonical registry checksum, manual lifecycle canary source-artifact checksums, dataset record/sample digests, and MCAST aggregate/threshold artifact checksums.
 
 ## Refresh command
 
@@ -46,5 +46,5 @@ The bounded preparation check confirmed:
 ## Residual limitations
 
 - ABI channel ranges are bounded deterministic snapshot summaries, not physical validity bounds.
-- The artifact contains no qualitative samples; future qualitative examples require separate bounded approval.
-- The ABI-025 canary intentionally failed scientific quality gates; its value here is lifecycle and acceptance-report context. Promotion remains human-reviewed.
+- The artifact contains no qualitative samples; future examples must remain within trusted data and artifact bounds.
+- The manual lifecycle canary intentionally failed scientific quality gates; its value here is lifecycle and acceptance-report context. Promotion remains an operator decision.
