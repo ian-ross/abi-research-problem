@@ -51,26 +51,33 @@ def test_committed_workspace_template_declares_abi_provider_data_and_runtime_req
     assert "mailjet" not in data
 
 
-def test_abi044_authorization_retains_one_step_scout_boundaries() -> None:
-    report = Path("campaign-reports/abi-044-first-representative-architecture-scout.md").read_text()
+def test_commissioned_autonomy_policy_uses_operator_invocation_as_authority() -> None:
+    instructions = Path("AGENTS.md").read_text()
+    readme = Path("README.md").read_text()
+    index = Path("EXPERIMENT_INDEX.md").read_text()
+    brief = Path("abi_contrail/brief/goes-abi-contrail-segmentation.md").read_text()
+    transition = Path("campaign-reports/abi-045-commissioned-autonomy-policy.md").read_text()
 
-    for required in (
-        "At most 1,024 per Dataset Source and Leakage-Safe Split",
-        "At most 12",
-        "At most 4",
-        "3,600 seconds",
-        "At most four using fixed `first_n`",
-        "At most 25,000,000",
-        "`constant_lr` only",
-        "Early stopping | Disabled",
-        "Parallel Runs | One",
-        "pinned to A100 device 0",
-        "at most one Harness-owned sequential Candidate Run",
-        "not protocol deviations merely because they differ",
-        "Low score alone does not",
-        "stops after this single representative-scout step",
-    ):
-        assert required in report
+    for document in (instructions, readme, index, transition):
+        assert "autonomy-step" in document
+        assert "run-autonomous-iteration" in document
+        assert "sufficient authority" in document
+
+    assert "do not require a Backlog task" in instructions
+    assert "No Backlog task" in readme
+    assert "no Backlog task" in index
+    assert "Work should start from a backlog task" not in instructions
+    assert "task-specific human gate" not in readme
+    assert "## Active autonomous research policy" in index
+    assert "historical commissioning records" in index
+
+    assert "resource pilot may be useful" in brief
+    assert "not a mandatory authorization stage" in brief
+    assert "separately authorized" not in brief
+    assert "Candidate models must never receive longitude or latitude" in instructions
+    assert "explicit `campaign_paused`" in transition
+    assert "stable identities are observed and reconciled idempotently" in transition
+    assert "non-finite state" in transition
 
 
 def test_workspace_bootstrap_files_exist() -> None:

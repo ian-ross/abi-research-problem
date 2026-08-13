@@ -18,10 +18,10 @@ docker_gpu_device = "0"
 docker_rootless_container_root = true
 runs_root = "/path/to/abi-ml-autoresearch/runs"
 ledger_path = "research-ledger.jsonl"
-# ABI-039 representative architecture-scout envelope. max_samples applies per
-# Dataset Source and Leakage-Safe Split through provider-owned record selection.
-# A new-family resource pilot should request only 32 samples/source/split and one
-# epoch; the ceilings below do not authorize longer or full-data training.
+# Harness-owned ABI research envelope. max_samples applies per Dataset Source
+# and Leakage-Safe Split through provider-owned record selection. Direct operator
+# invocation may use any in-contract values at or below these ceilings; a short
+# resource pilot is optional when a new family's resource compatibility is unknown.
 max_samples = 1024
 max_parameters = 25000000
 max_epochs = 12

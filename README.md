@@ -6,6 +6,25 @@ Root for [`ml-autoresearch`](../ml-autoresearch).
 Provider target: `abi_contrail.research_problem:build_spec`
 Research Problem id: `goes_abi_contrail_segmentation`
 
+## Operator autonomy workflow
+
+This workspace is commissioned for autonomous research, following the operational model in `../gvccs-research-problem`. Direct operator invocation is sufficient authority for the bounded work performed by either command:
+
+```bash
+# One Autonomy Step and at most one Harness-owned next action.
+uv run ml-autoresearch autonomy-step --workspace-root . --execute-next-action
+
+# Successive Autonomy Steps until the step or duration limit, or a Harness stop condition.
+uv run ml-autoresearch run-autonomous-iteration \
+  --workspace-root . \
+  --max-steps <N> \
+  --notify-email <address>
+```
+
+No Backlog task, implementation plan, campaign authorization report, `campaign_resumed` event, separate per-step approval, clean/pushed Git gate, manual Agent Control Boundary refresh, lifecycle-count baseline, or manual GPU-idle attestation is required before these commands. The commands prepare the boundary, require the applicable Runtime Image Validation Stamp, and enforce the active trusted Workspace Configuration and Research Problem contract.
+
+An explicit operator `campaign_paused` state and Harness stop/failure conditions still stop autonomous iteration. Candidate and Agent code cannot raise configured limits, change trusted ownership boundaries, introduce longitude/latitude inputs, or bypass data, metric, Artifact Filter, sampling, execution, or exactly-once lifecycle controls. Historical ABI-034 through ABI-044 authorization reports remain commissioning records rather than current launch gates; see `campaign-reports/abi-045-commissioned-autonomy-policy.md`.
+
 ## Local configuration
 
 `ml-autoresearch.toml` is machine-local because it contains host data paths,
@@ -198,7 +217,7 @@ Omitted `run-candidate` Docker image, GPU/device, and ownership options resolve 
 
 Trusted smoke, training, validation, checkpoint, and terminal-artifact paths fail closed on non-finite numerical state. A Candidate output/loss/gradient/parameter failure is normally `candidate_bug`; trusted Docker image/runtime, Research Problem provider, data bootstrap, or provider aggregate-metric failures are `harness_failure`. Neither is a Resource Failure, and neither receives batch-size retry. Inspect the bounded `outputs/nonfinite_diagnostic.json`; it contains counts and execution location only, never raw ABI Patches, coordinates, or tensor values.
 
-These reliability semantics do not authorize a scientific Candidate Run, GPU validation, or fully automatic autonomy iteration without the task-specific human gate.
+Direct operator invocation of `autonomy-step` or `run-autonomous-iteration` is the authority for bounded scientific execution; no task-specific or per-step authorization is required. These reliability semantics still forbid duplicate or replacement execution and preserve Harness stop, pause, contract, and failure handling.
 
 ## MCAST baseline evaluation
 

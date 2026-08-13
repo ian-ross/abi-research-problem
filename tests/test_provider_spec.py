@@ -132,19 +132,21 @@ def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:
     ]
 
 
-def test_research_problem_brief_defines_staged_scout_semantics() -> None:
+def test_research_problem_brief_defines_commissioned_architecture_evaluation_semantics() -> None:
     brief = Path("abi_contrail/brief/goes-abi-contrail-segmentation.md").read_text()
 
-    assert "one-epoch resource pilot" in brief
-    assert "32 representative records per Dataset Source and Leakage-Safe Split" in brief
+    assert "resource pilot may be useful" in brief
+    assert "not a mandatory authorization stage" in brief
+    assert "operator invocation" in brief
+    assert "sufficient authority" in brief
     assert "abi_scout_assessment.v1" in brief
     assert "does not apply strict top-k ranking" in brief
     assert "Low-scoring but improving, source-balanced, novel, noisy, or ambiguous" in brief
-    assert "Representative scout evidence is a feasibility screen" in brief
-    assert "full-data training and evaluation" in brief
-    assert "effective only after the generated Workspace Configuration activates them" in brief
-    assert "the Agent may preregister and choose learning rate" in brief
-    assert "not a protocol deviation merely because it differs from a prior Candidate" in brief
+    assert "Representative capped evidence is a feasibility screen" in brief
+    assert "Do not compare a capped score as though it were a full-data Result" in brief
+    assert "generated Agent Workspace Configuration remains authoritative" in brief
+    assert "Agent may preregister and choose learning rate" in brief
+    assert "separately authorized" not in brief
 
 
 def test_split_data_policy_metadata_records_leakage_safe_index_policy() -> None:
