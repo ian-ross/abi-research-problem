@@ -38,7 +38,7 @@ Implementation must start from local `main` at `6707824`. The commits, diffs, fi
 - [ ] #7 Candidate documentation no longer describes experiments through Backlog issues or commissioning authorization gates, while canonical Candidate identities and Run provenance remain intact.
 - [ ] #8 Trusted resource, data, sampling, coordinate-exclusion, loss, metric, Artifact Filter, execution, exactly-once lifecycle, pause, and failure safeguards remain enforced and consistently documented.
 - [ ] #9 No file in the Harness repository is changed.
-- [ ] #10 No commit, diff, file content, or implementation change from the range between local  at  and  is used; the work is implemented independently from local  and direct inspection of the commissioned workspace pattern.
+- [ ] #10 No commit, diff, file content, or implementation change from the range between local `main` at `6707824` and `origin/main` is used; the work is implemented independently from local `main` and direct inspection of the commissioned workspace pattern.
 <!-- AC:END -->
 
 ## Implementation Plan
