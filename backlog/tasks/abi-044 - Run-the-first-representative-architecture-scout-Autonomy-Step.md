@@ -1,9 +1,11 @@
 ---
 id: ABI-044
 title: Run the first representative architecture-scout Autonomy Step
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@agent'
 created_date: '2026-08-13 13:36'
+updated_date: '2026-08-13 13:48'
 labels:
   - autonomy
   - candidates
@@ -33,3 +35,16 @@ Authorize, prepare, and execute exactly one genuine post-ABI-043 representative-
 - [ ] #8 A durable report, Experiment Index and Research Ledger updates, validation results, independent review, and residual risks are recorded before closeout
 - [ ] #9 The task stops after the single representative-scout step; a roughly 36-epoch extension, full-data training, promotion, concurrency, policy-limit changes, and any subsequent Autonomy Step require their applicable separate authorization
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Re-baseline ABI-039, ABI-040, and ABI-043 artifacts plus the current ABI/../ml-autoresearch identities and operational state; inventory the promoted policy, pilot override, lifecycle baselines, and existing report/index/ledger evidence without launching work.
+2. Draft durable one-step representative-scout authorization that restores trusted ceilings to at most 1,024 records per Dataset Source and Leakage-Safe Split and 12 epochs while retaining batch 4, 3,600-second timeout, four first_n predictions, 25M parameters, constant LR, disabled early stopping, concurrency one, and pinned A100 GPU 0. Explicitly authorize preregistered Agent choices for LR, trusted loss, augmentation, and all other allowlisted Candidate parameters, and encode the ABI-039 asymmetric interpretation and hard stop.
+3. Implement the smallest trusted Workspace/Harness-only policy/configuration changes needed to replace the ABI-043 32-record/one-epoch pilot cap with the representative ceilings. Add focused no-bypass regressions proving Candidate source/manifests cannot alter trusted sample, epoch, batch, parameter, timeout, prediction, scheduler, early-stopping, concurrency, GPU, coordinate, sampling, data, loss/metric/filter, or lifecycle boundaries.
+4. Validate focused and full ABI/Harness suites, generated Agent Control Boundary synchronization, runtime images, and authorization/config reload. Prepare the durable scout report and execution checklist, then obtain explicit human approval before the irreversible Autonomy Step/GPU launch.
+5. Establish clean pushed ABI and Harness revisions and run preflight for named roots, validated images, synchronized authorization, no open action, no managed container, baseline Run/Evaluation/Batch counts, and idle pinned A100 GPU 0. Abort rather than weaken policy or retry around a failed preflight.
+6. Invoke exactly one Autonomy Step with next-action execution enabled. Permit at most one primary handoff and one Harness-owned sequential Candidate Run; do not repeat the launch or create a replacement/retry-driven second Run, Evaluation, Batch, or second step.
+7. Observe any stable Run and reconcile it idempotently. Collect exactly-once lifecycle, finite/resource, source-stratified, predicted-positive/non-degeneracy, selected-record-policy, trajectory, and timeout-headroom evidence, with no unresolved action. Apply only ABI-039 asymmetric scout conclusions and do not automatically extend.
+8. Update the durable report, Experiment Index, Research Ledger, validation evidence, residual risks, and task metadata. Obtain independent fresh-context review, resolve blockers, verify the campaign stopped after this one step, and close only when every acceptance criterion is evidenced.
+<!-- SECTION:PLAN:END -->
