@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-11 10:31'
-updated_date: '2026-08-11 19:54'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - candidates
@@ -74,7 +74,7 @@ After ABI-030 hardens trusted numerical fail-fast and long-Run lifecycle handlin
 <!-- SECTION:NOTES:BEGIN -->
 ## Phase 0 preregistration draft (2026-08-11)
 - ABI-030 and ABI-032 are complete; ABI-031 is now In Progress.
-- Drafted `campaign-reports/abi-031-positive-control-protocol.md` with architecture, Candidate boundary, controlled checks, sequential A100 pilot/main/evaluation commands, exact finite/non-degenerate criteria, expected artifacts, and Gates 0-5.
+- Drafted `campaign-reports/positive-control-protocol.md` with architecture, Candidate boundary, controlled checks, sequential A100 pilot/main/evaluation commands, exact finite/non-degenerate criteria, expected artifacts, and Gates 0-5.
 - Verified SMP U-Net/ResNet-18 with 3 inputs and 1 output has 14,328,209 parameters. The current Harness hard-codes 10,000,000 in `smoke.py`. Proposed trusted `candidate_execution.max_parameters`: default 10M, ABI workspace 25M, hard configurable ceiling 100M; Candidate code/manifests cannot select it.
 - Verified the current validated ABI runner lacks `segmentation_models_pytorch`; Gate 0 therefore includes adding pinned trusted runner dependencies and rebuilding/validating a new image before controlled checks.
 - No Candidate code, Harness/provider code, external-data training, or GPU Run has been started. Human Gate 0 is pending.
