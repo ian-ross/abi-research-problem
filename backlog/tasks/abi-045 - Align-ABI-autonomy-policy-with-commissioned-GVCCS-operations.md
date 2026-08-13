@@ -3,11 +3,11 @@ id: ABI-045
 title: >-
   Simplify ABI autonomous research policy and remove issue-oriented campaign
   guidance
-status: In Progress
+status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-13 15:54'
-updated_date: '2026-08-13 20:01'
+updated_date: '2026-08-13 20:43'
 labels:
   - autonomy
   - policy
@@ -30,16 +30,16 @@ Implementation must start from local `main` at `6707824`. The commits, diffs, fi
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Repository instructions do not require a Backlog task, implementation plan, or separate plan approval for an operator-invoked autonomous research operation.
-- [ ] #2 Direct operator invocation of `autonomy-step --execute-next-action` or `run-autonomous-iteration` is documented as sufficient authority for bounded in-contract research.
-- [ ] #3 Operational guidance follows the established commissioned workspace structure with only ABI-specific path, configuration, provider, and scientific differences, and contains no reference to another Research Problem or its repository.
-- [ ] #4 Current policy is expressed positively and contains no negative catalogue of obsolete requirements, no historical/supersession discussion of Backlog issues, and no references to Backlog issues ABI-034 through ABI-044 as policy or operational context.
-- [ ] #5 Every campaign report has an issue-independent filename and report title/body text contains no Backlog issue identifiers or issue-oriented framing; scientific evidence, commands, measurements, Run identities, and conclusions are preserved.
-- [ ] #6 All renamed-report references are repaired, including report cross-links, Experiment Index links, Candidate documentation, evaluation requests, Backlog metadata, tests, and Research Ledger report paths/reasons; no stale report path remains.
-- [ ] #7 Candidate documentation no longer describes experiments through Backlog issues or commissioning authorization gates, while canonical Candidate identities and Run provenance remain intact.
-- [ ] #8 Trusted resource, data, sampling, coordinate-exclusion, loss, metric, Artifact Filter, execution, exactly-once lifecycle, pause, and failure safeguards remain enforced and consistently documented.
-- [ ] #9 No file in the Harness repository is changed.
-- [ ] #10 No commit, diff, file content, or implementation change from the range between local `main` at `6707824` and `origin/main` is used; the work is implemented independently from local `main` and direct inspection of the commissioned workspace pattern.
+- [x] #1 Repository instructions do not require a Backlog task, implementation plan, or separate plan approval for an operator-invoked autonomous research operation.
+- [x] #2 Direct operator invocation of `autonomy-step --execute-next-action` or `run-autonomous-iteration` is documented as sufficient authority for bounded in-contract research.
+- [x] #3 Operational guidance follows the established commissioned workspace structure with only ABI-specific path, configuration, provider, and scientific differences, and contains no reference to another Research Problem or its repository.
+- [x] #4 Current policy is expressed positively and contains no negative catalogue of obsolete requirements, no historical/supersession discussion of Backlog issues, and no references to Backlog issues ABI-034 through ABI-044 as policy or operational context.
+- [x] #5 Every campaign report has an issue-independent filename and report title/body text contains no Backlog issue identifiers or issue-oriented framing; scientific evidence, commands, measurements, Run identities, and conclusions are preserved.
+- [x] #6 All renamed-report references are repaired, including report cross-links, Experiment Index links, Candidate documentation, evaluation requests, Backlog metadata, tests, and Research Ledger report paths/reasons; no stale report path remains.
+- [x] #7 Candidate documentation no longer describes experiments through Backlog issues or commissioning authorization gates, while canonical Candidate identities and Run provenance remain intact.
+- [x] #8 Trusted resource, data, sampling, coordinate-exclusion, loss, metric, Artifact Filter, execution, exactly-once lifecycle, pause, and failure safeguards remain enforced and consistently documented.
+- [x] #9 No file in the Harness repository is changed.
+- [x] #10 No commit, diff, file content, or implementation change from the range between local `main` at `6707824` and `origin/main` is used; the work is implemented independently from local `main` and direct inspection of the commissioned workspace pattern.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -61,4 +61,32 @@ Implementation must start from local `main` at `6707824`. The commits, diffs, fi
 - No implementation, merge, rebase, cherry-pick, Harness edit, or research execution is part of this task update.
 
 - Implementation started from the local task-update lineage based on `6707824`. Harness baseline is `b2d8345`; it will remain unchanged.
+
+- Implemented positive operator-invocation policy in root instructions, README, Experiment Index, Research Problem Brief, and portable Workspace template.
+- Renamed all 21 campaign reports to issue-independent paths and removed issue/task/authorization framing while retaining scientific measurements, commands, Candidate identities, Run identities, and conclusions.
+- Updated all report links in the Experiment Index, Candidate documentation, evaluation request, Research Ledger, tests, and affected historical Backlog metadata through the Backlog CLI.
+- Cleaned Candidate README/proposal prose while preserving canonical Candidate directory/manifest identities and Run provenance.
+- Added policy, report-corpus, ledger-path/reason, Backlog-reference, Markdown-link, and Candidate/Run provenance tests.
+- Full ABI suite: 138 passed. Focused policy suite: 14 passed. Ledger/link validation: 115 events and 37 documents passed. `git diff --check` passed.
+- Regenerated and inspected the ignored Agent boundary with unchanged Harness b2d8345 using the documented snapshot-only validation bypass; current Agent-visible Index, Brief, Candidate history, and boundary wording contain no stale issue/gate references.
+- Harness repository remained clean and unchanged at b2d8345. No merge, rebase, cherry-pick, or implementation content from the excluded local-main..origin-main range was used. No research/GPU execution occurred.
+- Independent review found no remaining in-scope blocker/high/medium issue after fixes. Ignored machine state retains a pre-existing stale runtime-image stamp; rebuild/execution and Harness generator changes were explicit non-goals.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Simplified ABI autonomous-research governance so direct operator invocation is sufficient authority under active trusted bounds. Removed the broad Backlog/plan prerequisite, replaced task-specific launch gates with positive current policy, renamed and cleaned all campaign reports, repaired repository-wide references and ledger paths, and removed issue/gate framing from Candidate documentation while preserving durable Candidate and Run provenance. Trusted provider ownership, coordinate exclusion, resource limits, exactly-once lifecycle behavior, campaign pause, and failure stops remain explicit. The Harness repository was not changed.
+
+Validation:
+- `uv run --group torch pytest -q`: 138 passed
+- Focused policy tests: 14 passed
+- Research Ledger/report-path and Markdown-link validation: 115 events, 37 documents
+- Agent-visible snapshot inspection: no stale issue/gate references
+- `git diff --check`: passed
+- Harness status: clean and unchanged at b2d8345
+- Independent review: no remaining in-scope blocker/high/medium findings
+
+Residual machine state:
+- The ignored runtime-image validation stamp predates this local implementation and is stale for Harness b2d8345. Runtime-image rebuild and research execution were outside scope; resolving generic Harness-generated wording would require the prohibited Harness change.
+<!-- SECTION:FINAL_SUMMARY:END -->
