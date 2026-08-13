@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 10:31'
-updated_date: '2026-08-12 11:03'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - autonomy
@@ -59,7 +59,7 @@ Reconcile the approved Gate 5 campaign state, add trusted test-run execution cei
 Prepared the ABI workspace for a first bounded autonomy test and completed one non-training Agent Control Boundary trial. Added Harness-owned 3-epoch and 1,800-second Docker training ceilings, clamped sample/concurrency execution to 128 per source and one Run, exposed/enforced the limits at Agent submission and canonical ingestion boundaries, reconciled Gate 5 records, validated Mailjet delivery, rebuilt runtime images, and refreshed the accepted boundary policy. The Agent produced one valid focal-Tversky Candidate handoff, but the Harness did not execute it: execution was null and Run/Evaluation counts were unchanged. The resulting run_candidate action remains pending separate human authorization.
 
 Evidence:
-- campaign-reports/abi-034-autonomy-boundary-trial.md
+- campaign-reports/autonomy-boundary-trial.md
 - agent-work/autonomy-step-result.json
 - Harness commit a38ad74
 - ABI commits f10981f and 696bc92
