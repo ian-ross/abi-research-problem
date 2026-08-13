@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:04'
-updated_date: '2026-08-12 15:06'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - autonomy
@@ -41,7 +41,7 @@ Record the operator's post-onboarding decision in Agent-visible durable campaign
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-- Added campaign-reports/abi-036-bounded-autonomy-authorization.md with the routine-operation scope, unchanged ABI-034 ceilings, exactly-once rules, and retained human stop gates
+- Added campaign-reports/bounded-autonomy-controls.md with the routine-operation scope, unchanged ABI-034 ceilings, exactly-once rules, and retained human stop gates
 - Updated EXPERIMENT_INDEX.md with an active authorization summary suitable for /reference
 - Recorded campaign_report_written and validated campaign_resumed(reason=bounded_autonomy_authorized_after_abi035_onboarding) ledger events
 - prepare-agent-boundary verification exposed the authorization in agent-reference/EXPERIMENT_INDEX.md and agent-history/research-ledger.jsonl
