@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@agent'
 created_date: '2026-08-12 15:11'
-updated_date: '2026-08-12 15:23'
+updated_date: '2026-08-13 20:16'
 labels:
   - harness
   - autonomy
@@ -62,7 +62,7 @@ Refreshed the Agent Control Boundary after confirming the pushed ABI-036 durable
 The Run was operationally reliable: all 1,202 audited structured numeric values and 14,339,829 checkpoint values were finite, required artifacts/mount/input exclusions were present, and exactly one submission/start/completion lineage was recorded. Scientifically, the Result failed its hypothesis: aggregate filtered Dice was 0.000123, filtered recall 0.0000618, Google Dice was at the all-negative floor, and both bounded masks were all-negative. The reported connectivity near 0.5 is not meaningful in this degenerate regime. Stop this exact loss branch; retain the Run as bounded negative evidence.
 
 Evidence:
-- campaign-reports/abi-037-post-onboarding-autonomy-step.md
+- campaign-reports/bce-dice-cldice-autonomy-step.md
 - candidates/abi037_mcast11_bce_dice_cldice_v1
 - agent-work/autonomy-step-result.json
 - Run run_20260812_151543_5b9508
