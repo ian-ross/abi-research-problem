@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@agent'
 created_date: '2026-08-13 15:54'
-updated_date: '2026-08-13 15:54'
+updated_date: '2026-08-13 16:27'
 labels:
   - autonomy
   - policy
@@ -22,10 +22,10 @@ Remove commissioning-only per-operation backlog and authorization gates from ABI
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Repository instructions no longer require a backlog task or separate plan approval for each autonomous research operation
-- [ ] #2 Operator invocation of autonomy-step or run-autonomous-iteration is documented as sufficient authorization for bounded research
-- [ ] #3 Commissioning-only one-step and task-specific authorization language is superseded without weakening trusted resource, data, coordinate, lifecycle, or pause safeguards
-- [ ] #4 Agent-visible policy and operational documentation are internally consistent with the commissioned GVCCS model
+- [x] #1 Repository instructions no longer require a backlog task or separate plan approval for each autonomous research operation
+- [x] #2 Operator invocation of autonomy-step or run-autonomous-iteration is documented as sufficient authorization for bounded research
+- [x] #3 Commissioning-only one-step and task-specific authorization language is superseded without weakening trusted resource, data, coordinate, lifecycle, or pause safeguards
+- [x] #4 Agent-visible policy and operational documentation are internally consistent with the commissioned GVCCS model
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -37,3 +37,14 @@ Remove commissioning-only per-operation backlog and authorization gates from ABI
 4. Regenerate/validate Agent-visible policy and run focused/full tests
 5. Record final evidence and close the transition task
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- Compared commissioned GVCCS policy: no Backlog directory or per-operation approval workflow; operator commands drive bounded research.
+- Replaced ABI commissioning gates with operator-invocation authority in AGENTS.md, README.md, Experiment Index, provider brief, template, and durable ABI-045 report. Historical ABI-034 through ABI-044 records remain unchanged and are prospectively superseded.
+- Updated Harness generated-boundary guidance to defer current scientific policy to mounted Experiment Index/Brief and removed generic staged-authorization prose; neutralized campaign resume wording. Harness commit e0032df is pushed.
+- ABI full suite: 135 passed. Harness focused: 49 passed. Harness full configured: 582 passed, 2 skipped, 1 known unrelated stale GVCCS fake-allowlist failure.
+- Rebuilt and validated clean-Harness runtime images at fingerprint cd7fa06690041d26; regenerated Agent boundary and verified current index/report/ledger visibility. No autonomy, Candidate, Evaluation, Batch, or GPU research operation launched.
+- Independent ABI and Harness reviews approved with no remaining blocker/high/medium findings.
+<!-- SECTION:NOTES:END -->
