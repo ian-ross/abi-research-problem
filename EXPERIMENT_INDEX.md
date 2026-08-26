@@ -2,7 +2,7 @@
 
 ## Current autonomous research policy
 
-Direct operator invocation of `autonomy-step --execute-next-action` or `run-autonomous-iteration` is sufficient authority for bounded research under the active Workspace Configuration and Research Problem contract.
+Direct operator invocation of `autonomy-step --execute-next-action` or `run-autonomous-iteration` is sufficient authority for bounded research under the active Workspace Configuration and Research Problem contract. The [`operator-invoked autonomous research policy`](campaign-reports/operator-invoked-autonomous-research.md) records the active authority, safeguards, and scientific interpretation.
 
 The current trusted execution limits are 1,024 provider-selected train and validation records per Dataset Source and Leakage-Safe Split, 12 epochs, batch size 4, concurrency one, a 3,600-second Docker training timeout, four fixed `first_n` predictions, 25 million parameters, constant learning rate, disabled early stopping, and pinned A100 GPU 0. Candidate source, manifests, and Agent handoffs cannot raise these values or replace provider/Harness ownership of data, sampling, loss, metrics, Artifact Filters, coordinate exclusion, resource placement, execution, or lifecycle behavior.
 
