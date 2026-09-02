@@ -1,0 +1,22 @@
+name: abi171_fullspectral_btd_sza_fullscale_skip_aspp_detail_decoder_centerline_w001_bce_dice_v1
+description: Full-spectral BTD+SZA full-scale skip ASPP/detail decoder continuation lowering Centerline Target auxiliary weight to test recall recovery while preserving ABI-154 precision/connectivity.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.01
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

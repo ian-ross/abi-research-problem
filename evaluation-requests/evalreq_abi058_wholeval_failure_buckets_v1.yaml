@@ -1,0 +1,25 @@
+request_id: evalreq_abi058_wholeval_failure_buckets_v1
+target_run_id: run_20260827_171331_c1769a
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-058's small
+  capped oriented-context improvement over ABI-056/ABI-053 persist, and which
+  Harness-owned failure buckets explain its late-epoch instability, source
+  behavior, false-positive burden, and remaining filtered-Dice/connectivity gap
+  versus canonical MCAST context?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, and bounded failure-bucket artifacts to decide whether
+  ABI-058 should replace ABI-056 as the local high-resolution BTD line U-Net
+  reference, whether further high-resolution decoder refinements are justified,
+  or whether the next Autonomy Step should broaden to a different connectivity
+  or false-positive-control architecture family. Treat the result as diagnostic
+  evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

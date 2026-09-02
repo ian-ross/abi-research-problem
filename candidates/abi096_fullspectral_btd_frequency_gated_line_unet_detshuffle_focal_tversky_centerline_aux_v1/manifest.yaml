@@ -1,0 +1,22 @@
+name: abi096_fullspectral_btd_frequency_gated_line_unet_detshuffle_focal_tversky_centerline_aux_v1
+description: Data-policy continuation of the full-spectral BTD frequency-gated line U-Net changing only the trusted sampling policy from combined source-balanced traversal to deterministic shuffle while retaining focal-Tversky and Centerline Target auxiliary supervision.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: deterministic_shuffle
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: focal_tversky
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

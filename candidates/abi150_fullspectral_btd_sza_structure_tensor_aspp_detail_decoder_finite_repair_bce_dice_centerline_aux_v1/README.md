@@ -1,0 +1,7 @@
+# ABI-150 full-spectral BTD+SZA structure-tensor ASPP/detail decoder finite repair
+
+Repair Candidate for GOES ABI Contrail Segmentation. ABI-149 smoke testing failed with Harness-classified `candidate_bug`: non-finite gradients in `front_end.learned_mixer.0.weight` during the synthetic backward pass. ABI-150 preserves ABI-149's structure-tensor hypothesis and comparison targets while repairing the differentiable structure features to avoid the zero-argument square-root gradient path.
+
+The model receives only provider-approved `abi_16ch_plus_sza`: GOES ABI channels 1-16 plus Solar Geometry Input. It computes normalized ABI features, deterministic thermal BTD planes, normalized SZA/cos(SZA), learned 1x1 spectral features, and Sobel structure-tensor evidence from those approved channels only. Longitude, latitude, reconstructed coordinate features, Dataset Source identity, external weights, runtime downloads, thresholding, postprocessing, and Artifact Filters are not used.
+
+The repair changes are local: structure-tensor contrast uses a small positive epsilon inside `sqrt`, ratios use an epsilon-stabilized denominator, orientation/coherence features are bounded, and ridge residual magnitudes are clamped. Data loading, split logic, capped-record selection, sampling traversal implementation, trusted random mirroring, primary and auxiliary target derivation, losses, metrics, thresholding, Artifact Filters, resource placement, prediction retention, and Run lifecycle remain provider/Harness-owned.

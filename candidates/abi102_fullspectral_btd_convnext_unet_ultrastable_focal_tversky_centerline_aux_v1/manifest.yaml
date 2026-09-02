@@ -1,0 +1,29 @@
+name: abi102_fullspectral_btd_convnext_unet_ultrastable_focal_tversky_centerline_aux_v1
+description: Numerical-stability repair of ABI-101 ConvNeXt-style U-Net replacing the learned front-end mixer with bounded deterministic raw+BTD features and lowering learning rate while retaining trusted focal-Tversky loss and Centerline Target auxiliary supervision.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+repair:
+  original_proposal_id: abi101_fullspectral_btd_convnext_unet_focal_tversky_centerline_aux_v1
+  original_candidate_id: abi101_fullspectral_btd_convnext_unet_focal_tversky_centerline_aux_v1
+  motivating_run_id: run_20260830_065055_ef616d
+  failure_classification: candidate_bug
+  preserves_original_hypothesis: true
+  preserves_comparison_target: true
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: focal_tversky
+  optimizer: adamw
+  learning_rate: 0.00005
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

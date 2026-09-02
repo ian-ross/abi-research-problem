@@ -1,0 +1,7 @@
+# ABI-136 SZA-aware ASPP/detail decoder with coarse objectness gate
+
+ABI-136 is a controlled family-development continuation of ABI-130. It keeps the provider-approved `abi_16ch_plus_sza` input, deterministic raw ABI plus thermal BTD plus SZA front end, compact ASPP/detail encoder-decoder, trusted `bce_dice` primary loss, provider-derived Centerline Target auxiliary supervision at weight 0.02, combined source-balanced traversal, random mirroring, AdamW learning rate `0.0003`, batch size 4, max epochs 12, constant learning rate, and disabled early stopping.
+
+The controlled architecture change is a neutral-initialized coarse objectness gate between the ASPP context and final line-aware refinement. The gate upsamples low-resolution ASPP context, compares it with high-resolution fused detail features, and applies a bounded feature multiplier initialized to unity. This tests whether coarse scene context can reduce negative-patch clutter and recover connectivity while preserving ABI-130's default-threshold recall benefit, without candidate-owned thresholding, postprocessing, Artifact Filters, losses, metrics, data loading, or sampling.
+
+Comparison targets are ABI-130 (`run_20260831_121006_7d24be`) as the SZA-aware ASPP/detail reference, ABI-068 (`run_20260828_010836_4ccc77`) as the local capped aggregate-Dice/source-balance reference, ABI-126 (`run_20260831_085615_d05ab3`) as the ASPP/detail precision/connectivity comparator, and ABI-066 (`run_20260827_230540_bf4ce3`) as the high-connectivity reference.

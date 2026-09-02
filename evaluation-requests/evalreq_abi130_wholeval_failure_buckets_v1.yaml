@@ -1,0 +1,28 @@
+request_id: evalreq_abi130_wholeval_failure_buckets_v1
+target_run_id: run_20260831_121006_7d24be
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, do ABI-130's capped
+  ASPP/detail decoder BTD+SZA BCE-Dice gains in aggregate filtered Dice, MIT
+  recall, source balance, and Google filtered Dice survive beyond the trusted
+  1,024-record-per-source representative validation cap, and do Harness-owned
+  failure buckets show whether the SZA-induced recall recovery is an acceptable
+  calibration improvement or introduces clutter/connectivity degradation relative
+  to ABI-126, ABI-121, ABI-068, and ABI-066?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, and bounded failure-bucket artifacts to decide whether
+  ABI-130 should become the local whole-validation-tested ASPP/detail
+  SZA-calibrated reference, whether ABI-126 should remain the ASPP/detail
+  precision/connectivity reference, or whether the next Autonomy Step should
+  broaden away from simple ASPP/detail input and loss tuning toward a different
+  architecture, calibration, preprocessing, loss, or data-policy frontier. Treat
+  the result as diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,29 @@
+name: abi150_fullspectral_btd_sza_structure_tensor_aspp_detail_decoder_finite_repair_bce_dice_centerline_aux_v1
+description: Finite-gradient repair of ABI-149 full-spectral BTD+SZA structure-tensor ASPP/detail decoder preserving trusted BCE-Dice and Centerline Target supervision.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+repair:
+  original_proposal_id: abi149_fullspectral_btd_sza_structure_tensor_aspp_detail_decoder_bce_dice_centerline_aux_v1
+  original_candidate_id: abi149_fullspectral_btd_sza_structure_tensor_aspp_detail_decoder_bce_dice_centerline_aux_v1
+  motivating_run_id: run_20260901_034445_07ce82
+  failure_classification: candidate_bug
+  preserves_original_hypothesis: true
+  preserves_comparison_target: true
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

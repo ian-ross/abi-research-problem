@@ -1,0 +1,29 @@
+request_id: evalreq_abi154_wholeval_failure_buckets_v1
+target_run_id: run_20260901_071026_32d3ec
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, do ABI-154's capped
+  full-scale skip ASPP/detail decoder gains in filtered precision, connectivity,
+  MIT filtered Dice, and positive-area discipline survive beyond the trusted
+  1,024-record-per-source representative validation cap, and do Harness-owned
+  failure buckets show whether its lower Google Dice and recall versus ABI-130
+  are acceptable trade-offs rather than full-validation under-segmentation or
+  source-specific failure modes relative to ABI-130, ABI-126, ABI-143, ABI-142,
+  and ABI-068?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, and bounded failure-bucket artifacts to decide whether
+  ABI-154 should become the local whole-validation-tested SZA-aware ASPP/detail
+  precision/connectivity reference, whether ABI-130 should remain the preferred
+  SZA-calibrated ASPP/detail reference, or whether the next Autonomy Step should
+  broaden away from all-scale ASPP/detail decoder fusion toward a different
+  architecture, calibration, preprocessing, loss, or data-policy frontier. Treat
+  the result as diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

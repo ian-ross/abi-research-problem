@@ -1,0 +1,7 @@
+# ABI-095 ultra-stable full-spectral BTD large-kernel line-context net repair
+
+Repair Candidate for GOES ABI Contrail Segmentation. ABI-094 (`run_20260830_002805_1d4d0f`) failed with Harness-recorded `candidate_bug` after a `non_finite_training_state` in `gradient.front_end.learned_mixer.0.weight` at epoch 12. ABI-095 preserves the large-kernel line-context scout hypothesis while making the smallest stability-oriented architectural/training changes needed to remove the observed failure point.
+
+The model uses only provider-approved ABI channels 1-16 plus brightness-temperature-difference planes derived from those same channels. Compared with ABI-094, it removes the learned 1x1 front-end mixer, keeps bounded normalized raw ABI and BTD features, reduces the base width from 48 to 40, reduces residual contributions in the large-kernel blocks, bounds intermediate activations, and lowers the AdamW learning rate to 0.00005. It still uses residual horizontal/vertical/local/dilated large-kernel blocks, pyramid context, a multi-scale line head, primary `mask_logits`, and provider-derived `centerline_logits` auxiliary output.
+
+All data loading, split logic, sampling, augmentation, losses, target derivation, metrics, thresholding, Artifact Filters, postprocessing, resource placement, and Run lifecycle remain provider/Harness-owned. The candidate receives no longitude, latitude, or reconstructed coordinate inputs and performs no network access or runtime weight downloads.

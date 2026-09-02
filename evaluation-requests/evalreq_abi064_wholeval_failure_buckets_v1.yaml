@@ -1,0 +1,26 @@
+request_id: evalreq_abi064_wholeval_failure_buckets_v1
+target_run_id: run_20260827_212811_0e34e2
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-064's
+  coarse-to-fine U-Net best-checkpoint capped source balance and marginal
+  filtered-Dice lead over ABI-058 persist, and do its Harness-owned failure
+  buckets show a real false-positive-control improvement or merely a different
+  precision/recall redistribution under the trusted Artifact Filters?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, and bounded failure-bucket artifacts to decide whether
+  ABI-064 should replace ABI-058 as the local whole-validation-tested reference,
+  whether additional coarse-to-fine family development is justified after the
+  negative ABI-065 focal-Tversky follow-up, or whether the next Autonomy Step
+  should broaden to a materially different topology/connectivity or
+  false-positive-control architecture family. Treat the result as diagnostic
+  evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,20 @@
+name: abi051_fullspectral_deeplabv3plus_btd_cldice_centerline_aux_v1
+description: Full-spectral DeepLabV3+ BTD-mixer with trusted BCE-Dice-clDice primary loss and a low-weight Centerline Target auxiliary head.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.05
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice_cldice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12

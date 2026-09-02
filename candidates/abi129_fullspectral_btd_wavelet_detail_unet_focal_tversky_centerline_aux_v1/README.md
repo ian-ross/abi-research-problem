@@ -1,0 +1,5 @@
+# ABI-129 Full-Spectral BTD Wavelet-Detail U-Net Focal-Tversky Centerline Auxiliary v1
+
+ABI-129 is a contract-compliant architecture scout for GOES ABI Contrail Segmentation. It broadens away from recent ASPP/detail mask-head tuning by using a compact wavelet-detail U-Net: encoder downsampling preserves fixed high-frequency detail summaries beside low-frequency context, and decoder skips are context-gated rather than blindly amplified.
+
+The candidate uses only provider-approved `abi_16ch` input, deterministic brightness-temperature-difference planes derived from GOES ABI channels 1-16, torch modules, trusted `focal_tversky` primary loss, trusted `random_mirroring`, provider-owned `combined_source_balanced` traversal, and provider-derived Centerline Target auxiliary supervision (`centerline_logits`, `weighted_bce`, weight 0.02). It does not use longitude/latitude, candidate-owned data loading, target derivation, losses, metrics, thresholding, Artifact Filters, postprocessing, external files, pretrained weights, network access, or resource scheduling.

@@ -1,0 +1,47 @@
+request_id: capreq_extended_epoch_budget_for_late_improving_abi_scouts_v1
+capability_type: contract_surface
+blocked_hypothesis: Several finite, non-collapsed ABI branches selected their best
+  checkpoint at or near epoch 12, including ABI-173 signed-detail SZA-aware ASPP/detail,
+  ABI-179 UPerNet pyramid/detail, ABI-180 UPerNet directional line-context, and ABI-175
+  anti-aliased full-scale skip. The blocked hypothesis is that a Harness-owned extended-training
+  budget for a small number of already resource-safe, late-improving Candidates can
+  distinguish genuine late learning from the current 12-epoch ceiling and may improve
+  default-threshold filtered Dice without changing Candidate code, data loading, losses,
+  metrics, Artifact Filters, coordinates, or sampling implementation.
+current_contract_insufficiency: The active Agent Workspace Configuration caps Candidate
+  manifests at 12 epochs and 3600 seconds. Candidate code and manifests cannot raise
+  these ceilings, and the agent must not reinterpret capped 12-epoch trajectories
+  as evidence about longer optimization. Multiple recent runs ended at the selected
+  best epoch or showed late jumps, but an in-contract Candidate Submission cannot
+  answer whether those trajectories plateau or improve under a longer trusted budget.
+expected_research_value: A narrow, trusted extended-budget surface would test whether
+  architecture search has been prematurely dominated by the epoch ceiling. It would
+  help decide whether ABI-173, ABI-179, or another late-improving branch deserves
+  further family development or whole-validation diagnostics, versus broadening away
+  because the apparent late improvement does not survive additional epochs.
+safety_reproducibility_risks: Longer runs consume more A100 time, may exceed the current
+  wall-clock envelope, and may overfit the provider-selected representative cap. Results
+  must remain labeled as capped feasibility evidence, not full-data promotion evidence.
+  The change must preserve provider ownership of capped-record selection, sampling
+  traversal implementation, augmentation, losses, metrics, Artifact Filters, prediction
+  retention, resource placement, and Run lifecycle, and should not grant Candidate
+  code any new authority.
+minimal_harness_change: Add a reviewed Harness/Workspace Configuration variant or
+  explicit operator-approved action that permits selected already-validated ABI Candidates
+  to run for up to 24 epochs with a matching trusted wall-clock budget, while keeping
+  the existing sample ceiling, batch-size ceiling, scheduler allowlist, early-stopping-disabled
+  policy, prediction-retention policy, coordinate exclusion, and all provider-owned
+  boundaries unchanged. The Harness should record the extended-budget policy identity
+  in Run metadata.
+candidate_authority_requested: none
+example_follow_up_experiments:
+- Rerun ABI-173 signed-detail SZA-aware full-scale skip ASPP/detail with the extended
+  epoch budget to test whether its whole-validation-confirmed recall recovery improves
+  or overfits under more epochs.
+- Rerun ABI-179 UPerNet pyramid/detail only if reviewers want to test whether its
+  epoch-11-to-12 jump was a late-learning trajectory rather than noise; keep all Candidate
+  source and manifest choices unchanged except the Harness-owned epoch budget.
+- If one extended run improves capped filtered Dice, request whole-validation failure-bucket
+  diagnostics before any promotion claim; if it plateaus or degrades, broaden away
+  from longer-training continuations.
+priority: medium

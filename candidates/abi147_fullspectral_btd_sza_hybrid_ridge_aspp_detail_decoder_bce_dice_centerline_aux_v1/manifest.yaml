@@ -1,0 +1,22 @@
+name: abi147_fullspectral_btd_sza_hybrid_ridge_aspp_detail_decoder_bce_dice_centerline_aux_v1
+description: Full-spectral BTD+SZA hybrid ridge-ASPP/detail decoder fusing ABI-130 style context/detail features with ABI-143 style ridge evidence under trusted BCE-Dice.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

@@ -1,0 +1,7 @@
+# ABI-132 full-spectral BTD+SZA ASPP/detail decoder region-line agreement BCE-Dice centerline auxiliary
+
+Family-development continuation for GOES ABI Contrail Segmentation. This candidate preserves ABI-130's provider-approved `abi_16ch_plus_sza` input, normalized raw ABI plus deterministic thermal BTD plus Solar Geometry Input front end, compact ASPP/detail encoder-decoder, trusted BCE-Dice primary loss, combined source-balanced traversal, trusted random mirroring, and low-weight provider-derived Centerline Target auxiliary head.
+
+The controlled architecture change is a bounded region-line agreement residual mask head. The base mask logits remain a standard learned 1x1 projection from the refined feature map, while a zero-initialized residual path compares local high-frequency detail, broad regional support, and horizontal/vertical line context before adding a bounded learned logit correction. This is intended to recover some of ABI-126/ABI-066's precision/connectivity discipline without undoing ABI-130's SZA-assisted recall and without candidate-owned thresholding or postprocessing.
+
+The model receives no longitude, latitude, reconstructed coordinate features, Dataset Source identity, pretrained weights, or network/runtime-fetched resources. All data loading, split logic, capped-record selection, sampling implementation, augmentation transforms, primary and auxiliary losses, target derivation, metrics, thresholding, Artifact Filters, postprocessing, resource placement, prediction retention, and Run lifecycle remain provider/Harness-owned.

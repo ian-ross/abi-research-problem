@@ -1,0 +1,31 @@
+request_id: evalreq_abi173_wholeval_failure_buckets_v1
+target_run_id: run_20260901_234732_bd5917
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, do ABI-173's capped
+  signed-detail full-scale skip ASPP decoder gains in aggregate filtered Dice,
+  MIT filtered Dice, Google filtered Dice, and default-threshold recall over
+  ABI-154 survive beyond the trusted 1,024-record-per-source representative
+  validation cap, and do Harness-owned failure buckets show whether its lower
+  precision/connectivity versus ABI-154 and ABI-130 reflects acceptable recall
+  recovery or unacceptable negative-patch clutter, fragmented contrail structure,
+  or source-specific degradation relative to ABI-154, ABI-130, ABI-068, and the
+  canonical MCAST summaries?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, and bounded failure-bucket artifacts to decide whether
+  ABI-173 should become the SZA-aware ASPP/detail aggregate branch, whether
+  ABI-154 should remain the whole-validation-tested precision/connectivity
+  reference, whether ABI-130 should remain the SZA-aware aggregate reference, or
+  whether the next Autonomy Step should shift from signed-detail recall recovery
+  toward a more conservative connectivity-preserving decoder, calibration head,
+  preprocessing, loss, or data-policy frontier. Treat the result as diagnostic
+  evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

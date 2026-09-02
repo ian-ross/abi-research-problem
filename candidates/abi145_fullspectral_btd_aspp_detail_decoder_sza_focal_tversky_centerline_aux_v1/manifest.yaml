@@ -1,0 +1,22 @@
+name: abi145_fullspectral_btd_aspp_detail_decoder_sza_focal_tversky_centerline_aux_v1
+description: Full-spectral BTD+SZA ASPP/detail decoder changing ABI-130 from trusted BCE-Dice to focal-Tversky loss to test recall/source-balance recovery.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: focal_tversky
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

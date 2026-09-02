@@ -1,0 +1,23 @@
+request_id: evalreq_abi056_wholeval_failure_buckets_v1
+target_run_id: run_20260827_153716_1ac9d4
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full Working Validation Split, does ABI-056's capped high-resolution
+  BTD line U-Net multi-scale skip-fusion advantage over ABI-053 persist, and
+  which Harness-owned failure buckets explain remaining filtered-Dice and
+  connectivity gaps versus canonical MCAST context?
+expected_decision_impact: >-
+  Use whole-validation aggregate, Dataset Source-stratified metrics, threshold
+  behavior, and bounded failure-bucket samples to decide whether the next
+  Autonomy Step should continue high-resolution line U-Net family development,
+  tune threshold/calibration behavior through approved mechanisms, or broaden to
+  a different connectivity architecture family. Treat the result as diagnostic
+  evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

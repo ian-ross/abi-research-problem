@@ -1,0 +1,7 @@
+# ABI-125 full-spectral BTD frequency-gated line U-Net additive directional context
+
+ABI-125 is a controlled family-development continuation of ABI-068 (`run_20260828_010836_4ccc77`). It keeps the provider-approved full ABI Channel Input (`abi_16ch`), deterministic raw-plus-BTD front end using only ABI channels 1-16, frequency-gated line U-Net backbone, trusted `focal_tversky` loss, provider-derived Centerline Target auxiliary output at weight 0.02, combined source-balanced sampling, trusted random mirroring, AdamW learning rate `0.0003`, batch size 4, 12 epochs, constant learning rate, and disabled early stopping.
+
+The only architectural change is a neutral-initialized additive directional context bridge after the high-resolution frequency-pyramid fusion. The bridge aggregates horizontal, vertical, dilated line, local-detail, and smoothed broad-context features and adds a small bounded residual. It deliberately avoids the suppressive/objectness/agreement-style gates that regressed in ABI-123 and ABI-124, so it tests whether non-suppressive long-axis context can recover connectivity and precision while preserving ABI-068's recall and source balance.
+
+The Candidate does not use longitude/latitude, candidate-owned data loading, losses, metrics, target derivation, augmentation, thresholding, postprocessing, Artifact Filters, filesystem writes, network access, pretrained weights, resource placement, or lifecycle behavior.

@@ -1,0 +1,29 @@
+name: abi095_fullspectral_btd_large_kernel_line_context_net_ultrastable_v1
+description: Numerical-stability repair of ABI-094 large-kernel line-context net replacing the learned front-end mixer with deterministic bounded raw+BTD features and lowering learning rate.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch
+output_form: mask_logits
+repair:
+  original_proposal_id: abi094_fullspectral_btd_large_kernel_line_context_net_stable_syntax_repair_v1
+  original_candidate_id: abi094_fullspectral_btd_large_kernel_line_context_net_stable_syntax_repair_v1
+  motivating_run_id: run_20260830_002805_1d4d0f
+  failure_classification: candidate_bug
+  preserves_original_hypothesis: true
+  preserves_comparison_target: true
+auxiliary_targets:
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: focal_tversky
+  optimizer: adamw
+  learning_rate: 0.00005
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr
