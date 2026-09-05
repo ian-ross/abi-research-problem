@@ -1,0 +1,22 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260903_075132_5cff8c
+justification: >-
+  ABI-191 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and made a
+  late filtered-Dice jump from 0.3567 at epoch 11 to 0.4041 at epoch 12. The
+  selected checkpoint reached the current third-best capped filtered Dice while
+  improving filtered recall relative to ABI-181 and improving MIT filtered Dice
+  relative to ABI-184/188/189, without a persistent all-negative or all-positive
+  prediction collapse and without primary Artifact Filter dependence. It remained
+  resource-safe at batch size 4 with 10,060,450 parameters. The extended
+  late-improving budget tests whether this exact directional-lattice mechanism can
+  convert the epoch-12 jump into ABI-181-level aggregate overlap while preserving
+  the MIT/source-balance signal, without changing Candidate-owned training
+  behavior, data loading, sampling implementation, augmentation, losses, metrics,
+  Artifact Filters, coordinates, prediction retention, scheduler policy, or
+  resource placement. Results remain capped representative feasibility evidence
+  unless a later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,22 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260903_031950_88e745
+justification: >-
+  ABI-188 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and made a
+  late filtered-Dice jump from 0.3631 at epoch 11 to 0.4013 at epoch 12. The
+  selected checkpoint improved the ABI-183 exploratory Line plus Centerline parent
+  on aggregate filtered Dice, MIT filtered Dice, and filtered recall while avoiding
+  the severe connectivity collapse seen in the ABI-187 focal-Tversky branch. It
+  remained resource-safe at batch size 4 with 9,838,851 parameters and 10.51GB peak
+  CUDA reservation. The extended late-improving budget tests whether this exact
+  detached auxiliary-logit fusion mechanism can convert the late epoch-12 jump into
+  ABI-181/184-level capped filtered Dice while retaining its MIT recall gain and at
+  least ABI-068-level connectivity, without changing Candidate-owned training
+  behavior, data loading, sampling implementation, augmentation, losses, metrics,
+  Artifact Filters, coordinates, prediction retention, scheduler policy, or
+  resource placement. Results remain capped representative feasibility evidence
+  unless a later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

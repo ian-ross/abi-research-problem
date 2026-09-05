@@ -1,0 +1,5 @@
+# ABI-184 Full-Spectral BTD+SZA Signed-Detail Full-Scale Skip ASPP Line-Aux Late36 BCE-Dice Centerline Auxiliary v1
+
+Late-improving budget close-continuation of ABI-183. The model architecture, provider-approved `abi_16ch_plus_sza` front end, deterministic approved-channel BTD features, signed-detail full-scale skip ASPP decoder, BCE-Dice loss, Line Target auxiliary head at weight 0.01, Centerline Target auxiliary head at weight 0.02, source-balanced traversal, trusted random mirroring, learning rate, batch size, and constant scheduler are retained exactly.
+
+The only research change is the reviewed `late_improving` budget request for 36 effective epochs, motivated by ABI-183's final-epoch best checkpoint and strong connectivity. The goal is to test whether longer trusted optimization recovers ABI-181-style aggregate/source filtered Dice while preserving ABI-183's direct line-supervision connectivity gain, without moving data loading, losses, target derivation, sampling, augmentation, thresholding, Artifact Filters, resource placement, or lifecycle control into Candidate code.

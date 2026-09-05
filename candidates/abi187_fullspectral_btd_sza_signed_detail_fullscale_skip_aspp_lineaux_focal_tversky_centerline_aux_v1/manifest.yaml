@@ -1,0 +1,26 @@
+name: abi187_fullspectral_btd_sza_signed_detail_fullscale_skip_aspp_lineaux_focal_tversky_centerline_aux_v1
+description: Controlled ABI-183/184 signed-detail full-scale skip ASPP Line plus Centerline auxiliary continuation changing only the trusted primary loss to focal-Tversky to test recall recovery under direct line supervision.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+auxiliary_targets:
+  - name: line
+    output: line_logits
+    loss: weighted_bce
+    weight: 0.01
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: all_target_frames
+  augmentation_policy: random_mirroring
+training:
+  loss: focal_tversky
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

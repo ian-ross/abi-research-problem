@@ -1,0 +1,20 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260903_135523_8976a0
+justification: >-
+  ABI-195 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  a late recovery from 0.3784 filtered Dice at epoch 9 through a dip to 0.3718 at
+  epoch 10 and then improvement to 0.3891 at epoch 12. The final checkpoint also
+  had the run final highest filtered precision and connectivity while keeping the
+  filtered predicted-positive fraction low, and it repaired ABI-194 clutter-gate
+  connectivity regression without changing provider-owned losses, sampling,
+  augmentation, metrics, Artifact Filters, coordinates, scheduler policy, or
+  resource placement. The extended late-improving budget tests whether this exact
+  resource-safe ridge-preserving bridge can convert the final-epoch high-precision
+  high-connectivity operating point into better recall/source balance, or whether
+  it plateaus/overfits. Results remain capped representative feasibility evidence
+  unless a later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

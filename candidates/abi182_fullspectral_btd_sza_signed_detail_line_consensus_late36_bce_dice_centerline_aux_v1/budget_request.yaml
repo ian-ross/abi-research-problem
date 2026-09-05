@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260902_005632_5651ef
+  - run_20260902_150611_cbbf35
+justification: >-
+  ABI-174 completed finitely and non-degenerately as a close continuation of the
+  signed-detail full-scale skip ASPP decoder, improved capped filtered
+  connectivity over ABI-173 from 0.3203 to 0.3460, and selected its final
+  exploratory epoch after a late jump in filtered Dice from 0.3609 at epoch 11 to
+  0.3929 at epoch 12. Its aggregate/source Dice remained below ABI-173/181,
+  so it was not promoted, but the final-epoch trajectory plus the intended
+  connectivity effect make it an eligible close-continuation for the
+  Harness-owned late-improving budget. ABI-181 then demonstrated that the same
+  signed-detail parent family can gain materially under 36 trusted epochs and
+  that whole-validation diagnostics still leave connectivity and MIT/source
+  balance as actionable weaknesses. ABI-182 keeps ABI-174 source and manifest
+  choices unchanged and requests only the reviewed late-improving epoch budget to
+  test whether line-consensus connectivity can catch up in aggregate/source Dice
+  without Candidate-owned data loading, sampling implementation, augmentation,
+  losses, metrics, thresholding, Artifact Filters, coordinates, prediction
+  retention, scheduler policy, resource placement, or Run lifecycle changes.
+fallback_if_denied: run_exploratory_budget

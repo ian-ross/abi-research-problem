@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260904_032624_7e855a
+justification: >-
+  ABI-201 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  late ambiguous improvement after volatility: filtered Dice recovered from 0.3575
+  at epoch 10 and 0.3599 at epoch 11 to a run-best 0.3958 at epoch 12, while
+  filtered connectivity recovered to 0.4630 and the filtered predicted-positive
+  fraction stayed conservative at 0.002749. The selected checkpoint improved the
+  ABI-199/200 bridge probes on precision, connectivity, Google filtered Dice, and
+  positive-area discipline, but remained below ABI-196 on aggregate/MIT Dice and
+  recall. The approved late-improving budget tests whether this exact resource-safe
+  cross-scale directional-consensus mechanism can convert the final-epoch recovery
+  into improved MIT/source balance and recall while preserving its precision,
+  connectivity, and low clutter behavior, without changing Candidate-owned data
+  loading, sampling implementation, augmentation, losses, metrics, Artifact
+  Filters, coordinates, prediction retention, scheduler policy, or resource
+  placement. Results remain capped representative feasibility evidence unless a
+  later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

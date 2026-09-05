@@ -1,0 +1,18 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260901_234732_bd5917
+justification: >-
+  ABI-173 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as best checkpoint, and its capped
+  signal survived Harness-owned whole-validation diagnostics. Filtered Dice improved
+  late from 0.3768 at epoch 11 to 0.3962 at epoch 12, with whole-validation filtered
+  Dice 0.3973 above the SZA-aware ASPP/detail references and canonical MCAST context.
+  The extended late-improving budget tests whether this exact already resource-safe
+  signed-detail branch continues learning, plateaus, or overfits without changing
+  Candidate code, data loading, sampling implementation, augmentation, loss,
+  metrics, Artifact Filters, coordinates, prediction retention, scheduler policy,
+  or resource placement. Results remain capped feasibility evidence unless a later
+  trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,29 @@
+request_id: evalreq_abi196_wholeval_failure_buckets_v1
+target_run_id: run_20260903_195527_248472
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-196's
+  late36 ridge-detail bridge ASPP capped-best improvement to 0.4133
+  val/filtered_dice survive beyond the trusted 1,024-record-per-source
+  representative validation cap, and do Harness-owned failure buckets show
+  whether its high-connectivity, high-precision but recall-limited operating
+  point is genuinely stronger than the current whole-validation-tested ABI-181,
+  ABI-184, and ABI-192 references rather than capped-subset noise?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, connectivity, negative-patch clutter, positive-patch miss
+  buckets, and Artifact Filter dependence to decide whether ABI-196 should
+  replace ABI-181 as the aggregate filtered-Dice reference, whether it should
+  instead be treated as a precision/connectivity reference beside ABI-184, and
+  whether the next in-contract step should continue the ridge-detail bridge
+  family, tune for recall/source balance, or broaden to a different
+  line-aware architecture or trusted data/loss/auxiliary policy probe. Treat
+  the result as diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

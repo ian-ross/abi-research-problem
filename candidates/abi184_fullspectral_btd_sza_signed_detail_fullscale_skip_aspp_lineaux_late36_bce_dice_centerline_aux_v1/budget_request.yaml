@@ -1,0 +1,22 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260902_204128_bba815
+justification: >-
+  ABI-183 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and made a
+  late filtered-Dice jump from 0.3622 at epoch 11 to 0.3966 at epoch 12. The
+  selected checkpoint uniquely combined near-reference capped filtered Dice with
+  strong filtered connectivity (0.4546), restrained filtered predicted-positive
+  fraction (0.00289), and improved precision relative to the ABI-173 parent while
+  adding only trusted provider-derived Line Target supervision to the already
+  resource-safe signed-detail full-scale skip ASPP branch. The extended
+  late-improving budget tests whether this exact close continuation can recover
+  ABI-181-like aggregate/source overlap while preserving the ABI-183 connectivity
+  gain, without changing Candidate-owned training behavior, data loading, sampling
+  implementation, augmentation, losses, metrics, Artifact Filters, coordinates,
+  prediction retention, scheduler policy, or resource placement. Results remain
+  capped representative feasibility evidence unless a later trusted whole-validation
+  diagnostic is requested.
+fallback_if_denied: run_exploratory_budget
