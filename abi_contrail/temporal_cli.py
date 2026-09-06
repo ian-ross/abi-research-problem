@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import tempfile
-from collections.abc import Mapping, Sequence
+from collections import OrderedDict
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -35,7 +37,7 @@ from abi_contrail.temporal import (
     GOES16ConusScene,
     build_temporal_cache_manifest_from_eligibility,
     build_temporal_eligibility_manifest,
-    list_goes16_mcmipc_scene_keys,
+    goes16_mcmipc_hour_prefixes,
     read_scene_coverage_metadata,
     scene_from_coverage_metadata,
 )
@@ -66,6 +68,7 @@ def provision_temporal_frames(
     output_name: str | None = None,
     extract_patches: bool = False,
     cache_manifest_name: str | None = None,
+    log_interval: int = 100,
 ) -> dict[str, object]:
     """Provision the current vertical slice: temporal eligibility manifest.
 
@@ -81,10 +84,16 @@ def provision_temporal_frames(
         raise ValueError("subset_limit must be positive")
     temporal_root = _resolve_temporal_root(data_config, temporal_cache_root)
     temporal_root.mkdir(parents=True, exist_ok=True)
+    _progress(log_interval, f"loading configured ABI Patch records from data root into temporal provisioning scope")
     context_by_key = _configured_record_contexts(data_config)
     all_records = tuple(context.record for context in context_by_key.values())
     scanned_records = all_records[:subset_limit] if subset_limit is not None else all_records
-    resolved_scenes = _load_scenes(scanned_records, scenes=scenes, scene_manifest_path=scene_manifest_path)
+    _progress(
+        log_interval,
+        f"configured_records={len(all_records)} scanned_records={len(scanned_records)} offsets={list(frame_offsets)} extract_patches={extract_patches}",
+    )
+    resolved_scenes = _load_scenes(scanned_records, scenes=scenes, scene_manifest_path=scene_manifest_path, log_interval=log_interval)
+    _progress(log_interval, f"building temporal eligibility manifest using {len(resolved_scenes)} discovered CONUS scenes")
     manifest = build_temporal_eligibility_manifest(
         scanned_records,
         resolved_scenes,
@@ -94,6 +103,10 @@ def provision_temporal_frames(
     filename = output_name or f"abi-temporal-eligibility-offsets-{temporal_offsets_cache_token(frame_offsets)}.json"
     manifest_path = _contained_output_path(temporal_root, filename)
     _write_json_atomic(manifest_path, manifest)
+    _progress(
+        log_interval,
+        f"wrote eligibility manifest {manifest_path} eligible_records={manifest['summary']['eligible_record_count']}",
+    )
     report = {
         "status": "eligibility_manifest_written",
         "eligibility_manifest": str(manifest_path),
@@ -113,6 +126,7 @@ def provision_temporal_frames(
             scenes=resolved_scenes,
             temporal_root=temporal_root,
             frame_offsets=frame_offsets,
+            log_interval=log_interval,
         )
         cache_filename = cache_manifest_name or f"abi-temporal-cache-offsets-{temporal_offsets_cache_token(frame_offsets)}.json"
         cache_manifest_path = _contained_output_path(temporal_root, cache_filename)
@@ -121,6 +135,8 @@ def provision_temporal_frames(
             {
                 "status": "cache_manifest_written",
                 "cache_manifest": str(cache_manifest_path),
+                "cache_eligible_record_count": len(cache_manifest.get("records", ())),
+                "coverage_rejected_record_count": cache_manifest["summary"].get("coverage_rejected_record_count", 0),
                 "extracted_patch_count": cache_manifest["summary"].get("extracted_patch_count", 0),
                 "next_phase": "candidate_training_can_use_temporal_cache_manifest",
             }
@@ -144,7 +160,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-name", help="Eligibility manifest filename under the temporal cache root.")
     parser.add_argument("--extract-patches", action="store_true", help="Download/materialize non-zero GOES scenes, extract trusted patch tensors, and write an abi_temporal_cache.v1 manifest.")
     parser.add_argument("--cache-manifest-name", help="Cache manifest filename under the temporal cache root when --extract-patches is used.")
-    args = parser.parse_args(argv)
+    parser.add_argument("--log-interval", type=int, default=100, help="Progress logging interval; use 0 to disable progress logs.")
+    args = parser.parse_args(_normalise_negative_offsets_option(argv))
 
     from ml_autoresearch.candidate_execution_config import load_candidate_execution_config
 
@@ -162,6 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         output_name=args.output_name,
         extract_patches=args.extract_patches,
         cache_manifest_name=args.cache_manifest_name,
+        log_interval=args.log_interval,
     )
     report["workspace_root"] = str(workspace_root)
     print(json.dumps(report, indent=2, sort_keys=True))
@@ -211,17 +229,21 @@ def _extract_temporal_patch_cache(
     scenes: Sequence[GOES16ConusScene],
     temporal_root: Path,
     frame_offsets: Sequence[int],
+    log_interval: int = 100,
 ) -> dict[str, object]:
     patch_paths: dict[tuple[tuple[object, ...], int], str] = {}
     scene_cache_root = temporal_root / "source-scenes"
-    patch_root = temporal_root / "patches" / temporal_offsets_cache_token(frame_offsets)
-    source_grid_cache: dict[str, object] = {}
+    source_grid_cache: OrderedDict[str, object] = OrderedDict()
+    loaded_source_scene_keys: set[str] = set()
     scene_by_key = {scene.key: scene for scene in scenes}
     records = eligibility_manifest.get("records", ())
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
         raise ValueError("eligibility manifest records must be a sequence")
     written_paths: set[Path] = set()
-    for raw_record in records:
+    extracted_records: list[Mapping[str, object]] = []
+    coverage_rejected_record_count = 0
+    _progress(log_interval, f"extracting temporal patch cache for time_eligible_records={len(records)}")
+    for record_index, raw_record in enumerate(records, start=1):
         if not isinstance(raw_record, Mapping):
             raise ValueError("eligibility manifest records must contain mappings")
         record_key = temporal_record_key_from_mapping(raw_record)
@@ -233,6 +255,8 @@ def _extract_temporal_patch_cache(
         source_scenes = raw_record.get("temporal_source_scenes")
         if not isinstance(source_scenes, Mapping):
             raise ValueError("eligibility record is missing temporal_source_scenes")
+        record_patches: dict[int, np.ndarray] = {}
+        coverage_rejected = False
         for offset in frame_offsets:
             if offset == 0:
                 continue
@@ -242,13 +266,40 @@ def _extract_temporal_patch_cache(
             if scene_key not in source_grid_cache:
                 local_scene = materialize_goes_scene(scene_key, scene_cache_root)
                 source_grid_cache[scene_key] = load_regular_source_grid_from_netcdf(local_scene)
+                loaded_source_scene_keys.add(scene_key)
+                _progress(
+                    log_interval,
+                    f"source scene load progress unique_source_scenes={len(loaded_source_scene_keys)} memory_cache_entries={len(source_grid_cache)}",
+                    every=max(log_interval, 50),
+                    count=len(loaded_source_scene_keys),
+                )
+                while len(source_grid_cache) > 4:
+                    source_grid_cache.popitem(last=False)
+            else:
+                source_grid_cache.move_to_end(scene_key)
             scene = scene_by_key.get(scene_key)
             observation_time = scene.canonical_scene_time if scene is not None else raw_record.get("goes_time")
-            patch = extract_regular_source_patch(
-                source_grid_cache[scene_key],  # type: ignore[arg-type]
-                target_grid,
-                observation_time=observation_time,
+            try:
+                record_patches[int(offset)] = extract_regular_source_patch(
+                    source_grid_cache[scene_key],  # type: ignore[arg-type]
+                    target_grid,
+                    observation_time=observation_time,
+                )
+            except ValueError as exc:
+                if "does not fully cover requested temporal ABI Patch footprint" not in str(exc):
+                    raise
+                coverage_rejected = True
+                coverage_rejected_record_count += 1
+                break
+        if coverage_rejected:
+            _progress(
+                log_interval,
+                f"extract progress records={record_index}/{len(records)} extracted_records={len(extracted_records)} coverage_rejected={coverage_rejected_record_count}",
+                every=log_interval,
+                count=record_index,
             )
+            continue
+        for offset, patch in record_patches.items():
             rel_path = _patch_relative_path(raw_record, offset, frame_offsets)
             output_path = (temporal_root / rel_path).resolve()
             try:
@@ -261,13 +312,28 @@ def _extract_temporal_patch_cache(
             _write_npy_atomic(output_path, patch)
             written_paths.add(output_path)
             patch_paths[(record_key, int(offset))] = rel_path
+        extracted_records.append(raw_record)
+        _progress(
+            log_interval,
+            f"extract progress records={record_index}/{len(records)} extracted_records={len(extracted_records)} coverage_rejected={coverage_rejected_record_count}",
+            every=log_interval,
+            count=record_index,
+        )
+    extracted_eligibility_manifest = dict(eligibility_manifest)
+    extracted_eligibility_manifest["records"] = extracted_records
+    summary = dict(eligibility_manifest.get("summary", {})) if isinstance(eligibility_manifest.get("summary"), Mapping) else {}
+    summary["time_eligible_record_count"] = len(records)
+    summary["coverage_rejected_record_count"] = coverage_rejected_record_count
+    summary["eligible_record_count"] = len(extracted_records)
+    extracted_eligibility_manifest["summary"] = summary
     cache_manifest = build_temporal_cache_manifest_from_eligibility(
-        eligibility_manifest,
+        extracted_eligibility_manifest,
         patch_path_for=lambda record, offset: patch_paths[(temporal_record_key_from_mapping(record), int(offset))],
     )
     summary = dict(cache_manifest.get("summary", {})) if isinstance(cache_manifest.get("summary"), Mapping) else {}
     summary["extracted_patch_count"] = len(patch_paths)
-    summary["source_scene_count"] = len(source_grid_cache)
+    summary["source_scene_count"] = len(loaded_source_scene_keys)
+    summary["source_grid_memory_cache_limit"] = 4
     summary["patch_storage"] = "npy_hwc_19_provider_internal_channels"
     cache_manifest["summary"] = summary
     return cache_manifest
@@ -325,21 +391,84 @@ def _load_scenes(
     *,
     scenes: Sequence[GOES16ConusScene] | None,
     scene_manifest_path: str | Path | None,
+    log_interval: int = 100,
 ) -> tuple[GOES16ConusScene, ...]:
     if scenes is not None and scene_manifest_path is not None:
         raise ValueError("provide either scenes or scene_manifest_path, not both")
     if scenes is not None:
+        _progress(log_interval, f"using caller-provided scene metadata count={len(scenes)}")
         return tuple(scenes)
     if scene_manifest_path is not None:
-        return _load_scene_manifest(scene_manifest_path)
-    keys: set[str] = set()
+        loaded = _load_scene_manifest(scene_manifest_path)
+        _progress(log_interval, f"loaded scene metadata manifest {scene_manifest_path} scenes={len(loaded)}")
+        return loaded
+    keys = _discover_scene_keys_for_records(records, log_interval=log_interval)
+    sorted_keys = sorted(keys)
+    _progress(log_interval, f"resolving coverage metadata for discovered_scene_keys={len(sorted_keys)}")
+    resolved: list[GOES16ConusScene] = []
+    for index, key in enumerate(sorted_keys, start=1):
+        resolved.append(read_scene_coverage_metadata(key))
+        _progress(
+            log_interval,
+            f"coverage metadata progress scenes={index}/{len(sorted_keys)}",
+            every=max(log_interval, 500),
+            count=index,
+        )
+    return tuple(resolved)
+
+
+def _discover_scene_keys_for_records(
+    records: Sequence[ABIPatchIndexRecord],
+    *,
+    lister: Callable[[str], Iterable[str]] | None = None,
+    log_interval: int = 100,
+) -> set[str]:
+    from abi_contrail.temporal import _is_goes16_mcmipc_netcdf_key, _normalise_s3_uri, _parse_datetime
+
+    if lister is None:
+        import s3fs
+
+        fs = s3fs.S3FileSystem(anon=True)
+
+        def lister(prefix: str) -> Iterable[str]:
+            return fs.ls(prefix)
+
+    prefixes: set[str] = set()
+    missing_goes_time_count = 0
     for record in records:
         if not record.goes_time:
+            missing_goes_time_count += 1
             continue
-        from abi_contrail.temporal import _parse_datetime  # trusted internal parser reused by CLI discovery
-
-        keys.update(list_goes16_mcmipc_scene_keys(_parse_datetime(record.goes_time)))
-    return tuple(read_scene_coverage_metadata(key) for key in sorted(keys))
+        prefixes.update(goes16_mcmipc_hour_prefixes(_parse_datetime(record.goes_time)))
+    sorted_prefixes = sorted(prefixes)
+    _progress(
+        log_interval,
+        f"discovering GOES-16 CONUS scene keys unique_hour_prefixes={len(sorted_prefixes)} missing_goes_time_records={missing_goes_time_count}",
+    )
+    keys: set[str] = set()
+    missing_prefix_count = 0
+    for index, prefix in enumerate(sorted_prefixes, start=1):
+        try:
+            listed_keys = lister(prefix)
+        except FileNotFoundError:
+            missing_prefix_count += 1
+            listed_keys = ()
+        before = len(keys)
+        for key in listed_keys:
+            uri = _normalise_s3_uri(str(key))
+            if _is_goes16_mcmipc_netcdf_key(uri):
+                keys.add(uri)
+        _progress(
+            log_interval,
+            f"S3 discovery progress prefixes={index}/{len(sorted_prefixes)} scene_keys={len(keys)} missing_prefixes={missing_prefix_count}",
+            every=log_interval,
+            count=index,
+        )
+    _progress(
+        log_interval,
+        f"S3 discovery complete unique_hour_prefixes={len(sorted_prefixes)} scene_keys={len(keys)} missing_prefixes={missing_prefix_count}",
+    )
+    return keys
 
 
 def _load_scene_manifest(path: str | Path) -> tuple[GOES16ConusScene, ...]:
@@ -402,11 +531,46 @@ def _write_json_atomic(path: Path, payload: Mapping[str, object]) -> None:
         Path(tmp_name).unlink(missing_ok=True)
 
 
+def _normalise_negative_offsets_option(argv: list[str] | None) -> list[str]:
+    """Let documented ``--offsets -1,0,1`` syntax survive argparse option parsing.
+
+    ``argparse`` treats values beginning with ``-`` as potential options before
+    handing them to the option's type/parser. ABI temporal offsets commonly
+    begin with a negative frame offset, so normalize the separated form to the
+    unambiguous ``--offsets=-1,0,1`` spelling.
+    """
+
+    raw = list(sys.argv[1:] if argv is None else argv)
+    normalised: list[str] = []
+    index = 0
+    while index < len(raw):
+        item = raw[index]
+        if item == "--offsets" and index + 1 < len(raw):
+            value = raw[index + 1]
+            if value.startswith("-") and value not in {"-h", "--help"}:
+                normalised.append(f"--offsets={value}")
+                index += 2
+                continue
+        normalised.append(item)
+        index += 1
+    return normalised
+
+
 def _parse_offsets(value: str) -> tuple[int, ...]:
     try:
         return tuple(int(part.strip()) for part in value.split(",") if part.strip())
     except ValueError as exc:
         raise ValueError("--offsets must be comma-separated integers") from exc
+
+
+def _progress(log_interval: int, message: str, *, every: int | None = None, count: int | None = None) -> None:
+    if log_interval <= 0:
+        return
+    if count is not None:
+        interval = every if every is not None else log_interval
+        if count % interval != 0:
+            return
+    print(f"[abi-temporal] {message}", file=sys.stderr, flush=True)
 
 
 __all__ = ["main", "provision_temporal_frames"]

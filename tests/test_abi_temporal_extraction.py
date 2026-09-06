@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import numpy as np
 import pytest
 from pyproj import CRS
@@ -50,6 +52,23 @@ def test_regular_source_patch_extraction_returns_19_channel_patch_without_paddin
     np.testing.assert_array_equal(patch[:, :, 16], np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3]], dtype=np.float32))
     np.testing.assert_array_equal(patch[:, :, 17], np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]], dtype=np.float32))
     np.testing.assert_array_equal(patch[:, :, 18], patch[:, :, 16] + patch[:, :, 17])
+
+
+def test_regular_source_patch_normalizes_timezone_aware_observation_time_for_sza() -> None:
+    observed_times = []
+
+    def fake_sza(observation_time: object, lon: np.ndarray, lat: np.ndarray) -> np.ndarray:
+        observed_times.append(observation_time)
+        return lon + lat
+
+    extract_regular_source_patch(
+        _source_grid(),
+        _target_grid(x0=1.0, y0=1.0),
+        solar_zenith_angle_function=fake_sza,
+        observation_time=datetime(2020, 1, 1, 3, 4, 5, tzinfo=timezone.utc),
+    )
+
+    assert observed_times == [datetime(2020, 1, 1, 3, 4, 5)]
 
 
 def test_regular_source_patch_extraction_fails_closed_for_partial_coverage() -> None:

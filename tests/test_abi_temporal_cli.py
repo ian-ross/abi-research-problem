@@ -10,7 +10,8 @@ import zarr
 from pyproj import CRS
 
 from abi_contrail.temporal import GOES16ConusScene
-from abi_contrail.temporal_cli import provision_temporal_frames
+from abi_contrail.datasets import ABIPatchIndexRecord
+from abi_contrail.temporal_cli import _discover_scene_keys_for_records, _normalise_negative_offsets_option, provision_temporal_frames
 
 
 def _write_google_fixture(root: Path) -> dict[str, object]:
@@ -65,10 +66,10 @@ def _scenes(*, keys: tuple[str, ...] | None = None) -> tuple[GOES16ConusScene, .
     )
 
 
-def _write_regular_scene(path: Path, *, base: float) -> None:
-    y = np.arange(256, dtype=np.float32)
-    x = np.arange(256, dtype=np.float32)
-    rows, cols = np.indices((256, 256))
+def _write_regular_scene(path: Path, *, base: float, size: int = 256) -> None:
+    y = np.arange(size, dtype=np.float32)
+    x = np.arange(size, dtype=np.float32)
+    rows, cols = np.indices((size, size))
     data_vars = {"spatial_ref": xr.DataArray(0, attrs={"crs_wkt": CRS.from_epsg(4326).to_wkt()})}
     for channel in range(1, 17):
         data_vars[f"CMI_C{channel:02d}"] = (("y", "x"), (base + channel + rows * 0 + cols * 0).astype(np.float32))
@@ -77,6 +78,53 @@ def _write_regular_scene(path: Path, *, base: float) -> None:
         coords={"x": x, "y": y},
         attrs={"time_coverage_start": "2020-01-01T00:00:00Z", "time_coverage_end": "2020-01-01T00:01:00Z"},
     ).to_netcdf(path)
+
+
+def _record(name: str, goes_time: str) -> ABIPatchIndexRecord:
+    return ABIPatchIndexRecord(
+        dataset_source="mit",
+        split="train",
+        scene_name=name,
+        scene_index=0,
+        goes_time=goes_time,
+        row=0,
+        col=0,
+        positive=True,
+        sample_index=None,
+    )
+
+
+def test_cli_accepts_documented_negative_offsets_spelling() -> None:
+    assert _normalise_negative_offsets_option(
+        ["--workspace-root", ".", "--offsets", "-1,0,1", "--extract-patches"]
+    ) == ["--workspace-root", ".", "--offsets=-1,0,1", "--extract-patches"]
+
+
+def test_scene_discovery_lists_each_unique_hour_prefix_once() -> None:
+    calls: list[str] = []
+
+    def lister(prefix: str) -> tuple[str, ...]:
+        calls.append(prefix)
+        return (
+            "s3://noaa-goes16/ABI-L2-MCMIPC/2020/001/00/"
+            "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc",
+        )
+
+    keys = _discover_scene_keys_for_records(
+        (
+            _record("a", "2020-01-01T00:05:00Z"),
+            _record("b", "2020-01-01T00:10:00Z"),
+        ),
+        lister=lister,
+        log_interval=0,
+    )
+
+    assert len(calls) == 3
+    assert len(set(calls)) == 3
+    assert keys == {
+        "s3://noaa-goes16/ABI-L2-MCMIPC/2020/001/00/"
+        "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc"
+    }
 
 
 def test_provision_temporal_frames_writes_full_eligibility_manifest_for_configured_snapshot(tmp_path: Path) -> None:
@@ -124,6 +172,31 @@ def test_provision_temporal_frames_extracts_non_zero_patches_and_writes_cache_ma
     assert plus_one.shape == (256, 256, 19)
     assert minus_one[0, 0, 0] == 1.0
     assert plus_one[0, 0, 0] == 2001.0
+
+
+def test_provision_temporal_frames_excludes_patch_when_conus_scene_has_partial_coverage(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    temporal_root = Path(str(data_config["temporal_cache"]))
+    temporal_root.mkdir()
+    scene_paths = tuple(str(tmp_path / f"scene-{index}.nc") for index in range(3))
+    for index, scene_path in enumerate(scene_paths):
+        _write_regular_scene(Path(scene_path), base=index * 1000.0, size=128)
+
+    report = provision_temporal_frames(
+        data_config=data_config,
+        offsets=(-1, 0, 1),
+        scenes=_scenes(keys=scene_paths),
+        extract_patches=True,
+        subset_limit=1,
+    )
+
+    cache = json.loads(Path(str(report["cache_manifest"])).read_text())
+    assert cache["records"] == []
+    assert cache["summary"]["time_eligible_record_count"] == 1
+    assert cache["summary"]["coverage_rejected_record_count"] == 1
+    assert cache["summary"]["eligible_record_count"] == 0
+    assert report["eligible_record_count"] == 1
+    assert report["extracted_patch_count"] == 0
 
 
 def test_provision_temporal_frames_fails_closed_when_google_location_crosses_center_footprint(tmp_path: Path) -> None:

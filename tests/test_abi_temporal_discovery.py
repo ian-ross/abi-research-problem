@@ -10,7 +10,10 @@ from abi_contrail.temporal import (
     GOES16ConusScene,
     choose_nearest_scene,
     goes16_mcmipc_hour_prefixes,
+    list_goes16_mcmipc_scene_keys,
+    parse_goes_abi_filename_coverage_times,
     parse_goes_abi_filename_scene_time,
+    read_scene_coverage_metadata,
     scene_from_coverage_metadata,
     temporal_window_by_frame_offsets,
 )
@@ -28,6 +31,50 @@ def test_goes16_mcmipc_prefixes_cover_adjacent_hours_for_boundary_matching() -> 
         f"s3://{GOES16_CONUS_BUCKET}/{GOES16_MCMIPC_PRODUCT}/2020/001/00/",
         f"s3://{GOES16_CONUS_BUCKET}/{GOES16_MCMIPC_PRODUCT}/2020/001/01/",
     )
+
+
+def test_goes16_scene_listing_treats_missing_hour_prefix_as_empty() -> None:
+    target = datetime(2020, 1, 1, 0, 1, tzinfo=timezone.utc)
+
+    def lister(prefix: str) -> tuple[str, ...]:
+        if prefix.endswith("/00/"):
+            return (
+                f"s3://{GOES16_CONUS_BUCKET}/{GOES16_MCMIPC_PRODUCT}/2020/001/00/"
+                "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc",
+            )
+        raise FileNotFoundError(prefix)
+
+    assert list_goes16_mcmipc_scene_keys(target, lister=lister) == (
+        f"s3://{GOES16_CONUS_BUCKET}/{GOES16_MCMIPC_PRODUCT}/2020/001/00/"
+        "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc",
+    )
+
+
+def test_goes_filename_coverage_timestamps_can_be_parsed() -> None:
+    start, end = parse_goes_abi_filename_coverage_times(
+        "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc"
+    )
+
+    assert start == datetime(2020, 1, 1, 0, 1, 17, 200000, tzinfo=timezone.utc)
+    assert end == datetime(2020, 1, 1, 0, 3, 54, 500000, tzinfo=timezone.utc)
+
+
+def test_s3_scene_coverage_metadata_falls_back_to_filename_when_backend_cannot_open_uri(monkeypatch: pytest.MonkeyPatch) -> None:
+    import xarray as xr
+
+    def fail_open_dataset(_path: object) -> object:
+        raise OSError("NetCDF: I/O failure")
+
+    monkeypatch.setattr(xr, "open_dataset", fail_open_dataset)
+
+    scene = read_scene_coverage_metadata(
+        f"s3://{GOES16_CONUS_BUCKET}/{GOES16_MCMIPC_PRODUCT}/2020/001/00/"
+        "OR_ABI-L2-MCMIPC-M6_G16_s20200010001172_e20200010003545_c20200010004029.nc"
+    )
+
+    assert scene.time_coverage_start == datetime(2020, 1, 1, 0, 1, 17, 200000, tzinfo=timezone.utc)
+    assert scene.time_coverage_end == datetime(2020, 1, 1, 0, 3, 54, 500000, tzinfo=timezone.utc)
+    assert scene.canonical_scene_time == datetime(2020, 1, 1, 0, 2, 35, 850000, tzinfo=timezone.utc)
 
 
 def test_goes_filename_timestamp_is_parsed_only_as_discovery_hint() -> None:

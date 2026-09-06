@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from dataclasses import dataclass
 from typing import Any
 
@@ -201,7 +202,7 @@ def extract_regular_source_patch(
     out[:, :, 16] = np.asarray(lon, dtype=np.float32)
     out[:, :, 17] = np.asarray(lat, dtype=np.float32)
     sza_function = solar_zenith_angle_function or _default_solar_zenith_angle_function
-    out[:, :, 18] = np.asarray(sza_function(observation_time, lon, lat), dtype=np.float32)
+    out[:, :, 18] = np.asarray(sza_function(_normalise_observation_time_for_sza(observation_time), lon, lat), dtype=np.float32)
     return out
 
 
@@ -225,6 +226,20 @@ def _default_solar_zenith_angle_function(observation_time: object, lon: np.ndarr
     from pyorbital.astronomy import sun_zenith_angle
 
     return sun_zenith_angle(observation_time, lon, lat)
+
+
+def _normalise_observation_time_for_sza(observation_time: object) -> object:
+    """Return timezone-naive UTC datetimes for pyorbital SZA calculation.
+
+    ``pyorbital`` converts datetimes through ``np.datetime64``, which cannot
+    represent timezone metadata and emits a warning for timezone-aware values.
+    Temporal provisioning supplies UTC scene times, so stripping the timezone
+    after conversion to UTC preserves the instant while avoiding warning spam.
+    """
+
+    if isinstance(observation_time, datetime) and observation_time.tzinfo is not None:
+        return observation_time.astimezone(UTC).replace(tzinfo=None)
+    return observation_time
 
 
 def _location_mapping(location: str | Mapping[str, object]) -> Mapping[str, object]:

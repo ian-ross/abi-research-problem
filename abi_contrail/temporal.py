@@ -7,6 +7,7 @@ NetCDF coverage metadata when available.
 
 from __future__ import annotations
 
+import bisect
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -74,7 +75,15 @@ def list_goes16_mcmipc_scene_keys(
 
     keys: list[str] = []
     for prefix in goes16_mcmipc_hour_prefixes(target_time, hour_radius=hour_radius):
-        for key in lister(prefix):
+        try:
+            listed_keys = lister(prefix)
+        except FileNotFoundError:
+            # NOAA Open Data has occasional missing/empty hourly prefixes. A
+            # missing discovery prefix means "no candidate scenes here", not a
+            # fatal provider-data error; eligibility matching will fail closed
+            # for records whose required scenes are unavailable.
+            continue
+        for key in listed_keys:
             uri = _normalise_s3_uri(str(key))
             if _is_goes16_mcmipc_netcdf_key(uri):
                 keys.append(uri)
@@ -84,11 +93,20 @@ def list_goes16_mcmipc_scene_keys(
 def parse_goes_abi_filename_scene_time(path_or_key: str | Path) -> datetime | None:
     """Parse the filename ``sYYYYJJJHHMMSSf`` timestamp as a discovery hint."""
 
+    coverage = parse_goes_abi_filename_coverage_times(path_or_key)
+    return None if coverage is None else coverage[0]
+
+
+def parse_goes_abi_filename_coverage_times(path_or_key: str | Path) -> tuple[datetime, datetime] | None:
+    """Parse filename ``s``/``e`` coverage timestamps when present."""
+
     name = Path(str(path_or_key)).name
-    match = _GOES_TIMESTAMP_RE.search(f"_{name}")
-    if match is None:
+    timestamps = {match.group("tag"): _parse_goes_compact_timestamp(match.group("stamp")) for match in _GOES_TIMESTAMP_RE.finditer(f"_{name}")}
+    start = timestamps.get("s")
+    end = timestamps.get("e")
+    if start is None or end is None:
         return None
-    return _parse_goes_compact_timestamp(match.group("stamp"))
+    return start, end
 
 
 def scene_from_coverage_metadata(key: str, attrs: dict[str, Any]) -> GOES16ConusScene:
@@ -116,10 +134,25 @@ def read_scene_coverage_metadata(path_or_uri: str | Path) -> GOES16ConusScene:
 
     This is intentionally a small boundary around ``xarray.open_dataset`` so
     provisioning code can be tested with ``scene_from_coverage_metadata`` without
-    network or large files.
+    network or large files. Some NetCDF backends cannot open anonymous S3 URIs
+    directly; for NOAA GOES S3 discovery, fall back to the filename ``s``/``e``
+    coverage timestamps rather than downloading every candidate scene just to
+    read global attributes.
     """
 
     import xarray as xr
+
+    if str(path_or_uri).startswith("s3://"):
+        coverage = parse_goes_abi_filename_coverage_times(path_or_uri)
+        if coverage is not None:
+            start, end = coverage
+            return GOES16ConusScene(
+                key=str(path_or_uri),
+                time_coverage_start=start,
+                time_coverage_end=end,
+                canonical_scene_time=start + (end - start) / 2,
+                filename_scene_time=start,
+            )
 
     with xr.open_dataset(path_or_uri) as ds:
         return scene_from_coverage_metadata(str(path_or_uri), dict(ds.attrs))
@@ -195,6 +228,13 @@ def build_temporal_eligibility_manifest(
     """
 
     sorted_offsets = sorted(int(offset) for offset in offsets)
+    ordered_scenes = tuple(sorted(scenes, key=lambda scene: (scene.canonical_scene_time, scene.key)))
+    scene_keys = [scene.key for scene in ordered_scenes]
+    if len(scene_keys) != len(set(scene_keys)):
+        raise ValueError("duplicate GOES ABI scene keys in temporal window candidates")
+    scene_times = [scene.canonical_scene_time for scene in ordered_scenes]
+    if len(scene_times) != len(set(scene_times)):
+        raise ValueError("duplicate GOES ABI canonical scene times in temporal window candidates")
     manifest_records: list[dict[str, object]] = []
     missing_goes_time_count = 0
     center_match_miss_count = 0
@@ -204,14 +244,18 @@ def build_temporal_eligibility_manifest(
             missing_goes_time_count += 1
             continue
         target_time = _parse_datetime(record.goes_time)
-        center_scene = choose_nearest_scene(scenes, target_time, tolerance_seconds=tolerance_seconds)
-        if center_scene is None:
+        center_index = _nearest_scene_index(ordered_scenes, scene_times, target_time, tolerance_seconds=tolerance_seconds)
+        if center_index is None:
             center_match_miss_count += 1
             continue
-        window = temporal_window_by_frame_offsets(scenes, center_scene, sorted_offsets)
-        if window is None:
+        selected_indices = [center_index + offset for offset in sorted_offsets]
+        if any(index < 0 or index >= len(ordered_scenes) for index in selected_indices):
             neighbor_window_miss_count += 1
             continue
+        window = tuple(ordered_scenes[index] for index in selected_indices)
+        if len({scene.key for scene in window}) != len(window):
+            raise ValueError("temporal window selected duplicate GOES ABI frames")
+        center_scene = ordered_scenes[center_index]
         source_scenes: dict[str, str] = {}
         for offset, scene in zip(sorted_offsets, window, strict=True):
             source_scenes[str(offset)] = "materialized_training_zarr" if offset == 0 else scene.key
@@ -319,6 +363,30 @@ def build_temporal_cache_manifest_from_eligibility(
     }
 
 
+def _nearest_scene_index(
+    ordered_scenes: Sequence[GOES16ConusScene],
+    scene_times: Sequence[datetime],
+    target_time: datetime,
+    *,
+    tolerance_seconds: int,
+) -> int | None:
+    if not ordered_scenes:
+        return None
+    target = _ensure_aware_utc(target_time)
+    insertion = bisect.bisect_left(scene_times, target)
+    candidate_indices = {index for index in (insertion - 1, insertion) if 0 <= index < len(ordered_scenes)}
+    if not candidate_indices:
+        return None
+    best_index = min(
+        candidate_indices,
+        key=lambda index: (abs((ordered_scenes[index].canonical_scene_time - target).total_seconds()), ordered_scenes[index].key),
+    )
+    delta = abs((ordered_scenes[best_index].canonical_scene_time - target).total_seconds())
+    if delta > float(tolerance_seconds):
+        return None
+    return best_index
+
+
 def _parse_goes_compact_timestamp(stamp: str) -> datetime:
     year = int(stamp[0:4])
     day_of_year = int(stamp[4:7])
@@ -375,6 +443,7 @@ __all__ = [
     "choose_nearest_scene",
     "goes16_mcmipc_hour_prefixes",
     "list_goes16_mcmipc_scene_keys",
+    "parse_goes_abi_filename_coverage_times",
     "parse_goes_abi_filename_scene_time",
     "read_scene_coverage_metadata",
     "scene_from_coverage_metadata",
