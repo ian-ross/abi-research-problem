@@ -48,6 +48,7 @@ expected_contract_version = "v0"
 training = "/path/to/contrail-detection"
 ancillary = "/path/to/abi-ml-autoresearch/ancillary"
 baselines = "/path/to/abi-ml-autoresearch/baselines"
+temporal_cache = "/path/to/abi-ml-autoresearch/temporal-cache"
 
 [research_problem.data_config]
 # Generated and verified with abi-baseline-targets. The relative path remains
@@ -64,6 +65,10 @@ coastline_geojson = "natural-earth/natural_earth_10m_coastline.geojson"
 rivers_geojson = "natural-earth/natural_earth_10m_rivers_north_america.geojson"
 # Bounds CUDA/CPU postprocessing memory independently of validation size.
 postprocessing_batch_size = 8
+# Optional override for the trusted eligibility/cache manifest name under
+# data_roots.temporal_cache. If omitted, temporal runs expect a default name
+# such as abi-temporal-cache-offsets-m1_0_p1.json for [-1, 0, 1].
+# temporal_cache_manifest = "abi-temporal-cache-offsets-m1_0_p1.json"
 
 [[research_problem.data_config.sources]]
 layout = "mit"

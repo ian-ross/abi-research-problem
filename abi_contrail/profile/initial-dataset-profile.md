@@ -20,13 +20,13 @@ The generated JSON contains:
 - exact mounted-snapshot MIT and Google train/validation counts;
 - positive ABI Patch prevalence and Contrail Mask area histograms, including per-split distributions;
 - ABI channels 1-16 names, wavelengths, units, and bounded deterministic safe-range statistics;
-- input/label shapes, dtypes, chunks, split policy, record digests, and projection caveats;
+- input/label shapes, dtypes, chunks, split policy, record digests, temporal eligibility/cache status when provisioned, and projection caveats;
 - canonical MCAST 1.1 and 2.1 raw, Artifact-Filtered, and Dataset Source-stratified Dice, precision, recall, and Contrail Connectivity metrics;
 - threshold optima and precision/recall balance summaries;
 - ordered Artifact Filter configuration, removed-pixel effects, registry identity, and input checksums;
 - bounded ABI-025 manual canary Run, Post-Run Evaluation, and human-review context.
 
-Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. This profile-statistics sample is separate from bounded training/validation record selection. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation.
+Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. This profile-statistics sample is separate from bounded training/validation record selection. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation. Temporal ABI inputs remain provider-owned: a temporal cache/eligibility manifest may summarize eligible counts and provenance, but candidate-visible temporal tensors still expose only ABI channels 1-16 plus per-frame Solar Geometry Input.
 
 ## Capped training and validation semantics
 

@@ -19,15 +19,21 @@ def test_build_spec_declares_abi_v0_contract() -> None:
     assert spec.id == "goes_abi_contrail_segmentation"
     assert spec.version == "v0"
     assert spec.contract_version == "v0"
-    assert spec.input_modes == ("abi_16ch", "abi_16ch_plus_sza", "abi_thermal_10ch")
+    assert spec.input_modes == ("abi_16ch", "abi_16ch_plus_sza", "abi_thermal_10ch", "abi_16ch_plus_sza_temporal")
     assert spec.input_specs["abi_16ch"]["shape"] == [16, 256, 256]
     assert spec.input_specs["abi_16ch"]["source_channel_indices"] == list(range(16))
     assert spec.input_specs["abi_16ch_plus_sza"]["shape"] == [17, 256, 256]
     assert spec.input_specs["abi_16ch_plus_sza"]["source_channel_indices"] == list(range(16)) + [18]
     assert spec.input_specs["abi_thermal_10ch"]["shape"] == [10, 256, 256]
     assert spec.input_specs["abi_thermal_10ch"]["source_channel_indices"] == list(range(6, 16))
-    assert all(16 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
-    assert all(17 not in spec.input_specs[mode]["source_channel_indices"] for mode in spec.input_modes)
+    temporal_spec = spec.input_specs["abi_16ch_plus_sza_temporal"]
+    assert temporal_spec["shape"] == [51, 256, 256]
+    assert temporal_spec["source_channel_indices_per_frame"] == list(range(16)) + [18]
+    assert temporal_spec["temporal_offset_field"] == "temporal_frame_offsets"
+    assert temporal_spec["default_temporal_frame_offsets"] == [-1, 0, 1]
+    assert temporal_spec["allowed_temporal_frame_offsets"] == [[0], [-1, 0, 1], [-2, -1, 0, 1, 2]]
+    assert all(16 not in spec.input_specs[mode].get("source_channel_indices", spec.input_specs[mode].get("source_channel_indices_per_frame", [])) for mode in spec.input_modes)
+    assert all(17 not in spec.input_specs[mode].get("source_channel_indices", spec.input_specs[mode].get("source_channel_indices_per_frame", [])) for mode in spec.input_modes)
     assert spec.output_forms == ("mask_logits",)
     assert spec.output_specs["mask_logits"]["shape"] == [1, 256, 256]
     assert spec.auxiliary_targets == ("line", "boundary", "centerline")
@@ -49,6 +55,9 @@ def test_build_spec_declares_abi_v0_contract() -> None:
         "google_only",
         "combined_source_balanced",
     )
+    assert spec.frame_selection_policies == ("all_target_frames", "temporal_eligible_center")
+    assert spec.input_mode_frame_selection_defaults["abi_16ch_plus_sza_temporal"] == "temporal_eligible_center"
+    assert spec.input_mode_frame_selection_defaults["abi_16ch_plus_sza"] == "all_target_frames"
     assert spec.augmentation_policies == ("none", "random_mirroring")
     assert spec.auxiliary_losses == ("weighted_bce",)
     assert spec.primary_metric == "val/filtered_dice"
@@ -107,8 +116,9 @@ def test_named_roots_do_not_change_candidate_longitude_latitude_boundary(tmp_pat
     for mode in spec.input_modes:
         input_spec = spec.input_specs[mode]
         assert input_spec["forbidden_channels"] == ["longitude", "latitude"]
-        assert 16 not in input_spec["source_channel_indices"]
-        assert 17 not in input_spec["source_channel_indices"]
+        source_indices = input_spec.get("source_channel_indices", input_spec.get("source_channel_indices_per_frame", []))
+        assert 16 not in source_indices
+        assert 17 not in source_indices
 
 
 def test_output_spec_includes_manifest_declared_auxiliary_outputs() -> None:

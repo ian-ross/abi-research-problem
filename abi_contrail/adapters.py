@@ -17,19 +17,28 @@ from abi_contrail.data_config import (
     TRAINING_DATA_ROOT,
     named_data_roots,
     resolve_root_relative_path,
+    resolve_temporal_cache_root,
     resolve_training_data_root,
 )
 from abi_contrail.datasets import (
     ABI_FORBIDDEN_SOURCE_INDICES,
     ABI_INPUT_MODE_SOURCE_INDICES,
+    ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS,
+    ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS,
     ABIPatchDataset,
+    ABIPatchSplitIndex,
+    ABITemporalPatchCache,
     INPUT_MODE_ABI_16CH,
     INPUT_MODE_ABI_16CH_PLUS_SZA,
+    INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
     INPUT_MODE_ABI_THERMAL_10CH,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
     load_abi_metadata_rows,
     open_abi_patch_arrays,
+    temporal_offsets_cache_token,
+    temporal_record_identity_sha256,
+    validate_temporal_frame_offsets,
 )
 from abi_contrail.record_selection import (
     BOUNDED_SELECTION_POLICY_NAME,
@@ -50,7 +59,12 @@ AUXILIARY_OUTPUT_LINE_LOGITS = "line_logits"
 AUXILIARY_OUTPUT_BOUNDARY_LOGITS = "boundary_logits"
 AUXILIARY_OUTPUT_CENTERLINE_LOGITS = "centerline_logits"
 AUXILIARY_LOSS_WEIGHTED_BCE = "weighted_bce"
-INPUT_MODE_ABI_INPUTS = (INPUT_MODE_ABI_16CH, INPUT_MODE_ABI_16CH_PLUS_SZA, INPUT_MODE_ABI_THERMAL_10CH)
+INPUT_MODE_ABI_INPUTS = (
+    INPUT_MODE_ABI_16CH,
+    INPUT_MODE_ABI_16CH_PLUS_SZA,
+    INPUT_MODE_ABI_THERMAL_10CH,
+    INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
+)
 AUXILIARY_TARGETS = (AUXILIARY_TARGET_LINE, AUXILIARY_TARGET_BOUNDARY, AUXILIARY_TARGET_CENTERLINE)
 AUXILIARY_OUTPUTS = {
     AUXILIARY_TARGET_LINE: AUXILIARY_OUTPUT_LINE_LOGITS,
@@ -109,6 +123,17 @@ def _artifact_filter_initialization_config(data_config: Mapping[str, object] | N
 class _ABISamplingConfig:
     positive_patch_preference: float
     source_mixture: dict[str, float]
+
+
+@dataclass(frozen=True)
+class _ABIResolvedManifestConfig:
+    input_mode: str
+    frame_selection_policy: str
+    temporal_frame_offsets: tuple[int, ...]
+
+    @property
+    def requires_temporal_eligibility(self) -> bool:
+        return self.input_mode == INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL or self.frame_selection_policy == "temporal_eligible_center"
 
 
 def _sampling_config(data_config: Mapping[str, object]) -> _ABISamplingConfig:
@@ -263,7 +288,9 @@ class ABITrainingAdapter:
         from ml_autoresearch.training_adapters import ResearchProblemDatasets
 
         root = self.validate_data_root(data_config)
-        input_mode = self._input_mode_from_manifest(resolved_manifest_path)
+        manifest_config = self._resolved_manifest_config(resolved_manifest_path)
+        input_mode = manifest_config.input_mode
+        temporal_cache = self._temporal_cache_for_manifest(data_config, manifest_config) if manifest_config.requires_temporal_eligibility else None
         source_datasets: list[tuple[_TorchABIPatchDataset, _TorchABIPatchDataset, dict[str, object]]] = []
         source_selection_summaries: list[dict[str, object]] = []
         for source_config in self._source_data_configs(root, data_config):
@@ -272,6 +299,8 @@ class ABITrainingAdapter:
             labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
             arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
             split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
+            if temporal_cache is not None:
+                split_index = self._filter_temporal_eligible_records(split_index, temporal_cache)
             train_selection = select_representative_records(
                 split_index.train,
                 max_samples,
@@ -286,8 +315,24 @@ class ABITrainingAdapter:
             )
             source_datasets.append(
                 (
-                    _TorchABIPatchDataset(ABIPatchDataset(arrays, train_selection.records, input_mode=input_mode)),
-                    _TorchABIPatchDataset(ABIPatchDataset(arrays, validation_selection.records, input_mode=input_mode)),
+                    _TorchABIPatchDataset(
+                        ABIPatchDataset(
+                            arrays,
+                            train_selection.records,
+                            input_mode=input_mode,
+                            temporal_frame_offsets=manifest_config.temporal_frame_offsets,
+                            temporal_cache=temporal_cache,
+                        )
+                    ),
+                    _TorchABIPatchDataset(
+                        ABIPatchDataset(
+                            arrays,
+                            validation_selection.records,
+                            input_mode=input_mode,
+                            temporal_frame_offsets=manifest_config.temporal_frame_offsets,
+                            temporal_cache=temporal_cache,
+                        )
+                    ),
                     split_index.data_policy_metadata,
                 )
             )
@@ -312,6 +357,8 @@ class ABITrainingAdapter:
             "available_sampling_policies": list(ABI_SAMPLING_POLICIES),
             "positive_patch_preference": self._sampling_config.positive_patch_preference,
             "source_mixture": dict(self._sampling_config.source_mixture),
+            "frame_selection_policy_effective": manifest_config.frame_selection_policy,
+            "temporal_frame_offsets_effective": list(manifest_config.temporal_frame_offsets),
             "bounded_record_selection": {
                 "policy_name": BOUNDED_SELECTION_POLICY_NAME,
                 "policy_version": BOUNDED_SELECTION_POLICY_VERSION,
@@ -605,19 +652,109 @@ class ABITrainingAdapter:
         )
 
     @staticmethod
-    def _input_mode_from_manifest(resolved_manifest_path: str | Path) -> str:
+    def _resolved_manifest_config(resolved_manifest_path: str | Path) -> _ABIResolvedManifestConfig:
         path = Path(resolved_manifest_path)
-        if not path.is_file():
-            return INPUT_MODE_ABI_16CH
-        import yaml
+        manifest: Mapping[str, object] = {}
+        if path.is_file():
+            import yaml
 
-        manifest = yaml.safe_load(path.read_text()) or {}
+            loaded = yaml.safe_load(path.read_text()) or {}
+            if isinstance(loaded, Mapping):
+                manifest = loaded
         input_mode = str(manifest.get("input_mode", INPUT_MODE_ABI_16CH))
         if input_mode not in ABI_INPUT_MODE_SOURCE_INDICES:
             from ml_autoresearch.errors import TrainingError
 
             raise TrainingError(f"unsupported ABI input mode: {input_mode}")
-        return input_mode
+        data_policy = manifest.get("data", {})
+        if not isinstance(data_policy, Mapping):
+            data_policy = {}
+        frame_selection_policy = str(data_policy.get("frame_selection_policy_effective", data_policy.get("frame_selection_policy", "all_target_frames")))
+        if input_mode == INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL and frame_selection_policy == "all_target_frames":
+            frame_selection_policy = "temporal_eligible_center"
+        raw_offsets = data_policy.get(
+            "temporal_frame_offsets_effective",
+            data_policy.get("temporal_frame_offsets", ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS),
+        )
+        temporal_frame_offsets = validate_temporal_frame_offsets(raw_offsets)  # type: ignore[arg-type]
+        return _ABIResolvedManifestConfig(
+            input_mode=input_mode,
+            frame_selection_policy=frame_selection_policy,
+            temporal_frame_offsets=temporal_frame_offsets,
+        )
+
+    @staticmethod
+    def _temporal_cache_for_manifest(
+        data_config: Mapping[str, object],
+        manifest_config: _ABIResolvedManifestConfig,
+    ) -> ABITemporalPatchCache:
+        from ml_autoresearch.errors import ResearchProblemDataError
+
+        try:
+            temporal_root = resolve_temporal_cache_root(data_config)
+        except ABIDataConfigError as exc:
+            raise ResearchProblemDataError(str(exc)) from exc
+        if not temporal_root.is_dir():
+            raise ResearchProblemDataError(
+                f"ABI temporal_cache root does not exist or is not a directory: {temporal_root}"
+            )
+        manifest_name = data_config.get(
+            "temporal_cache_manifest",
+            f"abi-temporal-cache-offsets-{temporal_offsets_cache_token(manifest_config.temporal_frame_offsets)}.json",
+        )
+        try:
+            manifest_path = resolve_root_relative_path(
+                temporal_root,
+                manifest_name,
+                config_key="temporal_cache_manifest",
+                named_root="temporal_cache" if named_data_roots(data_config) is not None else None,
+            )
+        except ABIDataConfigError as exc:
+            raise ResearchProblemDataError(str(exc)) from exc
+        if not manifest_path.is_file():
+            raise ResearchProblemDataError(
+                f"ABI temporal cache/eligibility manifest is required but missing: {manifest_path}"
+            )
+        try:
+            cache = ABITemporalPatchCache.from_manifest_file(
+                manifest_path,
+                requested_offsets=manifest_config.temporal_frame_offsets,
+            )
+        except (OSError, ValueError) as exc:
+            raise ResearchProblemDataError(f"invalid ABI temporal cache manifest: {exc}") from exc
+        if not cache.full_dataset_scan and not bool(data_config.get("allow_temporal_cache_subset", False)):
+            raise ResearchProblemDataError(
+                "ABI temporal cache manifest does not declare full_dataset_scan=true; "
+                "set data_config.allow_temporal_cache_subset=true only for trusted smoke tests/debugging"
+            )
+        return cache
+
+    @staticmethod
+    def _filter_temporal_eligible_records(
+        split_index: ABIPatchSplitIndex,
+        temporal_cache: ABITemporalPatchCache,
+    ) -> ABIPatchSplitIndex:
+        from ml_autoresearch.errors import ResearchProblemDataError
+
+        expected_scope_digest = temporal_record_identity_sha256(split_index.records)
+        if temporal_cache.full_dataset_scan:
+            if temporal_cache.dataset_scope_record_identity_sha256 is None:
+                raise ResearchProblemDataError(
+                    "ABI temporal cache manifest full_dataset_scan=true but missing dataset_scope.record_identity_sha256"
+                )
+            if temporal_cache.dataset_scope_record_identity_sha256 != expected_scope_digest:
+                raise ResearchProblemDataError(
+                    "ABI temporal cache manifest is stale for the requested dataset source/split scope: "
+                    f"expected {expected_scope_digest}, got {temporal_cache.dataset_scope_record_identity_sha256}"
+                )
+        train = temporal_cache.eligible_records(split_index.train)
+        validation = temporal_cache.eligible_records(split_index.validation)
+        metadata = dict(split_index.data_policy_metadata)
+        metadata["frame_selection_policy_effective"] = "temporal_eligible_center"
+        metadata["temporal_frame_offsets_effective"] = list(temporal_cache.temporal_frame_offsets)
+        metadata["temporal_eligible_train_count"] = len(train)
+        metadata["temporal_eligible_validation_count"] = len(validation)
+        return ABIPatchSplitIndex(train=train, validation=validation, data_policy_metadata=metadata)
 
     @staticmethod
     def _metadata_rows(root: Path, data_config: Mapping[str, object]) -> tuple[dict[str, object], ...] | None:
@@ -1000,6 +1137,23 @@ def _input_specs() -> dict[str, dict[str, object]]:
             "forbidden_channels": forbidden_names,
             "forbidden_source_channel_indices": forbidden_indices,
         },
+        INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL: {
+            "mode": INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
+            "shape": [17 * len(ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS), 256, 256],
+            "layout": "channel_stacked_temporal_frames",
+            "channel_set": "goes_abi_channels_1_16_plus_per_frame_solar_geometry_input",
+            "source_channel_indices_per_frame": list(ABI_INPUT_MODE_SOURCE_INDICES[INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL]),
+            "goes_abi_channel_numbers_per_frame": list(range(1, 17)),
+            "extra_inputs_per_frame": [{"name": "solar_zenith_angle", "source_channel_index": 18}],
+            "temporal_offset_field": "temporal_frame_offsets",
+            "default_temporal_frame_offsets": list(ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS),
+            "allowed_temporal_frame_offsets": [list(window) for window in ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS],
+            "base_channels_per_frame": 17,
+            "per_frame_sza": True,
+            "target_frame_offset": 0,
+            "forbidden_channels": forbidden_names,
+            "forbidden_source_channel_indices": forbidden_indices,
+        },
     }
 
 
@@ -1026,6 +1180,10 @@ def split_data_policy_metadata() -> dict[str, object]:
         "mit_window_shape": [256, 256],
         "sampling_policy_owner": "provider/harness",
         "sampling_policies": list(ABI_SAMPLING_POLICIES),
+        "frame_selection_policies": ["all_target_frames", "temporal_eligible_center"],
+        "temporal_input_mode": INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
+        "temporal_frame_offsets_allowed": [list(window) for window in ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS],
+        "temporal_frame_offsets_default": list(ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS),
         "positive_patch_preference_metadata_key": "positive_patch_preference",
         "source_mixture_metadata_key": "source_mixture",
         "bounded_record_selection": {
@@ -1104,8 +1262,11 @@ def build_spec(data_config: Mapping[str, object] | None = None):
         auxiliary_losses=(AUXILIARY_LOSS_WEIGHTED_BCE,),
         optimizers=("adamw",),
         sampling_policies=ABI_SAMPLING_POLICIES,
-        frame_selection_policies=("all_target_frames",),
-        input_mode_frame_selection_defaults={mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
+        frame_selection_policies=("all_target_frames", "temporal_eligible_center"),
+        input_mode_frame_selection_defaults={
+            **{mode: "all_target_frames" for mode in INPUT_MODE_ABI_INPUTS},
+            INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL: "temporal_eligible_center",
+        },
         augmentation_policies=ABI_AUGMENTATION_POLICIES,
         primary_metric="val/filtered_dice",
         operation_capabilities={"training": True, "evaluation_modes": (EVALUATION_MODE_WHOLE_VALIDATION_FAILURE_ANALYSIS,)},

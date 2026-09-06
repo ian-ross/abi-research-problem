@@ -15,6 +15,7 @@ from pathlib import Path
 TRAINING_DATA_ROOT = "training"
 ANCILLARY_DATA_ROOT = "ancillary"
 BASELINES_DATA_ROOT = "baselines"
+TEMPORAL_CACHE_ROOT = "temporal_cache"
 
 
 class ABIDataConfigError(ValueError):
@@ -72,6 +73,25 @@ def resolve_ancillary_data_root(data_config: Mapping[str, object]) -> Path:
                 "ABI data_config.data_roots.ancillary is required for geographic ancillary data"
             ) from exc
     return _legacy_data_root(data_config)
+
+
+def resolve_temporal_cache_root(data_config: Mapping[str, object]) -> Path:
+    """Resolve the trusted temporal ABI patch cache root."""
+
+    roots = named_data_roots(data_config)
+    if roots is not None:
+        try:
+            return roots[TEMPORAL_CACHE_ROOT]
+        except KeyError as exc:
+            raise ABIDataConfigError(
+                "ABI data_config.data_roots.temporal_cache is required for temporal ABI inputs"
+            ) from exc
+    value = data_config.get(TEMPORAL_CACHE_ROOT)
+    if not isinstance(value, (str, Path)) or not str(value):
+        raise ABIDataConfigError(
+            "ABI data_config.temporal_cache or data_roots.temporal_cache is required for temporal ABI inputs"
+        )
+    return Path(value).expanduser().resolve()
 
 
 def resolve_root_relative_path(
@@ -132,10 +152,12 @@ __all__ = [
     "ABIDataConfigError",
     "ANCILLARY_DATA_ROOT",
     "BASELINES_DATA_ROOT",
+    "TEMPORAL_CACHE_ROOT",
     "TRAINING_DATA_ROOT",
     "named_data_roots",
     "resolve_ancillary_data_root",
     "resolve_root_relative_path",
+    "resolve_temporal_cache_root",
     "resolve_training_data_root",
     "with_training_root_override",
 ]

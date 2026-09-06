@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=2.5.1",
     "pandas>=3.0.3",
     "pyarrow>=25.0.0",
+    "pyorbital>=1.12.1",
     "pyproj>=3.7.2",
     "pyresample>=1.35.0",
     "s3fs>=2026.6.0",
@@ -28,6 +29,7 @@ abi-baseline-targets = "abi_contrail.baseline_targets:main"
 abi-geographic-filter-smoke = "abi_contrail.ancillary_cli:smoke_main"
 abi-positive-control-report = "abi_contrail.positive_control:main"
 abi-provision-natural-earth = "abi_contrail.ancillary_cli:provision_main"
+abi-provision-temporal-frames = "abi_contrail.temporal_cli:main"
 
 [project.entry-points."ml_autoresearch.research_problems"]
 goes_abi_contrail_segmentation = "abi_contrail.research_problem:build_spec"

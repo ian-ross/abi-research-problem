@@ -13,8 +13,11 @@ The provider exposes only declared channel-first tensors:
 - `abi_16ch`: `[16, 256, 256]`, GOES ABI channels 1-16.
 - `abi_16ch_plus_sza`: `[17, 256, 256]`, GOES ABI channels 1-16 plus Solar Geometry Input / solar zenith angle.
 - `abi_thermal_10ch`: `[10, 256, 256]`, GOES ABI channels 7-16.
+- `abi_16ch_plus_sza_temporal`: `[17 * len(data.temporal_frame_offsets), 256, 256]`, channel-stacked temporal ABI frames in ascending frame-offset order. Each frame exposes GOES ABI channels 1-16 plus that frame's Solar Geometry Input. The default offsets are `[-1, 0, 1]`; initially allowed windows are `[0]`, `[-1, 0, 1]`, and `[-2, -1, 0, 1, 2]`.
 
-Candidate models must never receive longitude or latitude inputs. Source channels used for longitude/latitude may exist in local arrays for trusted diagnostics, Artifact Filters, or projection-aware provider logic, but they are not candidate features and must not be reconstructed as hidden inputs.
+Candidate models must never receive longitude or latitude inputs, including in temporal mode. Source channels used for longitude/latitude may exist in local arrays or temporal cache tensors for trusted diagnostics, Artifact Filters, reprojection, or projection-aware provider logic, but they are not candidate features and must not be reconstructed as hidden inputs.
+
+Temporal context is allowed only through provider-advertised input modes and provider-owned provisioning. Non-zero temporal offsets are precomputed trusted GOES-16 CONUS neighbor patches; Candidate code must not download S3 objects, reconstruct hidden frames, choose neighbors, pad/duplicate missing frames, or implement temporal sampling. Candidate runs using temporal mode, or `frame_selection_policy: temporal_eligible_center` for a matched single-frame control, require the matching trusted temporal cache/eligibility manifest and fail closed when it is absent or stale.
 
 ## Channel-combination and BTD guidance
 

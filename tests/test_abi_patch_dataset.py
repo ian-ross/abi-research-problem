@@ -6,6 +6,8 @@ import zarr
 from abi_contrail.datasets import (
     ABI_INPUT_MODE_SOURCE_INDICES,
     ABIPatchDataset,
+    ABITemporalPatchCache,
+    INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
     abi_16ch_channel_first,
     abi_input_channel_first,
     build_abi_patch_dataset,
@@ -120,6 +122,7 @@ def test_input_modes_select_exact_channel_mappings_and_never_lon_lat() -> None:
         "abi_16ch": (16, 2, 3),
         "abi_16ch_plus_sza": (17, 2, 3),
         "abi_thermal_10ch": (10, 2, 3),
+        "abi_16ch_plus_sza_temporal": (17, 2, 3),
     }
     for input_mode, source_indices in ABI_INPUT_MODE_SOURCE_INDICES.items():
         channel_first = abi_input_channel_first(channel_last, input_mode)
@@ -129,6 +132,64 @@ def test_input_modes_select_exact_channel_mappings_and_never_lon_lat() -> None:
         assert 17 not in source_indices
         for output_index, source_index in enumerate(source_indices):
             np.testing.assert_array_equal(channel_first[output_index], channel_last[:, :, source_index])
+
+
+def test_temporal_input_mode_stacks_frames_in_ascending_offset_order_without_lon_lat(tmp_path) -> None:
+    center = np.zeros((1, 2, 3, 19), dtype=np.float32)
+    labels = np.zeros((1, 2, 3), dtype=np.uint8)
+    for channel in range(19):
+        center[0, :, :, channel] = 100 + channel
+    labels[0, 0, 0] = 1
+    arrays = type("Arrays", (), {"inputs": center, "labels": labels, "layout": "google"})()
+    record = build_google_abi_patch_index(
+        [{"scene_name": "train-000/patch.zarr", "sample_index": 0, "positive": True}]
+    ).train[0]
+    cache_root = tmp_path / "temporal-cache"
+    cache_root.mkdir()
+    prev = np.zeros((2, 3, 19), dtype=np.float32)
+    next_frame = np.zeros((2, 3, 19), dtype=np.float32)
+    for channel in range(19):
+        prev[:, :, channel] = 10 + channel
+        next_frame[:, :, channel] = 200 + channel
+    np.save(cache_root / "prev.npy", prev)
+    np.save(cache_root / "next.npy", next_frame)
+    manifest = {
+        "manifest_version": "abi_temporal_cache.v1",
+        "temporal_frame_offsets": [-1, 0, 1],
+        "records": [
+            {
+                "dataset_source": "google",
+                "split": "train",
+                "scene_name": "train-000/patch.zarr",
+                "scene_index": 0,
+                "goes_time": None,
+                "row": 0,
+                "col": 0,
+                "sample_index": 0,
+                "patches": {"-1": "prev.npy", "1": "next.npy"},
+            }
+        ],
+    }
+
+    cache = ABITemporalPatchCache.from_manifest(cache_root, manifest, requested_offsets=(-1, 0, 1))
+    dataset = ABIPatchDataset(
+        arrays,
+        [record],
+        input_mode=INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
+        temporal_frame_offsets=(-1, 0, 1),
+        temporal_cache=cache,
+    )
+    sample = dataset[0]
+
+    assert sample["inputs"].shape == (51, 2, 3)
+    # Per-frame candidate channels are ABI 1-16 plus SZA; source longitude/latitude
+    # channels 16/17 are intentionally skipped for every temporal frame.
+    np.testing.assert_array_equal(sample["inputs"][:17, 0, 0], np.array(list(range(10, 26)) + [28], dtype=np.float32))
+    np.testing.assert_array_equal(sample["inputs"][17:34, 0, 0], np.array(list(range(100, 116)) + [118], dtype=np.float32))
+    np.testing.assert_array_equal(sample["inputs"][34:, 0, 0], np.array(list(range(200, 216)) + [218], dtype=np.float32))
+    assert 26 not in sample["inputs"][:, 0, 0]
+    assert 27 not in sample["inputs"][:, 0, 0]
+    assert sample["target"].shape == (1, 2, 3)
 
 
 def test_input_mode_dataset_selection_is_provider_owned() -> None:

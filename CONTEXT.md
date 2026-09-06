@@ -48,6 +48,14 @@ _Avoid_: Emissive input, infrared input
 Solar zenith angle used as an optional non-ABI-channel input describing illumination geometry.
 _Avoid_: SZA channel, solar input
 
+**Temporal ABI Input**:
+A provider-owned channel-stacked ABI input mode that supplies multiple ordered ABI capture offsets around the target ABI Patch. Each temporal frame exposes only ABI channels 1-16 plus that frame's Solar Geometry Input; longitude and latitude remain forbidden for every frame. The target Contrail Mask is always the zero-offset center ABI Patch.
+_Avoid_: Candidate temporal loader, padded clip, route/time prior
+
+**Temporal-Eligible Center ABI Patch**:
+A center ABI Patch for which the trusted temporal cache/provenance manifest confirms that all requested non-zero GOES-16 CONUS neighbor frame offsets exist and fully cover the same 256x256 footprint. It can be used either by a Temporal ABI Input Candidate or as a matched single-frame control via `frame_selection_policy: temporal_eligible_center`.
+_Avoid_: Arbitrary cached subset, partial temporal patch, inferred candidate sequence
+
 **Learned Channel Mixer**:
 A model front-end that learns useful combinations of ABI channels, such as channel reductions or brightness-temperature differences, rather than relying only on fixed hand-engineered composites.
 _Avoid_: MCAST features, ash composite

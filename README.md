@@ -33,18 +33,19 @@ by Git. Start from the committed template on a new host:
 cp ml-autoresearch.toml.example ml-autoresearch.toml
 ```
 
-Update the Harness checkout, runs root, ABI dataset, ancillary, and baselines root paths. The
+Update the Harness checkout, runs root, ABI dataset, ancillary, baselines, and temporal-cache root paths. The
 operational data configuration uses separate logical roots for the primary
-training data, trusted ancillary bundle, and immutable baseline artifacts.
+training data, trusted ancillary bundle, immutable baseline artifacts, and trusted temporal ABI cache.
 Dataset Source paths are relative to `training`, geographic paths are relative
-to `ancillary`, and the canonical comparison registry and MCAST model assets
-are relative to `baselines`:
+to `ancillary`, the canonical comparison registry and MCAST model assets
+are relative to `baselines`, and temporal eligibility/cache manifests are relative to `temporal_cache`:
 
 ```toml
 [research_problem.data_roots]
 training = "/path/to/contrail-detection"
 ancillary = "/path/to/abi-ml-autoresearch/ancillary"
 baselines = "/path/to/abi-ml-autoresearch/baselines"
+temporal_cache = "/path/to/abi-ml-autoresearch/temporal-cache"
 
 [research_problem.data_config]
 canonical_baseline_targets = "canonical/mcast-working-validation-v1.json"
@@ -70,16 +71,26 @@ metadata_parquet = "google/metadata.parquet"
 ```
 
 The Harness validates these host directories and mounts them read-only at
-`/data/training`, `/data/ancillary`, and `/data/baselines` for Docker operations; it supplies the
+`/data/training`, `/data/ancillary`, `/data/baselines`, and `/data/temporal_cache` for Docker operations; it supplies the
 resolved `data_roots` mapping to the trusted provider. Native operations receive
 the resolved host paths. Legacy direct callers that provide only `dataset_root`
-or `data_root` remain supported, with ancillary paths resolved beneath that
+or `data_root` remain supported for non-temporal training, with ancillary paths resolved beneath that
 single root.
 
 The provider opens the operational named arrays inside both zarr groups. Google
 keeps its source train/validation provenance; MIT is split by whole scene before
 256x256 windowing. Longitude and latitude remain trusted provider context and
-are never candidate inputs.
+are never candidate inputs. Temporal Candidate Experiments must use the provider-advertised `abi_16ch_plus_sza_temporal` input mode and a trusted temporal cache/eligibility manifest; matched single-frame controls should use `abi_16ch_plus_sza` with `data.frame_selection_policy: temporal_eligible_center`. Full/default temporal cache manifests must declare `full_dataset_scan = true`/`"full_dataset_scan": true`; set `allow_temporal_cache_subset = true` only for trusted smoke tests/debugging. Candidate code must not perform GOES S3 discovery/download, temporal matching, reprojection, hidden-frame loading, padding, or missing-neighbor fallback.
+
+## Temporal ABI provisioning
+
+Temporal inputs require explicit trusted provisioning before candidate training. The command first writes a temporal eligibility/provenance manifest under `data_roots.temporal_cache`; with `--extract-patches` it also materializes/downloads non-zero GOES-16 CONUS NetCDF scenes into a raw scene subcache, extracts 256x256 provider-internal 19-channel patch tensors onto the MIT/Google center footprint, and writes the `abi_temporal_cache.v1` manifest consumed by candidate training.
+
+```bash
+uv run abi-provision-temporal-frames --workspace-root . --offsets -1,0,1 --extract-patches
+```
+
+For smoke tests/debugging only, use `--subset-limit <N>`; the resulting eligibility/cache manifest is marked `full_dataset_scan=false` and candidate runs accept it only when trusted config sets `allow_temporal_cache_subset = true`.
 
 ## Natural Earth ancillary data
 

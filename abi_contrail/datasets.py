@@ -13,6 +13,7 @@ not returned to candidate code.
 
 from __future__ import annotations
 
+import json
 import random
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -29,6 +30,7 @@ from abi_contrail.data_config import (
 )
 
 ABI_PATCH_SHAPE = (16, 256, 256)
+ABI_TEMPORAL_RAW_PATCH_SHAPE = (256, 256, 19)
 CONTRAIL_MASK_SHAPE = (1, 256, 256)
 ABI_16CH_CHANNEL_COUNT = 16
 ABI_16CH_PLUS_SZA_CHANNEL_COUNT = 17
@@ -36,10 +38,14 @@ ABI_THERMAL_10CH_CHANNEL_COUNT = 10
 INPUT_MODE_ABI_16CH = "abi_16ch"
 INPUT_MODE_ABI_16CH_PLUS_SZA = "abi_16ch_plus_sza"
 INPUT_MODE_ABI_THERMAL_10CH = "abi_thermal_10ch"
+INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL = "abi_16ch_plus_sza_temporal"
+ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS = (-1, 0, 1)
+ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS = ((0,), (-1, 0, 1), (-2, -1, 0, 1, 2))
 ABI_INPUT_MODE_SOURCE_INDICES: dict[str, tuple[int, ...]] = {
     INPUT_MODE_ABI_16CH: tuple(range(16)),
     INPUT_MODE_ABI_16CH_PLUS_SZA: tuple(range(16)) + (18,),
     INPUT_MODE_ABI_THERMAL_10CH: tuple(range(6, 16)),
+    INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL: tuple(range(16)) + (18,),
 }
 ABI_FORBIDDEN_SOURCE_INDICES = (16, 17)
 
@@ -232,6 +238,176 @@ def abi_16ch_channel_first(inputs: np.ndarray) -> np.ndarray:
     """Return float32 channel-first GOES ABI channels 1-16 from ``[H, W, C]`` input."""
 
     return abi_input_channel_first(inputs, INPUT_MODE_ABI_16CH)
+
+
+def validate_temporal_frame_offsets(raw_offsets: Sequence[int] | None) -> tuple[int, ...]:
+    """Return canonical provider-allowed ABI temporal frame offsets."""
+
+    if raw_offsets is None:
+        return ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS
+    if not isinstance(raw_offsets, Sequence) or isinstance(raw_offsets, (str, bytes)):
+        raise ValueError("ABI temporal_frame_offsets must be a sequence of integer frame offsets")
+    if any(isinstance(offset, bool) or not isinstance(offset, int) for offset in raw_offsets):
+        raise ValueError("ABI temporal_frame_offsets must contain only integer frame offsets")
+    offsets = tuple(sorted(raw_offsets))
+    if offsets not in ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS:
+        raise ValueError(
+            "ABI temporal_frame_offsets must be one of "
+            f"{[list(window) for window in ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS]}, got {list(offsets)}"
+        )
+    return offsets
+
+
+def temporal_offsets_cache_token(offsets: Sequence[int]) -> str:
+    """Return the default manifest-name token for a temporal offset window."""
+
+    return "_".join(f"m{abs(offset)}" if offset < 0 else f"p{offset}" if offset > 0 else "0" for offset in offsets)
+
+
+class ABITemporalPatchCache:
+    """Trusted precomputed non-zero temporal ABI Patch cache."""
+
+    manifest_version = "abi_temporal_cache.v1"
+
+    def __init__(self, root: str | Path, manifest: Mapping[str, object], *, requested_offsets: Sequence[int]) -> None:
+        self.root = Path(root).expanduser().resolve()
+        offsets = tuple(int(offset) for offset in manifest.get("temporal_frame_offsets", ()))
+        self.temporal_frame_offsets = validate_temporal_frame_offsets(offsets)
+        requested = validate_temporal_frame_offsets(requested_offsets)
+        if self.temporal_frame_offsets != requested:
+            raise ValueError(
+                f"temporal cache offsets {list(self.temporal_frame_offsets)} do not match requested offsets {list(requested)}"
+            )
+        if manifest.get("manifest_version") != self.manifest_version:
+            raise ValueError(f"temporal cache manifest_version must be {self.manifest_version!r}")
+        self.full_dataset_scan = bool(manifest.get("full_dataset_scan", False))
+        dataset_scope = manifest.get("dataset_scope", {})
+        self.dataset_scope_record_identity_sha256 = (
+            str(dataset_scope.get("record_identity_sha256")) if isinstance(dataset_scope, Mapping) and dataset_scope.get("record_identity_sha256") is not None else None
+        )
+        records = manifest.get("records")
+        if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+            raise ValueError("temporal cache manifest records must be a sequence")
+        self._patches_by_record: dict[tuple[object, ...], dict[int, Path]] = {}
+        for raw_record in records:
+            if not isinstance(raw_record, Mapping):
+                raise ValueError("temporal cache manifest records must contain mappings")
+            key = temporal_record_key_from_mapping(raw_record)
+            if key in self._patches_by_record:
+                raise ValueError(f"duplicate temporal cache record: {key!r}")
+            patches = raw_record.get("patches")
+            if not isinstance(patches, Mapping):
+                raise ValueError("temporal cache record patches must be a mapping")
+            patch_paths: dict[int, Path] = {}
+            for offset in self.temporal_frame_offsets:
+                if offset == 0:
+                    continue
+                raw_path = patches.get(str(offset), patches.get(offset))
+                if not isinstance(raw_path, str) or not raw_path:
+                    raise ValueError(f"temporal cache record is missing patch for offset {offset}")
+                path = (self.root / raw_path).resolve()
+                try:
+                    path.relative_to(self.root)
+                except ValueError as exc:
+                    raise ValueError("temporal cache patch paths must resolve beneath the cache root") from exc
+                patch_paths[offset] = path
+            self._patches_by_record[key] = patch_paths
+
+    @classmethod
+    def from_manifest_file(cls, manifest_path: str | Path, *, requested_offsets: Sequence[int]) -> "ABITemporalPatchCache":
+        path = Path(manifest_path).expanduser().resolve()
+        with path.open() as handle:
+            manifest = json.load(handle)
+        if not isinstance(manifest, Mapping):
+            raise ValueError("temporal cache manifest must contain a mapping")
+        return cls(path.parent, manifest, requested_offsets=requested_offsets)
+
+    @classmethod
+    def from_manifest(cls, root: str | Path, manifest: Mapping[str, object], *, requested_offsets: Sequence[int]) -> "ABITemporalPatchCache":
+        return cls(root, manifest, requested_offsets=requested_offsets)
+
+    def contains(self, record: ABIPatchIndexRecord) -> bool:
+        return temporal_record_key(record) in self._patches_by_record
+
+    def eligible_records(self, records: Sequence[ABIPatchIndexRecord]) -> tuple[ABIPatchIndexRecord, ...]:
+        return tuple(record for record in records if self.contains(record))
+
+    def raw_patch(self, record: ABIPatchIndexRecord, offset: int) -> np.ndarray:
+        if offset == 0:
+            raise ValueError("temporal offset 0 must be read from materialized center ABI arrays")
+        try:
+            path = self._patches_by_record[temporal_record_key(record)][int(offset)]
+        except KeyError as exc:
+            raise ValueError(f"temporal cache has no patch for record {record.scene_name!r} offset {offset}") from exc
+        if not path.is_file():
+            raise ValueError(f"temporal cache patch is missing: {path}")
+        patch = np.load(path)
+        if patch.ndim != 3 or patch.shape[-1] < ABI_TEMPORAL_RAW_PATCH_SHAPE[-1]:
+            raise ValueError(
+                f"temporal cache patch {path} must have shape [H,W,{ABI_TEMPORAL_RAW_PATCH_SHAPE[-1]}+], got {tuple(patch.shape)}"
+            )
+        return patch
+
+
+def temporal_record_key(record: ABIPatchIndexRecord) -> tuple[object, ...]:
+    return (
+        record.dataset_source,
+        record.split,
+        record.scene_name,
+        int(record.scene_index),
+        record.goes_time,
+        int(record.row),
+        int(record.col),
+        None if record.sample_index is None else int(record.sample_index),
+    )
+
+
+def temporal_record_key_from_mapping(row: Mapping[str, object]) -> tuple[object, ...]:
+    sample_index = row.get("sample_index")
+    return (
+        str(row.get("dataset_source")),
+        str(row.get("split")),
+        str(row.get("scene_name")),
+        int(row.get("scene_index", 0)),
+        row.get("goes_time"),
+        int(row.get("row", 0)),
+        int(row.get("col", 0)),
+        None if sample_index is None else int(sample_index),
+    )
+
+
+def temporal_record_identity_sha256(records: Sequence[ABIPatchIndexRecord]) -> str:
+    """Return a stable digest for a temporal cache manifest's dataset scope."""
+
+    import hashlib
+
+    payload = [list(temporal_record_key(record)) for record in sorted(records, key=temporal_record_key)]
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def abi_temporal_input_channel_first(
+    center_inputs: np.ndarray,
+    *,
+    record: ABIPatchIndexRecord | None,
+    temporal_frame_offsets: Sequence[int],
+    temporal_cache: ABITemporalPatchCache | None,
+) -> np.ndarray:
+    """Return channel-stacked temporal ABI 1-16+SZA inputs in ascending offset order."""
+
+    offsets = validate_temporal_frame_offsets(temporal_frame_offsets)
+    frames: list[np.ndarray] = []
+    for offset in offsets:
+        if offset == 0:
+            frame = center_inputs
+        else:
+            if record is None:
+                raise ValueError("temporal ABI input requires index records for non-zero offsets")
+            if temporal_cache is None:
+                raise ValueError("temporal ABI input requires a trusted temporal cache for non-zero offsets")
+            frame = temporal_cache.raw_patch(record, offset)
+        frames.append(abi_input_channel_first(frame, INPUT_MODE_ABI_16CH_PLUS_SZA))
+    return np.concatenate(frames, axis=0).astype(np.float32, copy=False)
 
 
 def build_google_abi_patch_index(metadata_rows: Iterable[Mapping[str, object]]) -> ABIPatchSplitIndex:
@@ -436,11 +612,17 @@ class ABIPatchDataset:
         *,
         split: ABISplitName | None = None,
         input_mode: str = INPUT_MODE_ABI_16CH,
+        temporal_frame_offsets: Sequence[int] | None = None,
+        temporal_cache: ABITemporalPatchCache | None = None,
     ) -> None:
         if input_mode not in ABI_INPUT_MODE_SOURCE_INDICES:
             raise ValueError(f"Unsupported ABI input mode: {input_mode!r}")
         self.arrays = arrays
         self.input_mode = input_mode
+        self.temporal_frame_offsets = validate_temporal_frame_offsets(temporal_frame_offsets) if input_mode == INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL else None
+        self.temporal_cache = temporal_cache
+        if input_mode == INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL and self.temporal_frame_offsets != (0,) and temporal_cache is None:
+            raise ValueError("ABI temporal input mode requires a trusted temporal cache for non-zero offsets")
         self._uses_index_records = index_records is not None
         records = tuple(index_records or ())
         if split is not None:
@@ -504,8 +686,17 @@ class ABIPatchDataset:
         inputs = self.raw_inputs(index)
         labels = self.raw_labels(index)
 
+        if self.input_mode == INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL:
+            candidate_inputs = abi_temporal_input_channel_first(
+                inputs,
+                record=record,
+                temporal_frame_offsets=self.temporal_frame_offsets or ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS,
+                temporal_cache=self.temporal_cache,
+            )
+        else:
+            candidate_inputs = abi_input_channel_first(inputs, self.input_mode)
         sample = {
-            "inputs": abi_input_channel_first(inputs, self.input_mode),
+            "inputs": candidate_inputs,
             "target": collapse_contrail_mask(labels),
             "source_layout": self.arrays.layout,
             "input_mode": self.input_mode,
@@ -539,6 +730,8 @@ def build_abi_patch_dataset(
     index_records: Sequence[ABIPatchIndexRecord] | None = None,
     split: ABISplitName | None = None,
     input_mode: str = INPUT_MODE_ABI_16CH,
+    temporal_frame_offsets: Sequence[int] | None = None,
+    temporal_cache: ABITemporalPatchCache | None = None,
 ) -> ABIPatchDataset:
     """Open zarr inputs/labels and return the ABI Patch dataset."""
 
@@ -547,6 +740,8 @@ def build_abi_patch_dataset(
         index_records,
         split=split,
         input_mode=input_mode,
+        temporal_frame_offsets=temporal_frame_offsets,
+        temporal_cache=temporal_cache,
     )
 
 
@@ -557,18 +752,23 @@ __all__ = [
     "ABI_16CH_PLUS_SZA_CHANNEL_COUNT",
     "ABI_FORBIDDEN_SOURCE_INDICES",
     "ABI_INPUT_MODE_SOURCE_INDICES",
+    "ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS",
+    "ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS",
     "ABI_THERMAL_10CH_CHANNEL_COUNT",
     "ABIDatasetSource",
     "ABIPatchArrays",
     "ABIPatchDataset",
     "ABIPatchIndexRecord",
     "ABIPatchSplitIndex",
+    "ABITemporalPatchCache",
     "ABISplitName",
     "INPUT_MODE_ABI_16CH",
     "INPUT_MODE_ABI_16CH_PLUS_SZA",
     "INPUT_MODE_ABI_THERMAL_10CH",
+    "INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL",
     "abi_16ch_channel_first",
     "abi_input_channel_first",
+    "abi_temporal_input_channel_first",
     "build_abi_patch_dataset",
     "build_google_abi_patch_index",
     "build_mit_abi_patch_index",
@@ -577,4 +777,9 @@ __all__ = [
     "open_abi_patch_arrays",
     "open_google_abi_patch_arrays",
     "open_mit_abi_patch_arrays",
+    "temporal_offsets_cache_token",
+    "temporal_record_key",
+    "temporal_record_identity_sha256",
+    "temporal_record_key_from_mapping",
+    "validate_temporal_frame_offsets",
 ]
