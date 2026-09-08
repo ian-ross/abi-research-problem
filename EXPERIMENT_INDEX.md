@@ -12,7 +12,7 @@ Materially different architecture families begin with bounded sequential evidenc
 
 ## Current evidence summary
 
-- Candidate directories indexed: 177
+- Candidate directories indexed: 178
 - Research Notes indexed: 165
 - Whole-validation diagnostics indexed: 18
 - Active/non-reconciled Run(s): none in the current ledger snapshot
@@ -251,6 +251,7 @@ No active or non-reconciled Run is recorded in the current ledger snapshot; ABI-
 | [`abi212_fullspectral_btd_sza_compact_line_preserving_coarse_support_aspp_bce_dice_line_centerline_aux_v1`](candidates/abi212_fullspectral_btd_sza_compact_line_preserving_coarse_support_aspp_bce_dice_line_centerline_aux_v1/README.md) | Compact resource-safe continuation of ABI-211 line-preserving coarse-support ASPP bridge after wall-clock resource failure. | [`Full-spectral BTD+SZA compact line-preserving coarse-support ASPP follow-up`](research-notes/fullspectral-btd-sza-compact-line-preserving-coarse-support-aspp-followup.md) | `run_20260904_172606_3f797b` | Capped best val/filtered_dice 0.3875 at epoch 12 |
 | [`abi213_fullspectral_btd_sza_crossscale_directional_consensus_aspp_centerline_w005_bce_dice_line_centerline_aux_v1`](candidates/abi213_fullspectral_btd_sza_crossscale_directional_consensus_aspp_centerline_w005_bce_dice_line_centerline_aux_v1/README.md) | Centerline-weight policy probe for the ABI-202 cross-scale directional-consensus ASPP family. | [`Full-spectral BTD+SZA cross-scale directional-consensus ASPP centerline-w005 follow-up`](research-notes/fullspectral-btd-sza-crossscale-directional-consensus-aspp-centerline-w005-followup.md) | `run_20260904_182354_bfa5db` | Capped best val/filtered_dice 0.3889 at epoch 11 |
 | [`abi214_fullspectral_btd_sza_compact_thinline_continuity_aspp_bce_dice_line_centerline_aux_v1`](candidates/abi214_fullspectral_btd_sza_compact_thinline_continuity_aspp_bce_dice_line_centerline_aux_v1/README.md) | Exploratory compact architecture continuation of ABI-212 with a bounded thin-line continuity bridge. | — | `run_20260904_192740_b618bb` | Capped best val/filtered_dice 0.3911 at epoch 12; pending full Research Note |
+| [`abi215_temporal_access_canary_v1`](candidates/abi215_temporal_access_canary_v1/README.md) | Minimal temporal-input canary that consumes provider-owned -1/0/+1 ABI+SZA frames to verify trusted temporal cache and patch access during Candidate Execution. | — | — | Introduced; pending temporal-cache access Run |
 
 ## Chronological Research Notes
 

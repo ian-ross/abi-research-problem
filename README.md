@@ -38,7 +38,7 @@ operational data configuration uses separate logical roots for the primary
 training data, trusted ancillary bundle, immutable baseline artifacts, and trusted temporal ABI cache.
 Dataset Source paths are relative to `training`, geographic paths are relative
 to `ancillary`, the canonical comparison registry and MCAST model assets
-are relative to `baselines`, and temporal eligibility/cache manifests are relative to `temporal_cache`:
+are relative to `baselines`, and the SQLite temporal cache database is relative to `temporal_cache`:
 
 ```toml
 [research_problem.data_roots]
@@ -80,17 +80,17 @@ single root.
 The provider opens the operational named arrays inside both zarr groups. Google
 keeps its source train/validation provenance; MIT is split by whole scene before
 256x256 windowing. Longitude and latitude remain trusted provider context and
-are never candidate inputs. Temporal Candidate Experiments must use the provider-advertised `abi_16ch_plus_sza_temporal` input mode and a trusted temporal cache/eligibility manifest; matched single-frame controls should use `abi_16ch_plus_sza` with `data.frame_selection_policy: temporal_eligible_center`. Full/default temporal cache manifests must declare `full_dataset_scan = true`/`"full_dataset_scan": true`; set `allow_temporal_cache_subset = true` only for trusted smoke tests/debugging. Candidate code must not perform GOES S3 discovery/download, temporal matching, reprojection, hidden-frame loading, padding, or missing-neighbor fallback.
+are never candidate inputs. Temporal Candidate Experiments must use the provider-advertised `abi_16ch_plus_sza_temporal` input mode and the trusted SQLite temporal cache at `temporal-cache/abi-temporal-cache.sqlite`; matched single-frame controls should use `abi_16ch_plus_sza` with `data.frame_selection_policy: temporal_eligible_center`. Full/default temporal cache databases must declare `full_dataset_scan=true`; set `allow_temporal_cache_subset = true` only for trusted smoke tests/debugging. Candidate code must not perform GOES S3 discovery/download, temporal matching, reprojection, hidden-frame loading, padding, or missing-neighbor fallback.
 
 ## Temporal ABI provisioning
 
-Temporal inputs require explicit trusted provisioning before candidate training. The command first writes a temporal eligibility/provenance manifest under `data_roots.temporal_cache`; with `--extract-patches` it also materializes/downloads non-zero GOES-16 CONUS NetCDF scenes into a raw scene subcache, extracts 256x256 provider-internal 19-channel patch tensors onto the MIT/Google center footprint, and writes the `abi_temporal_cache.v1` manifest consumed by candidate training.
+Temporal inputs require explicit trusted provisioning before candidate training. The command writes/updates `abi-temporal-cache.sqlite` under `data_roots.temporal_cache`; with `--extract-patches` it also materializes/downloads non-zero GOES-16 CONUS NetCDF scenes into a raw scene subcache and extracts reusable per-offset 256x256 provider-internal 19-channel patch tensors onto the MIT/Google center footprint.
 
 ```bash
 uv run abi-provision-temporal-frames --workspace-root . --offsets -1,0,1 --extract-patches
 ```
 
-For smoke tests/debugging only, use `--subset-limit <N>`; the resulting eligibility/cache manifest is marked `full_dataset_scan=false` and candidate runs accept it only when trusted config sets `allow_temporal_cache_subset = true`.
+For smoke tests/debugging only, use `--subset-limit <N>`; the resulting SQLite cache scope is marked `full_dataset_scan=false` and candidate runs accept it only when trusted config sets `allow_temporal_cache_subset = true`.
 
 ## Natural Earth ancillary data
 

@@ -17,7 +17,7 @@ The provider exposes only declared channel-first tensors:
 
 Candidate models must never receive longitude or latitude inputs, including in temporal mode. Source channels used for longitude/latitude may exist in local arrays or temporal cache tensors for trusted diagnostics, Artifact Filters, reprojection, or projection-aware provider logic, but they are not candidate features and must not be reconstructed as hidden inputs.
 
-Temporal context is allowed only through provider-advertised input modes and provider-owned provisioning. Non-zero temporal offsets are precomputed trusted GOES-16 CONUS neighbor patches; Candidate code must not download S3 objects, reconstruct hidden frames, choose neighbors, pad/duplicate missing frames, or implement temporal sampling. Candidate runs using temporal mode, or `frame_selection_policy: temporal_eligible_center` for a matched single-frame control, require the matching trusted temporal cache/eligibility manifest and fail closed when it is absent or stale.
+Temporal context is allowed only through provider-advertised input modes and provider-owned provisioning. Non-zero temporal offsets are precomputed trusted GOES-16 CONUS neighbor patches; Candidate code must not download S3 objects, reconstruct hidden frames, choose neighbors, pad/duplicate missing frames, or implement temporal sampling. Candidate runs using temporal mode, or `frame_selection_policy: temporal_eligible_center` for a matched single-frame control, require matching trusted SQLite temporal cache evidence and fail closed when it is absent, stale, or incomplete.
 
 ## Channel-combination and BTD guidance
 

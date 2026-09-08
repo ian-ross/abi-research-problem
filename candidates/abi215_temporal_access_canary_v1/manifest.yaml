@@ -1,0 +1,18 @@
+name: abi215_temporal_access_canary_v1
+description: Minimal temporal-input canary that consumes provider-owned ±1 frame ABI+SZA patches to verify trusted temporal cache access during Candidate Execution.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza_temporal
+output_form: mask_logits
+data:
+  sampling_policy: sequential
+  frame_selection_policy: temporal_eligible_center
+  temporal_frame_offsets: [-1, 0, 1]
+  augmentation_policy: none
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.001
+  batch_size: 2
+  max_epochs: 1
+  scheduler:
+    policy: constant_lr

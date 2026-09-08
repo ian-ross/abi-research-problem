@@ -19,7 +19,16 @@ from abi_contrail.adapters import (
     derive_auxiliary_target,
     source_balanced_sampling_weights,
 )
-from abi_contrail.datasets import ABIPatchArrays, ABIPatchIndexRecord, ABIPatchSplitIndex, ABITemporalPatchCache, build_google_abi_patch_index, temporal_record_identity_sha256
+from abi_contrail.datasets import (
+    ABIPatchArrays,
+    ABIPatchIndexRecord,
+    ABIPatchSplitIndex,
+    ABITemporalPatchCache,
+    build_google_abi_patch_index,
+    mark_temporal_patch_extracted,
+    temporal_record_identity_sha256,
+    write_temporal_cache_database,
+)
 from abi_contrail.evaluation import _evaluation_data_config
 from ml_autoresearch.errors import ResearchProblemDataError
 from ml_autoresearch.evaluations import evaluate_run
@@ -118,6 +127,48 @@ def _write_minimal_candidate(root: Path) -> Path:
         "    return ABITinyMask(int(input_spec['shape'][0]))\n"
     )
     return candidate
+
+
+def _write_temporal_cache_database(
+    temporal_root: Path,
+    records: tuple[ABIPatchIndexRecord, ...],
+    *,
+    full_dataset_scan: bool = True,
+    record_identity_sha256: str | None = None,
+    patch_paths: dict[int, str] | None = None,
+) -> Path:
+    temporal_root.mkdir(exist_ok=True)
+    eligibility_records = []
+    for record in records:
+        eligibility_records.append(
+            {
+                "dataset_source": record.dataset_source,
+                "split": record.split,
+                "scene_name": record.scene_name,
+                "scene_index": record.scene_index,
+                "goes_time": record.goes_time,
+                "row": record.row,
+                "col": record.col,
+                "sample_index": record.sample_index,
+                "temporal_source_scenes": {"-1": "scene-prev", "0": "materialized_training_zarr", "1": "scene-next"},
+            }
+        )
+    database_path = temporal_root / "abi-temporal-cache.sqlite"
+    write_temporal_cache_database(
+        database_path,
+        cache_root=temporal_root,
+        records=records,
+        scenes=(),
+        eligibility={
+            "full_dataset_scan": full_dataset_scan,
+            "dataset_scope": {"record_identity_sha256": record_identity_sha256 or temporal_record_identity_sha256(records)},
+            "records": eligibility_records,
+        },
+    )
+    for record in records:
+        for offset, path in (patch_paths or {-1: "prev.npy", 1: "next.npy"}).items():
+            mark_temporal_patch_extracted(database_path, record, offset, path)
+    return database_path
 
 
 def test_abi_training_adapter_validates_data_root_and_builds_split_datasets(tmp_path: Path) -> None:
@@ -299,13 +350,10 @@ def test_temporal_input_mode_fails_closed_without_configured_cache(tmp_path: Pat
         ABITrainingAdapter().build_datasets(data_config=data_config, resolved_manifest_path=resolved_manifest)
 
 
-def test_temporal_cache_manifest_requires_full_scan_without_subset_flag(tmp_path: Path) -> None:
+def test_temporal_cache_sqlite_requires_full_scan_without_subset_flag(tmp_path: Path) -> None:
     data_config = _write_google_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
-    temporal_root.mkdir()
-    (temporal_root / "abi-temporal-cache-offsets-m1_0_p1.json").write_text(
-        json.dumps({"manifest_version": "abi_temporal_cache.v1", "temporal_frame_offsets": [-1, 0, 1], "records": []})
-    )
+    _write_temporal_cache_database(temporal_root, build_google_abi_patch_index(data_config["metadata_rows"]).records, full_dataset_scan=False)
     data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
     resolved_manifest = tmp_path / "resolved.yaml"
     resolved_manifest.write_text(
@@ -321,39 +369,14 @@ def test_temporal_cache_manifest_requires_full_scan_without_subset_flag(tmp_path
         ABITrainingAdapter().build_datasets(data_config=data_config, resolved_manifest_path=resolved_manifest)
 
 
-def test_temporal_cache_manifest_with_matching_full_scope_enables_temporal_input(tmp_path: Path) -> None:
+def test_temporal_cache_sqlite_with_matching_full_scope_enables_temporal_input(tmp_path: Path) -> None:
     data_config = _write_google_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
     temporal_root.mkdir()
     split_index = build_google_abi_patch_index(data_config["metadata_rows"])
     np.save(temporal_root / "prev.npy", np.zeros((256, 256, 19), dtype=np.float32))
     np.save(temporal_root / "next.npy", np.zeros((256, 256, 19), dtype=np.float32))
-    records = []
-    for record in split_index.records:
-        records.append(
-            {
-                "dataset_source": record.dataset_source,
-                "split": record.split,
-                "scene_name": record.scene_name,
-                "scene_index": record.scene_index,
-                "goes_time": record.goes_time,
-                "row": record.row,
-                "col": record.col,
-                "sample_index": record.sample_index,
-                "patches": {"-1": "prev.npy", "1": "next.npy"},
-            }
-        )
-    (temporal_root / "abi-temporal-cache-offsets-m1_0_p1.json").write_text(
-        json.dumps(
-            {
-                "manifest_version": "abi_temporal_cache.v1",
-                "full_dataset_scan": True,
-                "dataset_scope": {"record_identity_sha256": temporal_record_identity_sha256(split_index.records)},
-                "temporal_frame_offsets": [-1, 0, 1],
-                "records": records,
-            }
-        )
-    )
+    _write_temporal_cache_database(temporal_root, split_index.records)
     data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
     resolved_manifest = tmp_path / "resolved.yaml"
     resolved_manifest.write_text(
@@ -372,36 +395,18 @@ def test_temporal_cache_manifest_with_matching_full_scope_enables_temporal_input
     assert datasets.data_policy_metadata["temporal_frame_offsets_effective"] == [-1, 0, 1]
 
 
-def test_temporal_cache_manifest_fails_closed_when_dataset_scope_digest_is_stale(tmp_path: Path) -> None:
+def test_temporal_cache_sqlite_fails_closed_when_dataset_scope_digest_is_stale(tmp_path: Path) -> None:
     data_config = _write_google_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
     temporal_root.mkdir()
     record = build_google_abi_patch_index(data_config["metadata_rows"]).train[0]
     np.save(temporal_root / "prev.npy", np.zeros((256, 256, 19), dtype=np.float32))
     np.save(temporal_root / "next.npy", np.zeros((256, 256, 19), dtype=np.float32))
-    (temporal_root / "abi-temporal-cache-offsets-m1_0_p1.json").write_text(
-        json.dumps(
-            {
-                "manifest_version": "abi_temporal_cache.v1",
-                "full_dataset_scan": True,
-                "dataset_scope": {"record_identity_sha256": "0" * 64},
-                "temporal_frame_offsets": [-1, 0, 1],
-                "records": [
-                    {
-                        "dataset_source": record.dataset_source,
-                        "split": record.split,
-                        "scene_name": record.scene_name,
-                        "scene_index": record.scene_index,
-                        "goes_time": record.goes_time,
-                        "row": record.row,
-                        "col": record.col,
-                        "sample_index": record.sample_index,
-                        "patches": {"-1": "prev.npy", "1": "next.npy"},
-                    }
-                ],
-            }
-        )
-    )
+    database_path = _write_temporal_cache_database(temporal_root, (record,))
+    import sqlite3
+
+    with sqlite3.connect(database_path) as connection:
+        connection.execute("UPDATE dataset_scope SET record_identity_sha256 = ? WHERE id = 1", ("0" * 64,))
     data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
     resolved_manifest = tmp_path / "resolved.yaml"
     resolved_manifest.write_text(
@@ -423,83 +428,33 @@ def test_temporal_cache_raw_patch_rejects_wrong_shape(tmp_path: Path) -> None:
     temporal_root.mkdir()
     record = build_google_abi_patch_index(data_config["metadata_rows"]).train[0]
     np.save(temporal_root / "bad.npy", np.zeros((1, 2, 3), dtype=np.float32))
-    manifest = {
-        "manifest_version": "abi_temporal_cache.v1",
-        "temporal_frame_offsets": [-1, 0, 1],
-        "records": [
-            {
-                "dataset_source": record.dataset_source,
-                "split": record.split,
-                "scene_name": record.scene_name,
-                "scene_index": record.scene_index,
-                "goes_time": record.goes_time,
-                "row": record.row,
-                "col": record.col,
-                "sample_index": record.sample_index,
-                "patches": {"-1": "bad.npy", "1": "bad.npy"},
-            }
-        ],
-    }
-    cache = ABITemporalPatchCache.from_manifest(temporal_root, manifest, requested_offsets=(-1, 0, 1))
+    _write_temporal_cache_database(temporal_root, (record,), patch_paths={-1: "bad.npy", 1: "bad.npy"})
+    cache = ABITemporalPatchCache.from_database(temporal_root, requested_offsets=(-1, 0, 1))
 
     with pytest.raises(ValueError, match="must have shape"):
         cache.raw_patch(record, -1)
 
 
-def test_temporal_cache_rejects_duplicate_record_entries(tmp_path: Path) -> None:
+def test_temporal_cache_fails_closed_when_requested_offset_is_missing(tmp_path: Path) -> None:
     data_config = _write_google_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
     temporal_root.mkdir()
     record = build_google_abi_patch_index(data_config["metadata_rows"]).train[0]
-    np.save(temporal_root / "patch.npy", np.zeros((256, 256, 19), dtype=np.float32))
-    manifest_record = {
-        "dataset_source": record.dataset_source,
-        "split": record.split,
-        "scene_name": record.scene_name,
-        "scene_index": record.scene_index,
-        "goes_time": record.goes_time,
-        "row": record.row,
-        "col": record.col,
-        "sample_index": record.sample_index,
-        "patches": {"-1": "patch.npy", "1": "patch.npy"},
-    }
-    manifest = {
-        "manifest_version": "abi_temporal_cache.v1",
-        "temporal_frame_offsets": [-1, 0, 1],
-        "records": [manifest_record, dict(manifest_record)],
-    }
+    np.save(temporal_root / "prev.npy", np.zeros((256, 256, 19), dtype=np.float32))
+    _write_temporal_cache_database(temporal_root, (record,), patch_paths={-1: "prev.npy"})
 
-    with pytest.raises(ValueError, match="duplicate temporal cache record"):
-        ABITemporalPatchCache.from_manifest(temporal_root, manifest, requested_offsets=(-1, 0, 1))
+    cache = ABITemporalPatchCache.from_database(temporal_root, requested_offsets=(-1, 0, 1))
+
+    assert not cache.contains(record)
 
 
-def test_temporal_eligible_single_frame_control_uses_cache_manifest_subset(tmp_path: Path) -> None:
+def test_temporal_eligible_single_frame_control_uses_sqlite_cache_subset(tmp_path: Path) -> None:
     data_config = _write_google_selection_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
     temporal_root.mkdir()
-    cache_manifest = temporal_root / "abi-temporal-cache-offsets-m1_0_p1.json"
     eligible = data_config["metadata_rows"][1]
-    cache_manifest.write_text(
-        json.dumps(
-            {
-                "manifest_version": "abi_temporal_cache.v1",
-                "temporal_frame_offsets": [-1, 0, 1],
-                "records": [
-                    {
-                        "dataset_source": "google",
-                        "split": "train",
-                        "scene_name": eligible["scene_name"],
-                        "scene_index": int(eligible.get("scene_index", eligible["sample_index"])),
-                        "goes_time": None,
-                        "row": 0,
-                        "col": 0,
-                        "sample_index": eligible["sample_index"],
-                        "patches": {"-1": "missing-not-read.npy", "1": "missing-not-read.npy"},
-                    }
-                ],
-            }
-        )
-    )
+    record = build_google_abi_patch_index((eligible,)).train[0]
+    _write_temporal_cache_database(temporal_root, (record,), full_dataset_scan=False, patch_paths={-1: "missing-not-read.npy", 1: "missing-not-read.npy"})
     data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
     data_config["allow_temporal_cache_subset"] = True
     resolved_manifest = tmp_path / "resolved.yaml"

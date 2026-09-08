@@ -127,24 +127,31 @@ def test_scene_discovery_lists_each_unique_hour_prefix_once() -> None:
     }
 
 
-def test_provision_temporal_frames_writes_full_eligibility_manifest_for_configured_snapshot(tmp_path: Path) -> None:
+def test_provision_temporal_frames_writes_full_sqlite_cache_for_configured_snapshot(tmp_path: Path) -> None:
+    import sqlite3
+
     data_config = _write_google_fixture(tmp_path / "fixture")
     Path(str(data_config["temporal_cache"])).mkdir()
 
     report = provision_temporal_frames(data_config=data_config, offsets=(-1, 0, 1), scenes=_scenes())
 
-    manifest_path = Path(str(report["eligibility_manifest"]))
-    manifest = json.loads(manifest_path.read_text())
-    assert report["status"] == "eligibility_manifest_written"
-    assert manifest["full_dataset_scan"] is True
-    assert manifest["summary"]["scanned_record_count"] == 2
-    assert manifest["summary"]["eligible_record_count"] == 2
-    assert manifest["dataset_scope"]["record_count"] == 2
-    assert len(manifest["dataset_scope"]["record_identity_sha256"]) == 64
-    assert [record["split"] for record in manifest["records"]] == ["train", "validation"]
+    database_path = Path(str(report["temporal_cache_database"]))
+    with sqlite3.connect(database_path) as connection:
+        scope = connection.execute("SELECT record_count, record_identity_sha256, full_dataset_scan FROM dataset_scope").fetchone()
+        splits = [row[0] for row in connection.execute("SELECT split FROM abi_patch_records ORDER BY id")]
+        patch_statuses = [row[0] for row in connection.execute("SELECT status FROM temporal_patches ORDER BY offset")]
+    assert report["status"] == "temporal_cache_database_written"
+    assert report["full_dataset_scan"] is True
+    assert report["scanned_record_count"] == 2
+    assert report["eligible_record_count"] == 2
+    assert scope[0] == 2
+    assert len(scope[1]) == 64
+    assert scope[2] == 1
+    assert splits == ["train", "validation"]
+    assert patch_statuses == ["pending", "pending", "pending", "pending"]
 
 
-def test_provision_temporal_frames_extracts_non_zero_patches_and_writes_cache_manifest(tmp_path: Path) -> None:
+def test_provision_temporal_frames_extracts_non_zero_patches_and_updates_sqlite_cache(tmp_path: Path) -> None:
     data_config = _write_google_fixture(tmp_path / "fixture")
     temporal_root = Path(str(data_config["temporal_cache"]))
     temporal_root.mkdir()
@@ -159,19 +166,59 @@ def test_provision_temporal_frames_extracts_non_zero_patches_and_writes_cache_ma
         extract_patches=True,
     )
 
-    cache_path = Path(str(report["cache_manifest"]))
-    cache = json.loads(cache_path.read_text())
-    assert report["status"] == "cache_manifest_written"
-    assert cache["manifest_version"] == "abi_temporal_cache.v1"
-    assert len(cache["records"]) == 1
-    patches = cache["records"][0]["patches"]
-    assert sorted(patches) == ["-1", "1"]
-    minus_one = np.load(temporal_root / patches["-1"])
-    plus_one = np.load(temporal_root / patches["1"])
+    import sqlite3
+
+    with sqlite3.connect(Path(str(report["temporal_cache_database"]))) as connection:
+        rows = connection.execute("SELECT offset, patch_path, status FROM temporal_patches ORDER BY offset").fetchall()
+    assert report["status"] == "temporal_cache_database_updated"
+    assert len(rows) == 2
+    assert [row[0] for row in rows] == [-1, 1]
+    assert [row[2] for row in rows] == ["extracted", "extracted"]
+    minus_one = np.load(temporal_root / rows[0][1])
+    plus_one = np.load(temporal_root / rows[1][1])
     assert minus_one.shape == (256, 256, 19)
     assert plus_one.shape == (256, 256, 19)
     assert minus_one[0, 0, 0] == 1.0
     assert plus_one[0, 0, 0] == 2001.0
+
+
+def test_provision_temporal_frames_reuses_per_offset_patches_when_extending_window(tmp_path: Path) -> None:
+    import sqlite3
+
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    data_config["metadata_rows"][0]["goes_time"] = "2020-01-01T00:10:00Z"
+    temporal_root = Path(str(data_config["temporal_cache"]))
+    temporal_root.mkdir()
+    scene_paths = tuple(str(tmp_path / f"scene-{index}.nc") for index in range(5))
+    for index, scene_path in enumerate(scene_paths):
+        _write_regular_scene(Path(scene_path), base=index * 1000.0)
+
+    first = provision_temporal_frames(
+        data_config=data_config,
+        offsets=(-1, 0, 1),
+        scenes=_scenes(keys=scene_paths),
+        extract_patches=True,
+        subset_limit=1,
+    )
+    with sqlite3.connect(Path(str(first["temporal_cache_database"]))) as connection:
+        first_paths = dict(connection.execute("SELECT offset, patch_path FROM temporal_patches WHERE status = 'extracted'"))
+
+    second = provision_temporal_frames(
+        data_config=data_config,
+        offsets=(-2, -1, 0, 1, 2),
+        scenes=_scenes(keys=scene_paths),
+        extract_patches=True,
+        subset_limit=1,
+    )
+    with sqlite3.connect(Path(str(second["temporal_cache_database"]))) as connection:
+        second_paths = dict(connection.execute("SELECT offset, patch_path FROM temporal_patches WHERE status = 'extracted'"))
+
+    assert second["reused_patch_count"] == 2
+    assert first_paths[-1] == second_paths[-1]
+    assert first_paths[1] == second_paths[1]
+    assert second_paths[-1].startswith("patches/offset_m1/google/train/")
+    assert second_paths[1].startswith("patches/offset_p1/google/train/")
+    assert sorted(second_paths) == [-2, -1, 1, 2]
 
 
 def test_provision_temporal_frames_excludes_patch_when_conus_scene_has_partial_coverage(tmp_path: Path) -> None:
@@ -190,11 +237,8 @@ def test_provision_temporal_frames_excludes_patch_when_conus_scene_has_partial_c
         subset_limit=1,
     )
 
-    cache = json.loads(Path(str(report["cache_manifest"])).read_text())
-    assert cache["records"] == []
-    assert cache["summary"]["time_eligible_record_count"] == 1
-    assert cache["summary"]["coverage_rejected_record_count"] == 1
-    assert cache["summary"]["eligible_record_count"] == 0
+    assert report["cache_eligible_record_count"] == 0
+    assert report["coverage_rejected_record_count"] == 1
     assert report["eligible_record_count"] == 1
     assert report["extracted_patch_count"] == 0
 
@@ -230,8 +274,11 @@ def test_provision_temporal_frames_subset_mode_marks_manifest_not_full_scan(tmp_
         subset_limit=1,
     )
 
-    manifest = json.loads(Path(str(report["eligibility_manifest"])).read_text())
-    assert manifest["full_dataset_scan"] is False
-    assert manifest["summary"]["scanned_record_count"] == 1
-    assert manifest["summary"]["eligible_record_count"] == 1
+    import sqlite3
+
+    with sqlite3.connect(Path(str(report["temporal_cache_database"]))) as connection:
+        scope = connection.execute("SELECT record_count, full_dataset_scan FROM dataset_scope").fetchone()
+    assert scope == (1, 0)
+    assert report["scanned_record_count"] == 1
+    assert report["eligible_record_count"] == 1
     assert report["subset_limit"] == 1

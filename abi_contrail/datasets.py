@@ -41,6 +41,8 @@ INPUT_MODE_ABI_THERMAL_10CH = "abi_thermal_10ch"
 INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL = "abi_16ch_plus_sza_temporal"
 ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS = (-1, 0, 1)
 ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS = ((0,), (-1, 0, 1), (-2, -1, 0, 1, 2))
+ABI_TEMPORAL_CACHE_SQLITE_FILENAME = "abi-temporal-cache.sqlite"
+ABI_TEMPORAL_CACHE_SQLITE_SCHEMA_VERSION = "abi_temporal_cache.sqlite.v1"
 ABI_INPUT_MODE_SOURCE_INDICES: dict[str, tuple[int, ...]] = {
     INPUT_MODE_ABI_16CH: tuple(range(16)),
     INPUT_MODE_ABI_16CH_PLUS_SZA: tuple(range(16)) + (18,),
@@ -259,72 +261,113 @@ def validate_temporal_frame_offsets(raw_offsets: Sequence[int] | None) -> tuple[
 
 
 def temporal_offsets_cache_token(offsets: Sequence[int]) -> str:
-    """Return the default manifest-name token for a temporal offset window."""
+    """Return a stable token for a temporal offset window."""
 
     return "_".join(f"m{abs(offset)}" if offset < 0 else f"p{offset}" if offset > 0 else "0" for offset in offsets)
 
 
+def temporal_offset_directory_name(offset: int) -> str:
+    """Return the per-offset patch directory name used by the SQLite cache."""
+
+    if offset == 0:
+        raise ValueError("temporal offset 0 is read from materialized center ABI arrays, not patch cache directories")
+    return f"offset_m{abs(offset)}" if offset < 0 else f"offset_p{offset}"
+
+
+def temporal_record_digest(record: ABIPatchIndexRecord | Mapping[str, object]) -> str:
+    """Return the durable record identity digest used in temporal cache paths."""
+
+    import hashlib
+
+    key = temporal_record_key(record) if isinstance(record, ABIPatchIndexRecord) else temporal_record_key_from_mapping(record)
+    encoded = json.dumps(list(key), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 class ABITemporalPatchCache:
-    """Trusted precomputed non-zero temporal ABI Patch cache."""
+    """Trusted precomputed temporal ABI Patch cache backed by SQLite metadata."""
 
-    manifest_version = "abi_temporal_cache.v1"
+    sqlite_filename = ABI_TEMPORAL_CACHE_SQLITE_FILENAME
+    schema_version = ABI_TEMPORAL_CACHE_SQLITE_SCHEMA_VERSION
 
-    def __init__(self, root: str | Path, manifest: Mapping[str, object], *, requested_offsets: Sequence[int]) -> None:
+    def __init__(self, root: str | Path, *, requested_offsets: Sequence[int], database_path: str | Path | None = None) -> None:
         self.root = Path(root).expanduser().resolve()
-        offsets = tuple(int(offset) for offset in manifest.get("temporal_frame_offsets", ()))
-        self.temporal_frame_offsets = validate_temporal_frame_offsets(offsets)
+        self.database_path = Path(database_path).expanduser().resolve() if database_path is not None else self.root / self.sqlite_filename
         requested = validate_temporal_frame_offsets(requested_offsets)
-        if self.temporal_frame_offsets != requested:
-            raise ValueError(
-                f"temporal cache offsets {list(self.temporal_frame_offsets)} do not match requested offsets {list(requested)}"
-            )
-        if manifest.get("manifest_version") != self.manifest_version:
-            raise ValueError(f"temporal cache manifest_version must be {self.manifest_version!r}")
-        self.full_dataset_scan = bool(manifest.get("full_dataset_scan", False))
-        dataset_scope = manifest.get("dataset_scope", {})
-        self.dataset_scope_record_identity_sha256 = (
-            str(dataset_scope.get("record_identity_sha256")) if isinstance(dataset_scope, Mapping) and dataset_scope.get("record_identity_sha256") is not None else None
-        )
-        records = manifest.get("records")
-        if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
-            raise ValueError("temporal cache manifest records must be a sequence")
+        self.temporal_frame_offsets = requested
+        if not self.database_path.is_file():
+            raise ValueError(f"temporal cache SQLite database is missing: {self.database_path}")
         self._patches_by_record: dict[tuple[object, ...], dict[int, Path]] = {}
-        for raw_record in records:
-            if not isinstance(raw_record, Mapping):
-                raise ValueError("temporal cache manifest records must contain mappings")
-            key = temporal_record_key_from_mapping(raw_record)
-            if key in self._patches_by_record:
-                raise ValueError(f"duplicate temporal cache record: {key!r}")
-            patches = raw_record.get("patches")
-            if not isinstance(patches, Mapping):
-                raise ValueError("temporal cache record patches must be a mapping")
-            patch_paths: dict[int, Path] = {}
-            for offset in self.temporal_frame_offsets:
-                if offset == 0:
-                    continue
-                raw_path = patches.get(str(offset), patches.get(offset))
-                if not isinstance(raw_path, str) or not raw_path:
-                    raise ValueError(f"temporal cache record is missing patch for offset {offset}")
-                path = (self.root / raw_path).resolve()
-                try:
-                    path.relative_to(self.root)
-                except ValueError as exc:
-                    raise ValueError("temporal cache patch paths must resolve beneath the cache root") from exc
-                patch_paths[offset] = path
-            self._patches_by_record[key] = patch_paths
+        self.full_dataset_scan = False
+        self.dataset_scope_record_identity_sha256: str | None = None
+        self._load_sqlite_cache()
 
     @classmethod
-    def from_manifest_file(cls, manifest_path: str | Path, *, requested_offsets: Sequence[int]) -> "ABITemporalPatchCache":
-        path = Path(manifest_path).expanduser().resolve()
-        with path.open() as handle:
-            manifest = json.load(handle)
-        if not isinstance(manifest, Mapping):
-            raise ValueError("temporal cache manifest must contain a mapping")
-        return cls(path.parent, manifest, requested_offsets=requested_offsets)
+    def from_database(
+        cls,
+        root: str | Path,
+        *,
+        requested_offsets: Sequence[int],
+        database_path: str | Path | None = None,
+    ) -> "ABITemporalPatchCache":
+        return cls(root, requested_offsets=requested_offsets, database_path=database_path)
 
-    @classmethod
-    def from_manifest(cls, root: str | Path, manifest: Mapping[str, object], *, requested_offsets: Sequence[int]) -> "ABITemporalPatchCache":
-        return cls(root, manifest, requested_offsets=requested_offsets)
+    def _load_sqlite_cache(self) -> None:
+        import sqlite3
+
+        non_zero_offsets = tuple(offset for offset in self.temporal_frame_offsets if offset != 0)
+        with sqlite3.connect(self.database_path) as connection:
+            connection.row_factory = sqlite3.Row
+            schema_version = _sqlite_metadata_value(connection, "schema_version")
+            if schema_version != self.schema_version:
+                raise ValueError(f"temporal cache SQLite schema_version must be {self.schema_version!r}")
+            scope = connection.execute(
+                "SELECT record_identity_sha256, full_dataset_scan FROM dataset_scope WHERE id = 1"
+            ).fetchone()
+            if scope is None:
+                raise ValueError("temporal cache SQLite database is missing dataset_scope")
+            self.dataset_scope_record_identity_sha256 = scope["record_identity_sha256"]
+            self.full_dataset_scan = bool(scope["full_dataset_scan"])
+            record_rows = connection.execute(
+                """
+                SELECT dataset_source, split, scene_name, scene_index, goes_time, row, col, sample_index
+                FROM abi_patch_records
+                ORDER BY id
+                """
+            ).fetchall()
+            for row in record_rows:
+                record_key = (
+                    row["dataset_source"],
+                    row["split"],
+                    row["scene_name"],
+                    int(row["scene_index"]),
+                    row["goes_time"],
+                    int(row["row"]),
+                    int(row["col"]),
+                    None if row["sample_index"] is None else int(row["sample_index"]),
+                )
+                patch_paths: dict[int, Path] = {}
+                for offset in non_zero_offsets:
+                    patch = connection.execute(
+                        """
+                        SELECT p.patch_path
+                        FROM temporal_patches p
+                        JOIN abi_patch_records r ON r.id = p.record_id
+                        WHERE r.record_key_sha256 = ? AND p.offset = ? AND p.status = 'extracted' AND p.patch_path IS NOT NULL
+                        """,
+                        (temporal_record_key_sha256(record_key), int(offset)),
+                    ).fetchone()
+                    if patch is None:
+                        break
+                    raw_path = str(patch["patch_path"])
+                    path = (self.root / raw_path).resolve()
+                    try:
+                        path.relative_to(self.root)
+                    except ValueError as exc:
+                        raise ValueError("temporal cache patch paths must resolve beneath the cache root") from exc
+                    patch_paths[offset] = path
+                else:
+                    self._patches_by_record[record_key] = patch_paths
 
     def contains(self, record: ABIPatchIndexRecord) -> bool:
         return temporal_record_key(record) in self._patches_by_record
@@ -376,14 +419,303 @@ def temporal_record_key_from_mapping(row: Mapping[str, object]) -> tuple[object,
     )
 
 
+def temporal_record_key_sha256(record_key: tuple[object, ...]) -> str:
+    """Return the SQLite primary record-key digest for a temporal record key tuple."""
+
+    import hashlib
+
+    encoded = json.dumps(list(record_key), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _sqlite_metadata_value(connection: Any, key: str) -> str | None:
+    try:
+        row = connection.execute("SELECT value FROM cache_metadata WHERE key = ?", (key,)).fetchone()
+    except Exception as exc:  # sqlite3.OperationalError without importing sqlite3 at module import time.
+        raise ValueError("temporal cache SQLite database is missing required metadata tables") from exc
+    return None if row is None else str(row["value"] if hasattr(row, "keys") else row[0])
+
+
 def temporal_record_identity_sha256(records: Sequence[ABIPatchIndexRecord]) -> str:
-    """Return a stable digest for a temporal cache manifest's dataset scope."""
+    """Return a stable digest for a temporal cache database's dataset scope."""
 
     import hashlib
 
     payload = [list(temporal_record_key(record)) for record in sorted(records, key=temporal_record_key)]
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def temporal_patch_relative_path(record: ABIPatchIndexRecord | Mapping[str, object], offset: int) -> str:
+    """Return the per-offset reusable temporal patch path for one record."""
+
+    key = temporal_record_key(record) if isinstance(record, ABIPatchIndexRecord) else temporal_record_key_from_mapping(record)
+    dataset_source = str(key[0])
+    split = str(key[1])
+    return (
+        f"patches/{temporal_offset_directory_name(int(offset))}/"
+        f"{_safe_temporal_path_component(dataset_source)}/{_safe_temporal_path_component(split)}/"
+        f"{temporal_record_key_sha256(key)}.npy"
+    )
+
+
+def initialize_temporal_cache_database(database_path: str | Path) -> None:
+    """Create or upgrade the issue-5 SQLite temporal cache schema."""
+
+    import sqlite3
+
+    path = Path(database_path).expanduser().resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(path) as connection:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS cache_metadata (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dataset_scope (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                record_count INTEGER NOT NULL,
+                record_identity_sha256 TEXT NOT NULL,
+                full_dataset_scan INTEGER NOT NULL CHECK (full_dataset_scan IN (0, 1)),
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS abi_patch_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                record_key_sha256 TEXT NOT NULL UNIQUE,
+                dataset_source TEXT NOT NULL,
+                split TEXT NOT NULL,
+                scene_name TEXT NOT NULL,
+                scene_index INTEGER NOT NULL,
+                goes_time TEXT,
+                row INTEGER NOT NULL,
+                col INTEGER NOT NULL,
+                positive INTEGER NOT NULL CHECK (positive IN (0, 1)),
+                sample_index INTEGER
+            );
+            CREATE TABLE IF NOT EXISTS source_scenes (
+                key TEXT PRIMARY KEY,
+                time_coverage_start TEXT NOT NULL,
+                time_coverage_end TEXT NOT NULL,
+                canonical_scene_time TEXT NOT NULL,
+                filename_scene_time TEXT
+            );
+            CREATE TABLE IF NOT EXISTS record_scene_matches (
+                record_id INTEGER NOT NULL REFERENCES abi_patch_records(id) ON DELETE CASCADE,
+                offset INTEGER NOT NULL,
+                scene_key TEXT NOT NULL,
+                status TEXT NOT NULL,
+                PRIMARY KEY (record_id, offset)
+            );
+            CREATE TABLE IF NOT EXISTS temporal_patches (
+                record_id INTEGER NOT NULL REFERENCES abi_patch_records(id) ON DELETE CASCADE,
+                offset INTEGER NOT NULL,
+                source_scene_key TEXT NOT NULL,
+                status TEXT NOT NULL,
+                patch_path TEXT,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (record_id, offset)
+            );
+            CREATE INDEX IF NOT EXISTS idx_temporal_patches_offset_status ON temporal_patches(offset, status);
+            """
+        )
+        connection.execute(
+            "INSERT OR REPLACE INTO cache_metadata(key, value) VALUES ('schema_version', ?)",
+            (ABI_TEMPORAL_CACHE_SQLITE_SCHEMA_VERSION,),
+        )
+
+
+def write_temporal_cache_database(
+    database_path: str | Path,
+    *,
+    cache_root: str | Path,
+    records: Sequence[ABIPatchIndexRecord],
+    scenes: Sequence[Any],
+    eligibility: Mapping[str, object],
+) -> None:
+    """Write/update trusted temporal eligibility metadata into the SQLite cache."""
+
+    import sqlite3
+    from datetime import UTC, datetime
+
+    path = Path(database_path).expanduser().resolve()
+    root = Path(cache_root).expanduser().resolve()
+    initialize_temporal_cache_database(path)
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    expected_digest = temporal_record_identity_sha256(records)
+    dataset_scope = eligibility.get("dataset_scope", {})
+    manifest_digest = dataset_scope.get("record_identity_sha256") if isinstance(dataset_scope, Mapping) else None
+    if manifest_digest is not None and str(manifest_digest) != expected_digest:
+        raise ValueError("temporal eligibility dataset_scope does not match configured records")
+    eligible_records = eligibility.get("records", ())
+    if not isinstance(eligible_records, Sequence) or isinstance(eligible_records, (str, bytes)):
+        raise ValueError("temporal eligibility records must be a sequence")
+    eligible_by_key: dict[tuple[object, ...], Mapping[str, object]] = {}
+    for record in eligible_records:
+        if not isinstance(record, Mapping):
+            raise ValueError("temporal eligibility records must contain mappings")
+        key = temporal_record_key_from_mapping(record)
+        if key in eligible_by_key:
+            raise ValueError(f"duplicate temporal eligibility record: {key!r}")
+        eligible_by_key[key] = record
+    with sqlite3.connect(path) as connection:
+        connection.row_factory = sqlite3.Row
+        previous = connection.execute("SELECT record_identity_sha256 FROM dataset_scope WHERE id = 1").fetchone()
+        if previous is not None and str(previous["record_identity_sha256"]) != expected_digest:
+            connection.execute("DELETE FROM temporal_patches")
+            connection.execute("DELETE FROM record_scene_matches")
+            connection.execute("DELETE FROM abi_patch_records")
+        connection.execute(
+            """
+            INSERT INTO dataset_scope(id, record_count, record_identity_sha256, full_dataset_scan, updated_at)
+            VALUES (1, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              record_count=excluded.record_count,
+              record_identity_sha256=excluded.record_identity_sha256,
+              full_dataset_scan=excluded.full_dataset_scan,
+              updated_at=excluded.updated_at
+            """,
+            (len(records), expected_digest, 1 if bool(eligibility.get("full_dataset_scan", False)) else 0, now),
+        )
+        for scene in scenes:
+            connection.execute(
+                """
+                INSERT INTO source_scenes(key, time_coverage_start, time_coverage_end, canonical_scene_time, filename_scene_time)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                  time_coverage_start=excluded.time_coverage_start,
+                  time_coverage_end=excluded.time_coverage_end,
+                  canonical_scene_time=excluded.canonical_scene_time,
+                  filename_scene_time=excluded.filename_scene_time
+                """,
+                (
+                    str(scene.key),
+                    _temporal_isoformat(scene.time_coverage_start),
+                    _temporal_isoformat(scene.time_coverage_end),
+                    _temporal_isoformat(scene.canonical_scene_time),
+                    None if scene.filename_scene_time is None else _temporal_isoformat(scene.filename_scene_time),
+                ),
+            )
+        for record in records:
+            key = temporal_record_key(record)
+            key_digest = temporal_record_key_sha256(key)
+            connection.execute(
+                """
+                INSERT INTO abi_patch_records(
+                    record_key_sha256, dataset_source, split, scene_name, scene_index, goes_time, row, col, positive, sample_index
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(record_key_sha256) DO UPDATE SET
+                  dataset_source=excluded.dataset_source,
+                  split=excluded.split,
+                  scene_name=excluded.scene_name,
+                  scene_index=excluded.scene_index,
+                  goes_time=excluded.goes_time,
+                  row=excluded.row,
+                  col=excluded.col,
+                  positive=excluded.positive,
+                  sample_index=excluded.sample_index
+                """,
+                (
+                    key_digest,
+                    record.dataset_source,
+                    record.split,
+                    record.scene_name,
+                    int(record.scene_index),
+                    record.goes_time,
+                    int(record.row),
+                    int(record.col),
+                    1 if record.positive else 0,
+                    None if record.sample_index is None else int(record.sample_index),
+                ),
+            )
+            db_record = connection.execute(
+                "SELECT id FROM abi_patch_records WHERE record_key_sha256 = ?", (key_digest,)
+            ).fetchone()
+            record_id = int(db_record["id"])
+            eligible = eligible_by_key.get(key)
+            if eligible is None:
+                continue
+            source_scenes = eligible.get("temporal_source_scenes") if isinstance(eligible, Mapping) else None
+            if not isinstance(source_scenes, Mapping):
+                raise ValueError("temporal eligibility record is missing temporal_source_scenes")
+            for raw_offset, raw_scene_key in source_scenes.items():
+                offset = int(raw_offset)
+                scene_key = str(raw_scene_key)
+                connection.execute(
+                    """
+                    INSERT INTO record_scene_matches(record_id, offset, scene_key, status)
+                    VALUES (?, ?, ?, 'matched')
+                    ON CONFLICT(record_id, offset) DO UPDATE SET scene_key=excluded.scene_key, status=excluded.status
+                    """,
+                    (record_id, offset, scene_key),
+                )
+                if offset == 0:
+                    continue
+                existing = connection.execute(
+                    "SELECT source_scene_key, status, patch_path FROM temporal_patches WHERE record_id = ? AND offset = ?",
+                    (record_id, offset),
+                ).fetchone()
+                status = "pending"
+                patch_path: str | None = None
+                if existing is not None and str(existing["source_scene_key"]) == scene_key and existing["status"] == "extracted":
+                    existing_path = existing["patch_path"]
+                    if isinstance(existing_path, str) and (root / existing_path).is_file():
+                        status = "extracted"
+                        patch_path = existing_path
+                connection.execute(
+                    """
+                    INSERT INTO temporal_patches(record_id, offset, source_scene_key, status, patch_path, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(record_id, offset) DO UPDATE SET
+                      source_scene_key=excluded.source_scene_key,
+                      status=excluded.status,
+                      patch_path=excluded.patch_path,
+                      updated_at=excluded.updated_at
+                    """,
+                    (record_id, offset, scene_key, status, patch_path, now),
+                )
+
+
+def mark_temporal_patch_extracted(database_path: str | Path, record: ABIPatchIndexRecord | Mapping[str, object], offset: int, patch_path: str) -> None:
+    """Mark one extracted non-zero temporal patch path in SQLite."""
+
+    import sqlite3
+    from datetime import UTC, datetime
+
+    if Path(patch_path).is_absolute() or ".." in Path(patch_path).parts:
+        raise ValueError("temporal cache patch paths must be relative paths beneath the cache root")
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    record_digest = temporal_record_key_sha256(temporal_record_key(record) if isinstance(record, ABIPatchIndexRecord) else temporal_record_key_from_mapping(record))
+    with sqlite3.connect(Path(database_path).expanduser().resolve()) as connection:
+        row = connection.execute(
+            "SELECT id FROM abi_patch_records WHERE record_key_sha256 = ?", (record_digest,)
+        ).fetchone()
+        if row is None:
+            raise ValueError("cannot mark temporal patch extracted for an unknown ABI Patch record")
+        record_id = int(row[0])
+        updated = connection.execute(
+            """
+            UPDATE temporal_patches
+            SET status = 'extracted', patch_path = ?, updated_at = ?
+            WHERE record_id = ? AND offset = ?
+            """,
+            (patch_path, now, record_id, int(offset)),
+        ).rowcount
+        if updated != 1:
+            raise ValueError("cannot mark temporal patch extracted for an offset without trusted eligibility evidence")
+
+
+def _temporal_isoformat(value: Any) -> str:
+    if hasattr(value, "isoformat"):
+        return str(value.isoformat()).replace("+00:00", "Z")
+    return str(value)
+
+
+def _safe_temporal_path_component(value: str) -> str:
+    cleaned = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in value)
+    if not cleaned or cleaned in {".", ".."}:
+        raise ValueError(f"invalid temporal cache path component: {value!r}")
+    return cleaned
 
 
 def abi_temporal_input_channel_first(
@@ -753,6 +1085,7 @@ __all__ = [
     "ABI_FORBIDDEN_SOURCE_INDICES",
     "ABI_INPUT_MODE_SOURCE_INDICES",
     "ABI_TEMPORAL_ALLOWED_FRAME_OFFSETS",
+    "ABI_TEMPORAL_CACHE_SQLITE_FILENAME",
     "ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS",
     "ABI_THERMAL_10CH_CHANNEL_COUNT",
     "ABIDatasetSource",
@@ -773,13 +1106,19 @@ __all__ = [
     "build_google_abi_patch_index",
     "build_mit_abi_patch_index",
     "collapse_contrail_mask",
+    "initialize_temporal_cache_database",
     "load_abi_metadata_rows",
     "open_abi_patch_arrays",
     "open_google_abi_patch_arrays",
     "open_mit_abi_patch_arrays",
+    "temporal_offset_directory_name",
     "temporal_offsets_cache_token",
+    "temporal_patch_relative_path",
+    "temporal_record_digest",
     "temporal_record_key",
     "temporal_record_identity_sha256",
     "temporal_record_key_from_mapping",
+    "temporal_record_key_sha256",
     "validate_temporal_frame_offsets",
+    "write_temporal_cache_database",
 ]
