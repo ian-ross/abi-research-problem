@@ -10,6 +10,12 @@ An explicit `campaign_paused` state and Harness stop/failure conditions stop aut
 
 Materially different architecture families begin with bounded sequential evidence when their resource behavior is unknown. Capped Runs are feasibility evidence rather than full-data evidence. Hard failure, non-finite behavior, persistent prediction collapse, clear optimization failure, or convincing plateau/divergence may support eliminating an exact branch; low score alone does not eliminate a finite, improving, source-balanced, novel, noisy, or ambiguous family.
 
+### Current broadening guidance
+
+Recent search has concentrated on single-frame ABI-202/ABI-184-style full-spectral BTD+SZA ASPP/detail/line/refiner variants. Continue that frontier only with a clear, evidence-backed one-factor hypothesis; otherwise prefer broader sequential scouts. Underexplored directions now include provider-owned temporal/multi-timestep models, true motion/change architectures over the `abi_16ch_plus_sza_temporal` tensor, learned rotation-aware line networks, differentiable Hough/Radon-style line accumulation, compact modern attention/backbone families, spectral/SZA-state mixture-of-experts, and recall-preserving calibration or uncertainty-style agreement heads.
+
+Temporal scouts may request `input_mode: abi_16ch_plus_sza_temporal`, `data.frame_selection_policy: temporal_eligible_center`, and an allowlisted `data.temporal_frame_offsets` window (`[0]`, `[-1, 0, 1]`, or `[-2, -1, 0, 1, 2]`). Matched single-frame controls should use `abi_16ch_plus_sza` with `frame_selection_policy: temporal_eligible_center`. These suggestions do not authorize candidate-owned data loading, temporal lookup, S3/NetCDF access, patch-cache reads, padding, missing-neighbor fallback, coordinates, target derivation, losses, metrics, Artifact Filters, thresholding, postprocessing, augmentation, sampling, or resource scheduling.
+
 ## Current evidence summary
 
 - Candidate directories indexed: 178

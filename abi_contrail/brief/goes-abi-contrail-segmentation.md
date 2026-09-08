@@ -63,6 +63,33 @@ Decisions are asymmetric. Hard execution failure, non-finite behavior, persisten
 
 Representative capped evidence is a feasibility screen, not a substitute for focused full-data evidence. Do not compare a capped score as though it were a full-data Result. The generated Agent Workspace Configuration is authoritative for current sample, epoch, timeout, parameter, batch, prediction, scheduler, early-stopping, GPU, and concurrency limits.
 
+## Underexplored Candidate directions
+
+The campaign has produced a strong single-frame spectral/spatial frontier, especially around ABI-202-style full-spectral BTD+SZA ASPP/detail/line/refiner models. Repeated local support gates, auxiliary-head shuffles, and detail-bridge variants should not crowd out broader scouts. Good future proposals should explicitly say whether they are a close continuation of this frontier or a broader family scout.
+
+Underexplored in-contract directions include:
+
+1. **Temporal / multi-timestep models**. The provider now advertises `abi_16ch_plus_sza_temporal`; use it when the hypothesis depends on persistence, advection, or change over neighboring GOES ABI frames. Candidate manifests should use `data.frame_selection_policy: temporal_eligible_center` and an allowlisted `data.temporal_frame_offsets` window. Candidate code may split or reshape the channel-stacked tensor, but must not own temporal lookup, S3/NetCDF reads, reprojection, cache access, padding, duplicate-frame fallback, or sample selection.
+2. **True motion/change architectures**. Siamese/twin encoders, before/after residual streams, temporal-difference BTD features, depthwise temporal convolutions, ConvLSTM/GRU blocks, or small temporal-attention blocks are appropriate when they consume only provider-stacked temporal inputs.
+3. **Group-equivariant or rotation-aware line networks**. Learned steerable/group convolutions or richer orientation banks may improve thin-line continuity beyond manually coded horizontal/vertical/diagonal context.
+4. **Differentiable Hough/Radon-style line accumulation**. Architecture-internal line voting or accumulation can be explored for continuity, provided it remains differentiable model logic and not morphology, thresholding, postprocessing, or an Artifact Filter.
+5. **Modern lightweight segmentation backbones**. Compact SegFormer/UNetFormer/Swin-like window attention, ConvNeXt-V2-style encoders, MaxViT-like local/global blocks, and related resource-bounded backbones remain under-scouted.
+6. **Mixture-of-experts by spectral/illumination regime**. SZA- or spectral-state-gated experts are allowed when gates are learned from provider-approved channels and do not use Dataset Source identity, scene identity, longitude/latitude, or route/location priors.
+7. **Matched calibration/uncertainty architectures**. Compact-logit heads, dual-head agreement, uncertainty-like consensus, and recall-preserving calibration are valid architecture ideas, but threshold selection and postprocessing remain trusted Harness/provider responsibilities.
+
+Temporal manifest pattern:
+
+```yaml
+input_mode: abi_16ch_plus_sza_temporal
+data:
+  frame_selection_policy: temporal_eligible_center
+  temporal_frame_offsets: [-1, 0, 1]
+```
+
+Allowed temporal windows are `[0]`, `[-1, 0, 1]`, and `[-2, -1, 0, 1, 2]`. Each frame contributes ABI channels 1-16 plus per-frame Solar Geometry Input, stacked in ascending frame-offset order. The target Contrail Mask is always from offset `0`. A matched single-frame control should use `input_mode: abi_16ch_plus_sza` with `data.frame_selection_policy: temporal_eligible_center`.
+
+These directions are suggestions only. Candidate manifests and source remain constrained to provider-advertised input modes, allowlisted losses, auxiliary targets, sampling policies, augmentation policies, optimizer/scheduler choices, and trusted resource limits. Materially different families, particularly temporal and attention-heavy models, should run sequentially until profiled.
+
 ## Loss and auxiliary-target allowlists
 
 Primary loss allowlist:

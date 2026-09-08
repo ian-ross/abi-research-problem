@@ -31,6 +31,31 @@ Treat first attempts at materially different architecture families as scouts rat
 
 Representative capped Runs are feasibility evidence rather than full-data promotion evidence. Candidate code cannot alter trusted limits or reinterpret capped evidence as full-data evidence.
 
+## Underexplored architecture directions
+
+The recent ABI campaign has heavily explored single-frame full-spectral/BTD/SZA ASPP/detail/line/refiner variants around the ABI-202/ABI-184 frontier. Prefer a broader scout when repeated local support gates, auxiliary-head tweaks, or detail-refiner mutations are unlikely to add new evidence. Underexplored in-contract directions include:
+
+- **Temporal / multi-timestep models**: provider-owned temporal input is now available as `input_mode: abi_16ch_plus_sza_temporal`. Use it to test whether neighboring ABI frames distinguish persistent/advecting contrails from static geography, scan artifacts, and transient cloud edges.
+- **True motion/change architectures**: Siamese or twin encoders, before/after residual streams, temporal-difference BTD features, depthwise temporal convolutions, compact ConvLSTM/GRU blocks, or temporal attention over provider-stacked frames.
+- **Group-equivariant or rotation-aware line networks**: learned steerable/group convolutions or richer orientation banks beyond manual horizontal/vertical/diagonal context.
+- **Differentiable Hough/Radon-style line accumulation**: architecture-internal line voting/accumulation to improve continuity, without candidate-owned morphology, thresholding, postprocessing, or Artifact Filtering.
+- **Modern lightweight segmentation backbones**: compact SegFormer/UNetFormer/Swin-like window attention, ConvNeXt-V2-style encoders, MaxViT-like local/global blocks, or other resource-bounded modern backbones.
+- **Mixture-of-experts by spectral/illumination regime**: SZA- or spectral-state-gated experts that do not use Dataset Source identity, longitude/latitude, scene identity, or route/location priors.
+- **Matched calibration/uncertainty architectures**: compact logits, dual-head agreement, uncertainty-like consensus, or recall-preserving calibration heads without candidate-owned thresholding or postprocessing.
+
+Temporal Candidate manifests should request the trusted temporal mode and an allowlisted offset window, for example:
+
+```yaml
+input_mode: abi_16ch_plus_sza_temporal
+data:
+  frame_selection_policy: temporal_eligible_center
+  temporal_frame_offsets: [-1, 0, 1]
+```
+
+Allowed temporal windows are `[0]`, `[-1, 0, 1]`, and `[-2, -1, 0, 1, 2]`. The tensor is channel-stacked in ascending offset order with 17 channels per frame: ABI channels 1-16 plus that frame's Solar Geometry Input. The target Contrail Mask is always the zero-offset center ABI Patch. Matched single-frame controls should use `input_mode: abi_16ch_plus_sza` with `data.frame_selection_policy: temporal_eligible_center`, not candidate-side filtering.
+
+These suggestions do not relax the Research Problem contract. Candidate code must not discover S3/NetCDF objects, download, load, select, pad, duplicate, or repair temporal frames; it may only consume provider-advertised tensors and define architecture over those tensors. New materially different families, especially temporal or attention-heavy models, should run sequentially until resource behavior is profiled.
+
 ## Trusted provider and Candidate boundary
 
 - Candidate models must never receive longitude or latitude inputs. These encourage route-location priors and reduce transferability.
