@@ -26,7 +26,7 @@ The generated JSON contains:
 - ordered Artifact Filter configuration, removed-pixel effects, registry identity, and input checksums;
 - bounded ABI-025 manual canary Run, Post-Run Evaluation, and human-review context.
 
-Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. This profile-statistics sample is separate from bounded training/validation record selection. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation. Temporal ABI inputs remain provider-owned: a temporal cache/eligibility manifest may summarize eligible counts and provenance, but candidate-visible temporal tensors still expose only ABI channels 1-16 plus per-frame Solar Geometry Input.
+Channel statistics deterministically select at most 16 records per split and 1,024 evenly spaced pixels per selected record. This profile-statistics sample is separate from bounded training/validation record selection. Non-finite values are counted but excluded from ranges. Coordinate source indices 16 and 17 are never sampled by the channel-statistics implementation. Temporal ABI inputs remain provider-owned: the trusted SQLite temporal cache may summarize eligible counts and provenance, but candidate-visible temporal tensors still expose only ABI channels 1-16 plus per-frame Solar Geometry Input.
 
 ## Capped training and validation semantics
 

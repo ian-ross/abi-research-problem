@@ -8,14 +8,17 @@ from abi_contrail.datasets import (
     ABIPatchDataset,
     ABITemporalPatchCache,
     INPUT_MODE_ABI_16CH_PLUS_SZA_TEMPORAL,
+    mark_temporal_patch_extracted,
     abi_16ch_channel_first,
     abi_input_channel_first,
     build_abi_patch_dataset,
     build_google_abi_patch_index,
     build_mit_abi_patch_index,
     collapse_contrail_mask,
+    temporal_record_identity_sha256,
     open_google_abi_patch_arrays,
     open_mit_abi_patch_arrays,
+    write_temporal_cache_database,
 )
 
 
@@ -153,9 +156,9 @@ def test_temporal_input_mode_stacks_frames_in_ascending_offset_order_without_lon
         next_frame[:, :, channel] = 200 + channel
     np.save(cache_root / "prev.npy", prev)
     np.save(cache_root / "next.npy", next_frame)
-    manifest = {
-        "manifest_version": "abi_temporal_cache.v1",
-        "temporal_frame_offsets": [-1, 0, 1],
+    eligibility = {
+        "full_dataset_scan": True,
+        "dataset_scope": {"record_identity_sha256": temporal_record_identity_sha256((record,))},
         "records": [
             {
                 "dataset_source": "google",
@@ -166,12 +169,16 @@ def test_temporal_input_mode_stacks_frames_in_ascending_offset_order_without_lon
                 "row": 0,
                 "col": 0,
                 "sample_index": 0,
-                "patches": {"-1": "prev.npy", "1": "next.npy"},
+                "temporal_source_scenes": {"-1": "scene-prev", "0": "materialized_training_zarr", "1": "scene-next"},
             }
         ],
     }
+    database_path = cache_root / "abi-temporal-cache.sqlite"
+    write_temporal_cache_database(database_path, cache_root=cache_root, records=(record,), scenes=(), eligibility=eligibility)
+    mark_temporal_patch_extracted(database_path, record, -1, "prev.npy")
+    mark_temporal_patch_extracted(database_path, record, 1, "next.npy")
 
-    cache = ABITemporalPatchCache.from_manifest(cache_root, manifest, requested_offsets=(-1, 0, 1))
+    cache = ABITemporalPatchCache.from_database(cache_root, requested_offsets=(-1, 0, 1))
     dataset = ABIPatchDataset(
         arrays,
         [record],

@@ -36,7 +36,7 @@ from abi_contrail.datasets import (
     build_mit_abi_patch_index,
     load_abi_metadata_rows,
     open_abi_patch_arrays,
-    temporal_offsets_cache_token,
+    ABI_TEMPORAL_CACHE_SQLITE_FILENAME,
     temporal_record_identity_sha256,
     validate_temporal_frame_offsets,
 )
@@ -293,14 +293,19 @@ class ABITrainingAdapter:
         temporal_cache = self._temporal_cache_for_manifest(data_config, manifest_config) if manifest_config.requires_temporal_eligibility else None
         source_datasets: list[tuple[_TorchABIPatchDataset, _TorchABIPatchDataset, dict[str, object]]] = []
         source_selection_summaries: list[dict[str, object]] = []
+        prepared_sources: list[tuple[str, Any, ABIPatchSplitIndex]] = []
         for source_config in self._source_data_configs(root, data_config):
             layout = str(source_config["layout"])
             inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
             labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
             arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
             split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
+            prepared_sources.append((layout, arrays, split_index))
+        if temporal_cache is not None:
+            self._validate_temporal_cache_scope(tuple(split_index for _, _, split_index in prepared_sources), temporal_cache)
+        for layout, arrays, split_index in prepared_sources:
             if temporal_cache is not None:
-                split_index = self._filter_temporal_eligible_records(split_index, temporal_cache)
+                split_index = self._filter_temporal_eligible_records(split_index, temporal_cache, validate_scope=False)
             train_selection = select_representative_records(
                 split_index.train,
                 max_samples,
@@ -698,55 +703,65 @@ class ABITrainingAdapter:
             raise ResearchProblemDataError(
                 f"ABI temporal_cache root does not exist or is not a directory: {temporal_root}"
             )
-        manifest_name = data_config.get(
-            "temporal_cache_manifest",
-            f"abi-temporal-cache-offsets-{temporal_offsets_cache_token(manifest_config.temporal_frame_offsets)}.json",
-        )
+        database_name = data_config.get("temporal_cache_database", ABI_TEMPORAL_CACHE_SQLITE_FILENAME)
         try:
-            manifest_path = resolve_root_relative_path(
+            database_path = resolve_root_relative_path(
                 temporal_root,
-                manifest_name,
-                config_key="temporal_cache_manifest",
+                database_name,
+                config_key="temporal_cache_database",
                 named_root="temporal_cache" if named_data_roots(data_config) is not None else None,
             )
         except ABIDataConfigError as exc:
             raise ResearchProblemDataError(str(exc)) from exc
-        if not manifest_path.is_file():
+        if not database_path.is_file():
             raise ResearchProblemDataError(
-                f"ABI temporal cache/eligibility manifest is required but missing: {manifest_path}"
+                f"ABI temporal cache SQLite database is required but missing: {database_path}"
             )
         try:
-            cache = ABITemporalPatchCache.from_manifest_file(
-                manifest_path,
+            cache = ABITemporalPatchCache.from_database(
+                temporal_root,
                 requested_offsets=manifest_config.temporal_frame_offsets,
+                database_path=database_path,
             )
         except (OSError, ValueError) as exc:
-            raise ResearchProblemDataError(f"invalid ABI temporal cache manifest: {exc}") from exc
+            raise ResearchProblemDataError(f"invalid ABI temporal cache SQLite database: {exc}") from exc
         if not cache.full_dataset_scan and not bool(data_config.get("allow_temporal_cache_subset", False)):
             raise ResearchProblemDataError(
-                "ABI temporal cache manifest does not declare full_dataset_scan=true; "
+                "ABI temporal cache SQLite database does not declare full_dataset_scan=true; "
                 "set data_config.allow_temporal_cache_subset=true only for trusted smoke tests/debugging"
             )
         return cache
 
     @staticmethod
+    def _validate_temporal_cache_scope(
+        split_indices: Sequence[ABIPatchSplitIndex],
+        temporal_cache: ABITemporalPatchCache,
+    ) -> None:
+        from ml_autoresearch.errors import ResearchProblemDataError
+
+        if not temporal_cache.full_dataset_scan:
+            return
+        expected_records = tuple(record for split_index in split_indices for record in split_index.records)
+        expected_scope_digest = temporal_record_identity_sha256(expected_records)
+        if temporal_cache.dataset_scope_record_identity_sha256 is None:
+            raise ResearchProblemDataError(
+                "ABI temporal cache SQLite database full_dataset_scan=true but missing dataset_scope.record_identity_sha256"
+            )
+        if temporal_cache.dataset_scope_record_identity_sha256 != expected_scope_digest:
+            raise ResearchProblemDataError(
+                "ABI temporal cache SQLite database is stale for the requested dataset source/split scope: "
+                f"expected {expected_scope_digest}, got {temporal_cache.dataset_scope_record_identity_sha256}"
+            )
+
+    @staticmethod
     def _filter_temporal_eligible_records(
         split_index: ABIPatchSplitIndex,
         temporal_cache: ABITemporalPatchCache,
+        *,
+        validate_scope: bool = True,
     ) -> ABIPatchSplitIndex:
-        from ml_autoresearch.errors import ResearchProblemDataError
-
-        expected_scope_digest = temporal_record_identity_sha256(split_index.records)
-        if temporal_cache.full_dataset_scan:
-            if temporal_cache.dataset_scope_record_identity_sha256 is None:
-                raise ResearchProblemDataError(
-                    "ABI temporal cache manifest full_dataset_scan=true but missing dataset_scope.record_identity_sha256"
-                )
-            if temporal_cache.dataset_scope_record_identity_sha256 != expected_scope_digest:
-                raise ResearchProblemDataError(
-                    "ABI temporal cache manifest is stale for the requested dataset source/split scope: "
-                    f"expected {expected_scope_digest}, got {temporal_cache.dataset_scope_record_identity_sha256}"
-                )
+        if validate_scope:
+            ABITrainingAdapter._validate_temporal_cache_scope((split_index,), temporal_cache)
         train = temporal_cache.eligible_records(split_index.train)
         validation = temporal_cache.eligible_records(split_index.validation)
         metadata = dict(split_index.data_policy_metadata)

@@ -221,10 +221,10 @@ def build_temporal_eligibility_manifest(
 ) -> dict[str, object]:
     """Build a durable trusted temporal eligibility/provenance manifest.
 
-    This manifest records which center ABI Patches have complete GOES-16 CONUS
-    neighbor scenes for the requested frame-offset window. It does not imply the
-    non-zero patch tensors have already been extracted; cache manifests add the
-    per-offset patch paths after extraction.
+    This in-memory payload records which center ABI Patches have complete GOES-16
+    CONUS neighbor scenes for the requested frame-offset window. Provisioning
+    persists the payload into the SQLite temporal cache database, where non-zero
+    patch extraction status and per-offset patch paths are updated separately.
     """
 
     sorted_offsets = sorted(int(offset) for offset in offsets)
@@ -306,63 +306,6 @@ def build_temporal_eligibility_manifest(
     }
 
 
-def build_temporal_cache_manifest_from_eligibility(
-    eligibility_manifest: Mapping[str, object],
-    *,
-    patch_path_for: Callable[[Mapping[str, object], int], str],
-) -> dict[str, object]:
-    """Build an ``abi_temporal_cache.v1`` manifest from extracted patch paths."""
-
-    if eligibility_manifest.get("manifest_version") != "abi_temporal_eligibility.v1":
-        raise ValueError("eligibility manifest must have manifest_version 'abi_temporal_eligibility.v1'")
-    offsets = eligibility_manifest.get("temporal_frame_offsets")
-    if not isinstance(offsets, Sequence) or isinstance(offsets, (str, bytes)):
-        raise ValueError("eligibility manifest temporal_frame_offsets must be a sequence")
-    frame_offsets = [int(offset) for offset in offsets]
-    records = eligibility_manifest.get("records")
-    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
-        raise ValueError("eligibility manifest records must be a sequence")
-    cache_records: list[dict[str, object]] = []
-    for raw_record in records:
-        if not isinstance(raw_record, Mapping):
-            raise ValueError("eligibility manifest records must contain mappings")
-        cache_record = {
-            "dataset_source": raw_record.get("dataset_source"),
-            "split": raw_record.get("split"),
-            "scene_name": raw_record.get("scene_name"),
-            "scene_index": raw_record.get("scene_index"),
-            "goes_time": raw_record.get("goes_time"),
-            "row": raw_record.get("row"),
-            "col": raw_record.get("col"),
-            "sample_index": raw_record.get("sample_index"),
-            "matched_conus_center_key": raw_record.get("matched_conus_center_key"),
-            "temporal_source_scenes": raw_record.get("temporal_source_scenes"),
-            "patches": {},
-        }
-        patches: dict[str, str] = {}
-        for offset in frame_offsets:
-            if offset == 0:
-                continue
-            path = patch_path_for(raw_record, offset)
-            if not isinstance(path, str) or not path:
-                raise ValueError(f"patch_path_for returned an invalid path for offset {offset}")
-            if Path(path).is_absolute() or ".." in Path(path).parts:
-                raise ValueError("temporal cache patch paths must be relative paths beneath the cache root")
-            patches[str(offset)] = path
-        cache_record["patches"] = patches
-        cache_records.append(cache_record)
-    return {
-        "manifest_version": "abi_temporal_cache.v1",
-        "full_dataset_scan": bool(eligibility_manifest.get("full_dataset_scan", False)),
-        "dataset_scope": dict(eligibility_manifest.get("dataset_scope", {})) if isinstance(eligibility_manifest.get("dataset_scope"), Mapping) else {},
-        "temporal_frame_offsets": frame_offsets,
-        "source_product_policy": dict(eligibility_manifest.get("source_product_policy", {})) if isinstance(eligibility_manifest.get("source_product_policy"), Mapping) else {},
-        "matching_policy": dict(eligibility_manifest.get("matching_policy", {})) if isinstance(eligibility_manifest.get("matching_policy"), Mapping) else {},
-        "summary": dict(eligibility_manifest.get("summary", {})) if isinstance(eligibility_manifest.get("summary"), Mapping) else {},
-        "records": cache_records,
-    }
-
-
 def _nearest_scene_index(
     ordered_scenes: Sequence[GOES16ConusScene],
     scene_times: Sequence[datetime],
@@ -438,7 +381,6 @@ __all__ = [
     "GOES16_MCMIPC_PRODUCT",
     "GOES16_PLATFORM",
     "GOES16ConusScene",
-    "build_temporal_cache_manifest_from_eligibility",
     "build_temporal_eligibility_manifest",
     "choose_nearest_scene",
     "goes16_mcmipc_hour_prefixes",

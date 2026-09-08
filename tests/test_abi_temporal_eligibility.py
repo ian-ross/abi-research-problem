@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from abi_contrail.datasets import ABIPatchIndexRecord, temporal_record_identity_sha256
-from abi_contrail.temporal import GOES16ConusScene, build_temporal_cache_manifest_from_eligibility, build_temporal_eligibility_manifest
+from abi_contrail.datasets import ABIPatchIndexRecord, temporal_record_identity_sha256, write_temporal_cache_database
+from abi_contrail.temporal import GOES16ConusScene, build_temporal_eligibility_manifest
 
 
 def _dt(minute: int) -> datetime:
@@ -74,22 +74,30 @@ def test_temporal_eligibility_fails_closed_on_duplicate_source_frames() -> None:
         build_temporal_eligibility_manifest(records, scenes, offsets=(-1, 0, 1))
 
 
-def test_temporal_cache_manifest_is_derived_from_eligibility_with_non_zero_patch_paths() -> None:
-    records = (_record("mit-scene-0", 5),)
-    eligibility = build_temporal_eligibility_manifest(records, tuple(_scene(index) for index in range(3)), offsets=(-1, 0, 1))
+def test_temporal_sqlite_cache_records_scope_scenes_matches_and_pending_patch_status(tmp_path) -> None:
+    import sqlite3
 
-    cache = build_temporal_cache_manifest_from_eligibility(
-        eligibility,
-        patch_path_for=lambda record, offset: f"patches/{record['dataset_source']}/{record['scene_index']}_{offset}.npy",
+    records = (_record("mit-scene-0", 5),)
+    scenes = tuple(_scene(index) for index in range(3))
+    eligibility = build_temporal_eligibility_manifest(records, scenes, offsets=(-1, 0, 1))
+
+    database_path = tmp_path / "temporal-cache" / "abi-temporal-cache.sqlite"
+    write_temporal_cache_database(
+        database_path,
+        cache_root=database_path.parent,
+        records=records,
+        scenes=scenes,
+        eligibility=eligibility,
     )
 
-    assert cache["manifest_version"] == "abi_temporal_cache.v1"
-    assert cache["full_dataset_scan"] is True
-    assert cache["dataset_scope"] == eligibility["dataset_scope"]
-    assert cache["temporal_frame_offsets"] == [-1, 0, 1]
-    assert cache["source_product_policy"] == eligibility["source_product_policy"]
-    assert cache["records"][0]["patches"] == {
-        "-1": "patches/mit/0_-1.npy",
-        "1": "patches/mit/0_1.npy",
-    }
-    assert "0" not in cache["records"][0]["patches"]
+    with sqlite3.connect(database_path) as connection:
+        scope = connection.execute("SELECT record_count, record_identity_sha256, full_dataset_scan FROM dataset_scope").fetchone()
+        scene_count = connection.execute("SELECT count(*) FROM source_scenes").fetchone()[0]
+        matches = connection.execute("SELECT offset, scene_key FROM record_scene_matches ORDER BY offset").fetchall()
+        patches = connection.execute("SELECT offset, status, patch_path FROM temporal_patches ORDER BY offset").fetchall()
+
+    assert scope == (1, temporal_record_identity_sha256(records), 1)
+    assert scene_count == 3
+    assert [row[0] for row in matches] == [-1, 0, 1]
+    assert matches[1][1] == "materialized_training_zarr"
+    assert patches == [(-1, "pending", None), (1, "pending", None)]
