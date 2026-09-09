@@ -448,13 +448,64 @@ def test_temporal_cache_fails_closed_when_requested_offset_is_missing(tmp_path: 
     assert not cache.contains(record)
 
 
+def test_temporal_build_datasets_preflights_zero_eligible_train_samples(tmp_path: Path) -> None:
+    data_config = _write_google_fixture(tmp_path / "fixture")
+    temporal_root = tmp_path / "temporal-cache"
+    temporal_root.mkdir()
+    split_index = build_google_abi_patch_index(data_config["metadata_rows"])
+    database_path = temporal_root / "abi-temporal-cache.sqlite"
+    eligibility_records = []
+    for record in split_index.records:
+        eligibility_records.append(
+            {
+                "dataset_source": record.dataset_source,
+                "split": record.split,
+                "scene_name": record.scene_name,
+                "scene_index": record.scene_index,
+                "goes_time": record.goes_time,
+                "row": record.row,
+                "col": record.col,
+                "sample_index": record.sample_index,
+                "temporal_source_scenes": {"-1": "scene-prev", "0": "materialized_training_zarr", "1": "scene-next"},
+            }
+        )
+    write_temporal_cache_database(
+        database_path,
+        cache_root=temporal_root,
+        records=split_index.records,
+        scenes=(),
+        eligibility={
+            "full_dataset_scan": True,
+            "dataset_scope": {"record_identity_sha256": temporal_record_identity_sha256(split_index.records)},
+            "records": eligibility_records,
+        },
+    )
+    for offset, path in {-1: "prev.npy", 1: "next.npy"}.items():
+        np.save(temporal_root / path, np.zeros((256, 256, 19), dtype=np.float32))
+        mark_temporal_patch_extracted(database_path, split_index.validation[0], offset, path)
+    data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
+    resolved_manifest = tmp_path / "resolved.yaml"
+    resolved_manifest.write_text(
+        yaml.safe_dump(
+            {
+                "input_mode": "abi_16ch_plus_sza_temporal",
+                "data": {"temporal_frame_offsets_effective": [-1, 0, 1]},
+            }
+        )
+    )
+
+    with pytest.raises(ResearchProblemDataError, match="no eligible training samples"):
+        ABITrainingAdapter().build_datasets(data_config=data_config, resolved_manifest_path=resolved_manifest)
+
+
 def test_temporal_eligible_single_frame_control_uses_sqlite_cache_subset(tmp_path: Path) -> None:
     data_config = _write_google_selection_fixture(tmp_path / "fixture")
     temporal_root = tmp_path / "temporal-cache"
     temporal_root.mkdir()
     eligible = data_config["metadata_rows"][1]
-    record = build_google_abi_patch_index((eligible,)).train[0]
-    _write_temporal_cache_database(temporal_root, (record,), full_dataset_scan=False, patch_paths={-1: "missing-not-read.npy", 1: "missing-not-read.npy"})
+    eligible_validation = data_config["metadata_rows"][5]
+    records = build_google_abi_patch_index((eligible, eligible_validation)).records
+    _write_temporal_cache_database(temporal_root, records, full_dataset_scan=False, patch_paths={-1: "missing-not-read.npy", 1: "missing-not-read.npy"})
     data_config["data_roots"] = {"training": data_config.pop("dataset_root"), "temporal_cache": str(temporal_root)}
     data_config["allow_temporal_cache_subset"] = True
     resolved_manifest = tmp_path / "resolved.yaml"

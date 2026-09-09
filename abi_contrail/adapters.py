@@ -130,6 +130,7 @@ class _ABIResolvedManifestConfig:
     input_mode: str
     frame_selection_policy: str
     temporal_frame_offsets: tuple[int, ...]
+    sampling_policy: str = SAMPLING_POLICY_SEQUENTIAL
 
     @property
     def requires_temporal_eligibility(self) -> bool:
@@ -293,14 +294,9 @@ class ABITrainingAdapter:
         temporal_cache = self._temporal_cache_for_manifest(data_config, manifest_config) if manifest_config.requires_temporal_eligibility else None
         source_datasets: list[tuple[_TorchABIPatchDataset, _TorchABIPatchDataset, dict[str, object]]] = []
         source_selection_summaries: list[dict[str, object]] = []
-        prepared_sources: list[tuple[str, Any, ABIPatchSplitIndex]] = []
-        for source_config in self._source_data_configs(root, data_config):
-            layout = str(source_config["layout"])
-            inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
-            labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
-            arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
-            split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
-            prepared_sources.append((layout, arrays, split_index))
+        prepared_sources = self._prepared_source_split_indices(root, data_config)
+        selected_train_counts_by_source: dict[str, int] = {}
+        selected_validation_counts_by_source: dict[str, int] = {}
         if temporal_cache is not None:
             self._validate_temporal_cache_scope(tuple(split_index for _, _, split_index in prepared_sources), temporal_cache)
         for layout, arrays, split_index in prepared_sources:
@@ -318,6 +314,8 @@ class ABITrainingAdapter:
                 dataset_source=layout,  # type: ignore[arg-type]
                 split="validation",
             )
+            selected_train_counts_by_source[layout] = len(train_selection.records)
+            selected_validation_counts_by_source[layout] = len(validation_selection.records)
             source_datasets.append(
                 (
                     _TorchABIPatchDataset(
@@ -350,6 +348,11 @@ class ABITrainingAdapter:
                     },
                 }
             )
+        self._validate_selected_data_availability(
+            manifest_config,
+            selected_train_counts_by_source=selected_train_counts_by_source,
+            selected_validation_counts_by_source=selected_validation_counts_by_source,
+        )
         if len(source_datasets) == 1:
             train_dataset, validation_dataset, split_metadata = source_datasets[0]
         else:
@@ -631,6 +634,21 @@ class ABITrainingAdapter:
             raise ResearchProblemDataError("ABI data_config.sources must not be empty")
         return tuple(source_configs)
 
+    def _prepared_source_split_indices(
+        self,
+        root: Path,
+        data_config: Mapping[str, object],
+    ) -> list[tuple[str, Any, ABIPatchSplitIndex]]:
+        prepared_sources: list[tuple[str, Any, ABIPatchSplitIndex]] = []
+        for source_config in self._source_data_configs(root, data_config):
+            layout = str(source_config["layout"])
+            inputs_path = self._resolve_required_path(root, source_config, "inputs_zarr")
+            labels_path = self._resolve_required_path(root, source_config, "labels_zarr")
+            arrays = open_abi_patch_arrays(inputs_path, labels_path, layout=layout)  # type: ignore[arg-type]
+            split_index = self._build_split_index(arrays.labels, root=root, layout=layout, data_config=source_config)
+            prepared_sources.append((layout, arrays, split_index))
+        return prepared_sources
+
     def _build_split_index(self, labels: Any, *, root: Path, layout: str, data_config: Mapping[str, object]):
         metadata_rows = self._metadata_rows(root, data_config)
         if layout == "google":
@@ -666,6 +684,10 @@ class ABITrainingAdapter:
             loaded = yaml.safe_load(path.read_text()) or {}
             if isinstance(loaded, Mapping):
                 manifest = loaded
+        return ABITrainingAdapter._resolved_manifest_config_from_mapping(manifest)
+
+    @staticmethod
+    def _resolved_manifest_config_from_mapping(manifest: Mapping[str, object]) -> _ABIResolvedManifestConfig:
         input_mode = str(manifest.get("input_mode", INPUT_MODE_ABI_16CH))
         if input_mode not in ABI_INPUT_MODE_SOURCE_INDICES:
             from ml_autoresearch.errors import TrainingError
@@ -682,11 +704,110 @@ class ABITrainingAdapter:
             data_policy.get("temporal_frame_offsets", ABI_TEMPORAL_DEFAULT_FRAME_OFFSETS),
         )
         temporal_frame_offsets = validate_temporal_frame_offsets(raw_offsets)  # type: ignore[arg-type]
+        sampling_policy = str(data_policy.get("sampling_policy_effective", data_policy.get("sampling_policy", SAMPLING_POLICY_SEQUENTIAL)))
         return _ABIResolvedManifestConfig(
             input_mode=input_mode,
             frame_selection_policy=frame_selection_policy,
             temporal_frame_offsets=temporal_frame_offsets,
+            sampling_policy=sampling_policy,
         )
+
+    @staticmethod
+    def _resolved_manifest_config_from_manifest_object(manifest: object) -> _ABIResolvedManifestConfig:
+        if isinstance(manifest, Mapping):
+            return ABITrainingAdapter._resolved_manifest_config_from_mapping(manifest)
+        model_dump = getattr(manifest, "model_dump", None)
+        if callable(model_dump):
+            dumped = model_dump(mode="python")
+            if isinstance(dumped, Mapping):
+                return ABITrainingAdapter._resolved_manifest_config_from_mapping(dumped)
+        input_mode = str(getattr(manifest, "input_mode", INPUT_MODE_ABI_16CH))
+        data = getattr(manifest, "data", {})
+        if isinstance(data, Mapping):
+            data_policy: Mapping[str, object] = data
+        else:
+            data_dump = getattr(data, "model_dump", None)
+            data_policy = data_dump(mode="python") if callable(data_dump) else {}
+            if not isinstance(data_policy, Mapping):
+                data_policy = {}
+        return ABITrainingAdapter._resolved_manifest_config_from_mapping({"input_mode": input_mode, "data": data_policy})
+
+    def validate_candidate_data_availability(
+        self,
+        data_config: Mapping[str, object],
+        manifest: object,
+        *,
+        max_samples: int | None = None,
+    ) -> None:
+        """Preflight provider-owned data availability for one resolved Candidate Manifest.
+
+        This hook is called by the Harness before accepting/submitting a Run when
+        available. It catches zero temporal-eligible center populations and
+        source-aware sampling/source mismatches before Candidate code or training
+        starts.
+        """
+
+        manifest_config = self._resolved_manifest_config_from_manifest_object(manifest)
+        if not manifest_config.requires_temporal_eligibility:
+            return
+        root = self.validate_data_root(data_config)
+        temporal_cache = self._temporal_cache_for_manifest(data_config, manifest_config)
+        prepared_sources = self._prepared_source_split_indices(root, data_config)
+        self._validate_temporal_cache_scope(tuple(split_index for _, _, split_index in prepared_sources), temporal_cache)
+        train_counts: dict[str, int] = {}
+        validation_counts: dict[str, int] = {}
+        for layout, _, split_index in prepared_sources:
+            filtered = self._filter_temporal_eligible_records(split_index, temporal_cache, validate_scope=False)
+            train_counts[layout] = len(select_representative_records(filtered.train, max_samples, dataset_source=layout, split="train").records)  # type: ignore[arg-type]
+            validation_counts[layout] = len(select_representative_records(filtered.validation, max_samples, dataset_source=layout, split="validation").records)  # type: ignore[arg-type]
+        self._validate_selected_data_availability(
+            manifest_config,
+            selected_train_counts_by_source=train_counts,
+            selected_validation_counts_by_source=validation_counts,
+        )
+
+    def _validate_selected_data_availability(
+        self,
+        manifest_config: _ABIResolvedManifestConfig,
+        *,
+        selected_train_counts_by_source: Mapping[str, int],
+        selected_validation_counts_by_source: Mapping[str, int],
+    ) -> None:
+        if not manifest_config.requires_temporal_eligibility:
+            return
+        from ml_autoresearch.errors import ResearchProblemDataError
+
+        offsets = list(manifest_config.temporal_frame_offsets)
+        train_total = sum(selected_train_counts_by_source.values())
+        validation_total = sum(selected_validation_counts_by_source.values())
+        if train_total == 0:
+            raise ResearchProblemDataError(
+                "ABI temporal eligibility preflight failed: no eligible training samples remain "
+                f"for frame_selection_policy={manifest_config.frame_selection_policy!r} and temporal_frame_offsets={offsets}; "
+                "refresh the trusted temporal cache or inspect abi_contrail/profile/temporal-eligibility-profile.v1.json"
+            )
+        if validation_total == 0:
+            raise ResearchProblemDataError(
+                "ABI temporal eligibility preflight failed: no eligible validation samples remain "
+                f"for frame_selection_policy={manifest_config.frame_selection_policy!r} and temporal_frame_offsets={offsets}; "
+                "refresh the trusted temporal cache or inspect abi_contrail/profile/temporal-eligibility-profile.v1.json"
+            )
+        for source in self._required_sampling_sources(manifest_config.sampling_policy):
+            if selected_train_counts_by_source.get(source, 0) == 0:
+                raise ResearchProblemDataError(
+                    "ABI temporal eligibility preflight failed: sampling policy "
+                    f"{manifest_config.sampling_policy!r} requested Dataset Source {source!r}, but no eligible training samples "
+                    f"remain for temporal_frame_offsets={offsets}; inspect abi_contrail/profile/temporal-eligibility-profile.v1.json"
+                )
+
+    def _required_sampling_sources(self, sampling_policy: str) -> tuple[str, ...]:
+        if sampling_policy == SAMPLING_POLICY_MIT_ONLY:
+            return ("mit",)
+        if sampling_policy == SAMPLING_POLICY_GOOGLE_ONLY:
+            return ("google",)
+        if sampling_policy == SAMPLING_POLICY_COMBINED_SOURCE_BALANCED:
+            return tuple(sorted(self._sampling_config.source_mixture))
+        return ()
 
     @staticmethod
     def _temporal_cache_for_manifest(
@@ -1311,6 +1432,14 @@ def build_spec(data_config: Mapping[str, object] | None = None):
                 "path": "abi_contrail/profile/agent-campaign-context.v1.json",
                 "summary": "Curated ABI snapshot, canonical MCAST 1.1/2.1, Artifact Filter, threshold, and ABI-025 manual-canary summaries; contains no raw samples, coordinates, or model weights.",
                 "split_scope": "Mounted ABI snapshot and canonical 3,088-sample Working Validation Split",
+                "required": True,
+            },
+            {
+                "name": "goes_abi_temporal_eligibility_profile_v1",
+                "role": "operator_generated_temporal_dataset_profile",
+                "path": "abi_contrail/profile/temporal-eligibility-profile.v1.json",
+                "summary": "Aggregate temporal-eligible center counts for allowlisted ABI temporal windows by Dataset Source and Leakage-Safe Split, with cache provenance and capped-selector audit counts; contains no raw samples, coordinates, patch paths, or record identities.",
+                "split_scope": "Mounted ABI snapshot; Google provenance plus MIT deterministic whole-scene split; temporal windows [0], [-1,0,1], and [-2,-1,0,1,2]",
                 "required": True,
             },
         ),

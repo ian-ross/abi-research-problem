@@ -90,6 +90,16 @@ Temporal inputs require explicit trusted provisioning before candidate training.
 uv run abi-provision-temporal-frames --workspace-root . --offsets -1,0,1 --extract-patches
 ```
 
+After provisioning or refreshing temporal patches, publish the agent-visible aggregate eligibility profile from the trusted SQLite cache:
+
+```bash
+uv run abi-temporal-eligibility-profile \
+  --workspace-root . \
+  --output abi_contrail/profile/temporal-eligibility-profile.v1.json
+```
+
+The profile summarizes allowlisted windows `[0]`, `[-1,0,1]`, and `[-2,-1,0,1,2]` by Dataset Source, Leakage-Safe Split, positive/negative counts, capped selected counts, and cache provenance. It intentionally does not expose raw ABI tensors, coordinates, per-record identities, scene identities, patch paths, or cache roots.
+
 For smoke tests/debugging only, use `--subset-limit <N>`; the resulting SQLite cache scope is marked `full_dataset_scan=false` and candidate runs accept it only when trusted config sets `allow_temporal_cache_subset = true`.
 
 ## Natural Earth ancillary data

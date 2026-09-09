@@ -1,0 +1,339 @@
+{
+  "artifact_type": "temporal_eligibility_profile",
+  "bounded_record_selection": {
+    "cap_scope": "independent_per_dataset_source_and_leakage_safe_split",
+    "policy_name": "abi_representative_scene_positive_hash",
+    "policy_version": "v1",
+    "record_identities_disclosed": false,
+    "requested_cap_per_source_split": 1024,
+    "seed": 20260812
+  },
+  "cache_provenance": {
+    "cache_root_disclosed": false,
+    "dataset_scope": {
+      "expected_record_identity_sha256_from_sqlite_records": "3b550466fee73615fbfc82ab96cc7713f7d069a6871d4279011983c7a06613a7",
+      "full_dataset_scan": true,
+      "record_count": 28545,
+      "record_identity_sha256": "3b550466fee73615fbfc82ab96cc7713f7d069a6871d4279011983c7a06613a7",
+      "record_identity_status": "matches_records",
+      "updated_at": "2026-09-08T18:07:18.740770Z"
+    },
+    "source_scene_count": 100980,
+    "sqlite_filename": "abi-temporal-cache.sqlite",
+    "sqlite_schema_version": "abi_temporal_cache.sqlite.v1",
+    "sqlite_sha256": "3b042324f047f93303980976f4f680d9ca1cb4bc92317c875aa3e166158d38b4",
+    "temporal_patch_status_by_offset": {
+      "-1": {
+        "extracted_patch_files_missing_count": 0,
+        "invalid_relative_patch_path_count": 0,
+        "status_counts": {
+          "extracted": 16585,
+          "pending": 11861
+        }
+      },
+      "-2": {
+        "extracted_patch_files_missing_count": 0,
+        "invalid_relative_patch_path_count": 0,
+        "status_counts": {
+          "extracted": 16585,
+          "pending": 11861
+        }
+      },
+      "1": {
+        "extracted_patch_files_missing_count": 0,
+        "invalid_relative_patch_path_count": 0,
+        "status_counts": {
+          "extracted": 16585,
+          "pending": 11861
+        }
+      },
+      "2": {
+        "extracted_patch_files_missing_count": 0,
+        "invalid_relative_patch_path_count": 0,
+        "status_counts": {
+          "extracted": 16585,
+          "pending": 11861
+        }
+      }
+    }
+  },
+  "known_caveats": [
+    "The SQLite temporal cache is the operational source of truth; this artifact is an aggregate agent-visible profile.",
+    "Eligibility for non-zero offsets requires SQLite status='extracted' and a non-null patch_path for every required non-zero offset.",
+    "Patch path values and individual ABI Patch identities are intentionally not serialized.",
+    "Capped counts use the trusted representative selector and are feasibility-context summaries, not full-data promotion evidence."
+  ],
+  "provenance": {
+    "candidate_authority": "none",
+    "generation_command": "uv run abi-temporal-eligibility-profile --workspace-root . --output abi_contrail/profile/temporal-eligibility-profile.v1.json",
+    "generation_timestamp": "2026-09-09T14:34:17.991563Z",
+    "generation_version": "abi_contrail.temporal_eligibility_profile.v1",
+    "research_problem_id": "goes_abi_contrail_segmentation",
+    "research_problem_version": "v0",
+    "source_policy": "trusted Research Problem package-generated from provider-owned SQLite temporal cache",
+    "split_scope": "Google source provenance plus MIT deterministic whole-scene split before windowing"
+  },
+  "schema_version": "abi-temporal-eligibility-profile.v1",
+  "temporal_input_boundary": {
+    "allowed_temporal_frame_offsets": [
+      [
+        0
+      ],
+      [
+        -1,
+        0,
+        1
+      ],
+      [
+        -2,
+        -1,
+        0,
+        1,
+        2
+      ]
+    ],
+    "candidate_visible_channels_per_frame": 17,
+    "extra_inputs_per_frame": [
+      {
+        "name": "solar_zenith_angle",
+        "source_channel_index": 18
+      }
+    ],
+    "forbidden_source_channel_indices": [
+      16,
+      17
+    ],
+    "goes_abi_channel_numbers_per_frame": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "input_mode": "abi_16ch_plus_sza_temporal",
+    "longitude_latitude_exposed_to_candidates": false,
+    "patch_paths_disclosed": false,
+    "record_identities_disclosed": false,
+    "source_channel_indices_per_frame": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      18
+    ],
+    "target_frame_offset": 0
+  },
+  "windows": [
+    {
+      "by_source": {
+        "google": {
+          "train": {
+            "eligible_count": 20529,
+            "eligible_negative_count": 11270,
+            "eligible_positive_count": 9259,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 562,
+            "selected_positive_count": 462,
+            "selected_record_identity_sha256": "a5ebe021858d209c30b66e74ea8e8bf5c18fc00225f6c37a37c6fbcf3d8ae7e0"
+          },
+          "validation": {
+            "eligible_count": 1856,
+            "eligible_negative_count": 1304,
+            "eligible_positive_count": 552,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 719,
+            "selected_positive_count": 305,
+            "selected_record_identity_sha256": "f2792f2ae16f496faea9c04b45116d24197407909d37deb998f24dd8a692658f"
+          }
+        },
+        "mit": {
+          "train": {
+            "eligible_count": 4928,
+            "eligible_negative_count": 2805,
+            "eligible_positive_count": 2123,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 583,
+            "selected_positive_count": 441,
+            "selected_record_identity_sha256": "7f573509ebc2b5352efd4e71f17c0c790f755dc6e48521ff7c1e240e64721f29"
+          },
+          "validation": {
+            "eligible_count": 1232,
+            "eligible_negative_count": 699,
+            "eligible_positive_count": 533,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 581,
+            "selected_positive_count": 443,
+            "selected_record_identity_sha256": "2a2ec50eb239f5c568a63dddc726881553e7fba020948f3f31b565d34473a29b"
+          }
+        }
+      },
+      "eligible_count": 28545,
+      "eligible_negative_count": 16078,
+      "eligible_positive_count": 12467,
+      "required_non_zero_offsets": [],
+      "selected_count": 4096,
+      "selected_negative_count": 2445,
+      "selected_positive_count": 1651,
+      "temporal_frame_offsets": [
+        0
+      ]
+    },
+    {
+      "by_source": {
+        "google": {
+          "train": {
+            "eligible_count": 11059,
+            "eligible_negative_count": 4034,
+            "eligible_positive_count": 7025,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 374,
+            "selected_positive_count": 650,
+            "selected_record_identity_sha256": "c102a05669bca96ef15cd96033901e82daae8bb00239e07a738282035c57928a"
+          },
+          "validation": {
+            "eligible_count": 699,
+            "eligible_negative_count": 403,
+            "eligible_positive_count": 296,
+            "record_identities_disclosed": false,
+            "selected_count": 699,
+            "selected_negative_count": 403,
+            "selected_positive_count": 296,
+            "selected_record_identity_sha256": "c89c078472d1d4121608fa7b735b10989933c37f69c71d8d5e5eb0ae461685c7"
+          }
+        },
+        "mit": {
+          "train": {
+            "eligible_count": 3912,
+            "eligible_negative_count": 2105,
+            "eligible_positive_count": 1807,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 551,
+            "selected_positive_count": 473,
+            "selected_record_identity_sha256": "13ff17321fbb914925a4069de86cf3aa94ca72c0825a5072a4b8b6cef0f70dba"
+          },
+          "validation": {
+            "eligible_count": 915,
+            "eligible_negative_count": 492,
+            "eligible_positive_count": 423,
+            "record_identities_disclosed": false,
+            "selected_count": 915,
+            "selected_negative_count": 492,
+            "selected_positive_count": 423,
+            "selected_record_identity_sha256": "cd9d2b5bb2288c12dac4ec0672452849489ba71137cf40ca30bed156bc22f074"
+          }
+        }
+      },
+      "eligible_count": 16585,
+      "eligible_negative_count": 7034,
+      "eligible_positive_count": 9551,
+      "required_non_zero_offsets": [
+        -1,
+        1
+      ],
+      "selected_count": 3662,
+      "selected_negative_count": 1820,
+      "selected_positive_count": 1842,
+      "temporal_frame_offsets": [
+        -1,
+        0,
+        1
+      ]
+    },
+    {
+      "by_source": {
+        "google": {
+          "train": {
+            "eligible_count": 11059,
+            "eligible_negative_count": 4034,
+            "eligible_positive_count": 7025,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 374,
+            "selected_positive_count": 650,
+            "selected_record_identity_sha256": "c102a05669bca96ef15cd96033901e82daae8bb00239e07a738282035c57928a"
+          },
+          "validation": {
+            "eligible_count": 699,
+            "eligible_negative_count": 403,
+            "eligible_positive_count": 296,
+            "record_identities_disclosed": false,
+            "selected_count": 699,
+            "selected_negative_count": 403,
+            "selected_positive_count": 296,
+            "selected_record_identity_sha256": "c89c078472d1d4121608fa7b735b10989933c37f69c71d8d5e5eb0ae461685c7"
+          }
+        },
+        "mit": {
+          "train": {
+            "eligible_count": 3912,
+            "eligible_negative_count": 2105,
+            "eligible_positive_count": 1807,
+            "record_identities_disclosed": false,
+            "selected_count": 1024,
+            "selected_negative_count": 551,
+            "selected_positive_count": 473,
+            "selected_record_identity_sha256": "13ff17321fbb914925a4069de86cf3aa94ca72c0825a5072a4b8b6cef0f70dba"
+          },
+          "validation": {
+            "eligible_count": 915,
+            "eligible_negative_count": 492,
+            "eligible_positive_count": 423,
+            "record_identities_disclosed": false,
+            "selected_count": 915,
+            "selected_negative_count": 492,
+            "selected_positive_count": 423,
+            "selected_record_identity_sha256": "cd9d2b5bb2288c12dac4ec0672452849489ba71137cf40ca30bed156bc22f074"
+          }
+        }
+      },
+      "eligible_count": 16585,
+      "eligible_negative_count": 7034,
+      "eligible_positive_count": 9551,
+      "required_non_zero_offsets": [
+        -2,
+        -1,
+        1,
+        2
+      ],
+      "selected_count": 3662,
+      "selected_negative_count": 1820,
+      "selected_positive_count": 1842,
+      "temporal_frame_offsets": [
+        -2,
+        -1,
+        0,
+        1,
+        2
+      ]
+    }
+  ]
+}

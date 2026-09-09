@@ -30,6 +30,7 @@ abi-geographic-filter-smoke = "abi_contrail.ancillary_cli:smoke_main"
 abi-positive-control-report = "abi_contrail.positive_control:main"
 abi-provision-natural-earth = "abi_contrail.ancillary_cli:provision_main"
 abi-provision-temporal-frames = "abi_contrail.temporal_cli:main"
+abi-temporal-eligibility-profile = "abi_contrail.temporal_profile:main"
 
 [project.entry-points."ml_autoresearch.research_problems"]
 goes_abi_contrail_segmentation = "abi_contrail.research_problem:build_spec"
