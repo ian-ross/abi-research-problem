@@ -259,6 +259,26 @@ No active or non-reconciled Run is recorded in the current ledger snapshot; ABI-
 | [`abi214_fullspectral_btd_sza_compact_thinline_continuity_aspp_bce_dice_line_centerline_aux_v1`](candidates/abi214_fullspectral_btd_sza_compact_thinline_continuity_aspp_bce_dice_line_centerline_aux_v1/README.md) | Exploratory compact architecture continuation of ABI-212 with a bounded thin-line continuity bridge. | — | `run_20260904_192740_b618bb` | Capped best val/filtered_dice 0.3911 at epoch 12; pending full Research Note |
 | [`abi215_temporal_access_canary_v1`](candidates/abi215_temporal_access_canary_v1/README.md) | Minimal temporal-input canary that consumes provider-owned -1/0/+1 ABI+SZA frames to verify trusted temporal cache and patch access during Candidate Execution. | — | — | Introduced; pending temporal-cache access Run |
 
+| `candidates/abi216_temporal_siamese_change_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi216_temporal_siamese_change_unet_bce_dice_line_centerline_aux_v1/README.md) — Sequential temporal family scout using provider-owned -1/0/+1 ABI+SZA frames with a shared-weight per-frame encoder and center-minus-neighbor change fusion. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi217_temporal_siamese_change_unet_finite_input_repair_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi217_temporal_siamese_change_unet_finite_input_repair_bce_dice_line_centerline_aux_v1/README.md) — Finite-input repair of ABI-216 temporal Siamese change U-Net preserving provider-owned -1/0/+1 ABI+SZA frames, shared-weight per-frame encoder, and center-minus-neighbor change fusion. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi218_temporal_eligible_singleframe_control_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi218_temporal_eligible_singleframe_control_unet_bce_dice_line_centerline_aux_v1/README.md) — Matched temporal-eligible single-frame ABI+SZA control for ABI-217, using the center-frame feature builder and compact U-Net/ASPP decoder without temporal residual streams. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi219_temporal_difference_frontend_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi219_temporal_difference_frontend_unet_bce_dice_line_centerline_aux_v1/README.md) — Compact temporal-difference front-end U-Net consuming provider-owned -1/0/+1 ABI+SZA frames and fusing center-minus-neighbor features before a single decoder. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi220_temporal_change_confidence_gate_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi220_temporal_change_confidence_gate_unet_bce_dice_line_centerline_aux_v1/README.md) — Temporal-difference U-Net with learned change-confidence gating and residual calibration over provider-owned -1/0/+1 ABI+SZA frames. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi221_temporal_convgru_state_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi221_temporal_convgru_state_unet_bce_dice_line_centerline_aux_v1/README.md) — Compact temporal ConvGRU state U-Net consuming provider-owned -1/0/+1 ABI+SZA frames and learning recurrent temporal context before a single decoder. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi222_temporal_attention_fusion_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi222_temporal_attention_fusion_unet_bce_dice_line_centerline_aux_v1/README.md) — Compact temporal-attention fusion U-Net consuming provider-owned -1/0/+1 ABI+SZA frames, reweighting bounded per-frame ABI/SZA/BTD features before a single decoder. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi223_temporal_attention_fusion_unet_late36_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi223_temporal_attention_fusion_unet_late36_bce_dice_line_centerline_aux_v1/README.md) — Late-improving close-continuation of ABI-222 compact temporal-attention fusion U-Net over provider-owned -1/0/+1 ABI+SZA frames. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi224_temporal_fiveframe_attention_difference_unet_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi224_temporal_fiveframe_attention_difference_unet_bce_dice_line_centerline_aux_v1/README.md) — Five-frame temporal attention/difference U-Net scout consuming provider-owned -2/-1/0/+1/+2 ABI+SZA frames. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
+| `candidates/abi225_temporal_fiveframe_attention_difference_unet_googleonly_repair_bce_dice_line_centerline_aux_v1` | [`README.md`](candidates/abi225_temporal_fiveframe_attention_difference_unet_googleonly_repair_bce_dice_line_centerline_aux_v1/README.md) — Google-only repair of the five-frame temporal attention/difference U-Net scout consuming provider-owned -2/-1/0/+1/+2 ABI+SZA frames. | Pending full Research Note. | Pending Research Problem Run. | Pending Harness Run; ingested from Agent Workspace. |
+
 ## Chronological Research Notes
 
 - [`Full-spectral DeepLabV3+ family-development update: focal-Tversky vs BTD mixer`](research-notes/fullspectral-deeplabv3plus-btd-family-development.md)
@@ -426,3 +446,11 @@ No active or non-reconciled Run is recorded in the current ledger snapshot; ABI-
 - [`Full-spectral BTD+SZA compact spectral-ridge support ASPP follow-up`](research-notes/fullspectral-btd-sza-compact-spectral-ridge-support-aspp-followup.md)
 - [`Full-spectral BTD+SZA compact line-preserving coarse-support ASPP follow-up`](research-notes/fullspectral-btd-sza-compact-line-preserving-coarse-support-aspp-followup.md)
 - [`Full-spectral BTD+SZA cross-scale directional-consensus ASPP centerline-w005 follow-up`](research-notes/fullspectral-btd-sza-crossscale-directional-consensus-aspp-centerline-w005-followup.md)
+- [`ABI-215 temporal access canary`](research-notes/abi215-temporal-access-canary.md)
+- [`ABI-217 temporal Siamese change U-Net finite-input repair`](research-notes/abi217-temporal-siamese-change-unet-finite-input-repair.md)
+- [`ABI-218 temporal-eligible single-frame control`](research-notes/abi218-temporal-eligible-singleframe-control.md)
+- [`ABI-219 temporal-difference front-end U-Net`](research-notes/abi219-temporal-difference-frontend-unet.md)
+- [`ABI-220 temporal change-confidence gate`](research-notes/abi220-temporal-change-confidence-gate.md)
+- [`ABI-221 temporal ConvGRU state U-Net`](research-notes/abi221-temporal-convgru-state-unet.md)
+- [`ABI-222 temporal-attention fusion U-Net`](research-notes/abi222-temporal-attention-fusion-unet.md)
+- [`ABI-223 temporal-attention fusion U-Net late36`](research-notes/abi223-temporal-attention-fusion-unet-late36.md)

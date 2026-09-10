@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260908_150315_9aea3f
+justification: >-
+  ABI-222 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  late unsettled improvement after precision/recall oscillation: filtered Dice
+  reached a run-best 0.374329 at epoch 12, raw Dice reached 0.392066, validation
+  loss was the lowest observed, and both Dataset Sources remained informative
+  with MIT filtered Dice 0.357658 and Google filtered Dice 0.416510. ABI-222 is
+  the current capped temporal-family frontier and preserved a controlled margin
+  over the temporal-eligible single-frame control ABI-218 while also improving
+  over ABI-219/220 on aggregate filtered Dice and over ABI-221 on filtered Dice,
+  precision, recall, source Dice, memory, and wall time. The approved
+  late-improving budget tests whether this exact resource-safe temporal-attention
+  fusion mechanism can convert the final-epoch improvement into a more stable
+  recall/precision/source-balanced trajectory, without changing Candidate-owned
+  data loading, temporal lookup, sample selection, augmentation implementation,
+  losses, metrics, Artifact Filters, coordinates, thresholding, postprocessing,
+  scheduler policy, prediction retention, or resource placement. Results remain
+  capped representative feasibility evidence unless a later trusted
+  whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

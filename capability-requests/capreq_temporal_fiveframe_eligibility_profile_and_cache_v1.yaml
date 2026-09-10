@@ -1,0 +1,67 @@
+request_id: capreq_temporal_fiveframe_eligibility_profile_and_cache_v1
+capability_type: dataset_profile_artifact
+blocked_hypothesis: A provider-owned five-frame temporal ABI input window with offsets
+  [-2, -1, 0, 1, 2] may capture longer persistence, dissipation, and motion/change
+  cues that improve over the strong three-frame ABI-223 temporal-attention frontier
+  without granting Candidate code temporal lookup, padding, data loading, coordinates,
+  thresholding, or postprocessing authority.
+current_contract_insufficiency: The Research Problem Brief allowlists temporal_frame_offsets
+  [-2, -1, 0, 1, 2], but ABI-224 failed before training because combined_source_balanced
+  found no MIT samples after temporal_eligible_center filtering, and ABI-225 then
+  failed because google_only found no Google samples. The agent-visible campaign profile
+  has no per-window temporal eligibility counts for the five-frame window, and static
+  Candidate validation did not catch that the configured provider/cache surface currently
+  yields zero training samples. The campaign therefore cannot tell whether the five-frame
+  hypothesis is blocked by absent cache coverage, absent eligible centers, or missing
+  preflight/profile surfacing.
+expected_research_value: A trusted temporal-eligibility profile and/or cache-status
+  surface would prevent repeated zero-sample candidate failures and determine whether
+  wider temporal modeling is feasible. If nonzero five-frame eligible centers exist,
+  it would unlock a bounded sequential comparison against ABI-223 and the ABI-218
+  matched single-frame control; if counts are truly zero or too sparse, it provides
+  a reproducible hard stop for this input-window branch and directs the campaign toward
+  three-frame temporal architecture changes or other underexplored families.
+safety_reproducibility_risks: The artifact must not expose raw samples, coordinates,
+  unrestricted cache paths, individual scene identities, or model weights. Any cache
+  refresh or availability summary must remain Harness/provider owned, preserve leakage-safe
+  splits and capped-record selection semantics, and continue to fail closed when neighbor
+  frames are absent or stale. Results from any follow-up remain capped feasibility
+  evidence and must not be reinterpreted as full-data promotion evidence.
+minimal_harness_change: Generate and mount an agent-visible dataset profile artifact
+  summarizing temporal_eligible_center availability for each allowlisted temporal
+  window ([0], [-1,0,1], and [-2,-1,0,1,2]) by Dataset Source and leakage-safe split,
+  including positive/negative counts, selected capped counts where applicable, cache
+  provenance/version/checksum status, and a clear unavailable reason when counts are
+  zero. If reviewed cache coverage exists for the five-frame window, update the trusted
+  temporal cache/config so provider-owned loading can serve it; otherwise add Harness-owned
+  preflight validation that rejects zero-sample temporal manifests with an explicit
+  capability-facing reason before Run submission.
+candidate_authority_requested: none
+example_follow_up_experiments:
+- Rerun a repaired ABI-224-style five-frame temporal attention/difference U-Net only
+  if the profile reports nonzero train and validation eligible centers under provider-owned
+  [-2,-1,0,1,2] provisioning.
+- Prepare a matched temporal-eligible single-frame or three-frame control on the same
+  five-frame-eligible center population if the Harness exposes a safe matched-control
+  selection surface.
+- If five-frame counts are zero or too sparse, record a research note closing this
+  window branch and broaden to three-frame temporal loss/calibration, rotation-aware
+  line accumulation, or compact modern attention backbones.
+priority: high
+diagnostic_question: For each Dataset Source and leakage-safe split, how many centers
+  are eligible for each allowlisted temporal window, especially [-2, -1, 0, 1, 2],
+  and is zero eligibility caused by cache coverage, provenance requirements, or actual
+  absence of complete neighbor frames?
+expected_research_decision_impact: Decide whether to resume five-frame temporal architecture
+  scouts, restrict temporal work to the existing three-frame window, or record a hard
+  stop for wider-window temporal modeling until trusted cache coverage changes.
+scope_split: Mounted ABI snapshot under the active goes_abi_contrail_segmentation
+  v0 contract; MIT deterministic whole-scene train/validation split and Google provenance
+  train/validation split; allowed temporal windows [0], [-1,0,1], and [-2,-1,0,1,2].
+bounded_computation_artifact_budget: One durable JSON or Markdown profile artifact
+  plus any small validation/preflight metadata needed to summarize counts and cache
+  status; no raw ABI tensors, no prediction rasters, and no unrestricted file lists.
+provenance_requirements: Record provider version, temporal cache manifest/checksum
+  or explicit unavailable status, split policy identity, capped-record selector identity/seed
+  if selected counts are reported, generation timestamp, and confirmation that candidate-visible
+  temporal tensors would contain only ABI channels 1-16 plus Solar Geometry Input.

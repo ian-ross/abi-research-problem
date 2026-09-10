@@ -1,0 +1,9 @@
+# ABI-225 temporal five-frame attention/difference U-Net google-only repair
+
+ABI-225 is a narrow Repair Candidate for ABI-224 (`run_20260908_172818_76b0fc`). ABI-224 failed before training because the provider-owned five-frame temporal-eligible population had no MIT samples available for `combined_source_balanced`; the trusted sampler therefore rejected the request with `sampling policy 'combined_source_balanced' requested Dataset Source 'mit', but no samples are available`.
+
+This repair preserves ABI-224's architecture and five-frame temporal hypothesis while changing only the manifest sampling policy to the allowlisted `google_only` policy. The goal is to obtain bounded feasibility evidence for whether the allowlisted `[-2, -1, 0, 1, 2]` provider-owned temporal window adds useful wider persistence/advection information on the available five-frame eligible Google population. It is not source-balanced promotion evidence and should be compared primarily with Google-stratified temporal-family metrics from ABI-218/222/223.
+
+The model consumes only trusted `abi_16ch_plus_sza_temporal` tensors with `frame_selection_policy: temporal_eligible_center`. It reshapes the provider-stacked five-frame tensor, builds bounded ABI+SZA+BTD features per frame, applies shared frame projection and per-pixel attention relative to the center frame, fuses near/far signed and absolute temporal differences, and decodes through a compact U-Net/ASPP head. It returns `mask_logits`, `line_logits`, and `centerline_logits`.
+
+Contract boundaries: no candidate-owned data loading, temporal lookup, missing-frame fallback, target derivation, losses, metrics, Artifact Filters, thresholding, postprocessing, augmentation, sampling implementation, training loop, coordinate inputs, Dataset Source identity, downloads, or resource scheduling.
