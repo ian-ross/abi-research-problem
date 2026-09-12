@@ -1,0 +1,22 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_102833_5db7f8
+justification: >-
+  ABI-248 completed the exploratory 12-epoch budget finitely with non-collapsed,
+  source-informative predictions, remained inside resource ceilings, and selected
+  the final epoch as its best checkpoint. The final epoch also gave its best
+  aggregate filtered Dice, MIT filtered Dice, Google filtered Dice, precision,
+  and Contrail Connectivity Metric while train and validation losses continued
+  declining, which is direct evidence that the exact C4 steerable line-context
+  branch may be truncated by the exploratory epoch ceiling. ABI-249 is an exact
+  close continuation: it preserves the provider-approved ABI+SZA input, derived
+  approved-channel BTD front end, source-balanced sampling, trusted random
+  mirroring, BCE-Dice loss, trusted Line and Centerline auxiliary outputs,
+  optimizer, scheduler, and batch size, and changes only the Harness-owned budget
+  class. The purpose is to test whether additional epochs recover recall and
+  continuity while preserving ABI-248's precision and source balance. The result
+  remains capped representative feasibility evidence unless a later trusted
+  diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

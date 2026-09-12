@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260908_154531_8c7e2b
+justification: >-
+  ABI-223 completed the approved late-improving 36-epoch budget finitely and
+  selected the final epoch as its best checkpoint, with non-collapsed source-
+  informative predictions and simultaneous improvements over ABI-222 in filtered
+  Dice, recall, precision, Dataset Source Dice, and connectivity. Its final-epoch
+  trajectory indicates that close temporal-attention continuations may be
+  truncated by the exploratory 12-epoch ceiling. ABI-238 is a close architecture
+  continuation rather than a new data or training policy: it preserves the
+  provider-owned -1/0/+1 temporal ABI+SZA input, temporal-eligible center policy,
+  source-balanced sampling, trusted random mirroring, BCE-Dice loss, Line and
+  Centerline auxiliary targets, optimizer, scheduler, and batch size, while adding
+  only a small full-resolution directional-context bridge intended to recover some
+  of ABI-223's remaining recall/connectivity gap to the ABI-202 single-frame
+  frontier. The request tests this bounded temporal-family continuation under the
+  approved late-improving budget without Candidate-owned data loading, temporal
+  lookup, sampling, losses, metrics, Artifact Filters, thresholding,
+  postprocessing, augmentation implementation, coordinates, Dataset Source
+  identity, resource placement, or lifecycle behavior. Results remain capped
+  representative feasibility evidence unless a later trusted diagnostic is
+  requested.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,29 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_023156_f7eb6b
+justification: >-
+  ABI-239 completed the exploratory 12-epoch representative temporal-eligible
+  cap finitely and non-degenerately, selected its final epoch as the best
+  checkpoint, and showed a late-improving/source-informative trajectory: filtered
+  Dice rose into a higher band after epoch 8 and reached a run-best 0.366274 at
+  epoch 12, while raw Dice reached 0.383403, MIT filtered Dice was 0.346223,
+  Google filtered Dice was 0.415466, filtered recall was 0.305207, and filtered
+  predicted-positive fraction remained compact at 0.003446. Training and
+  validation losses also finished at their lowest reported values. At matched
+  exploratory epoch 12, ABI-239 improved filtered Dice, recall, MIT Dice, and
+  Google Dice over ABI-223 and ABI-238 exploratory temporal checkpoints, but its
+  connectivity remained weak, so the approved late-improving budget is needed to
+  distinguish budget truncation from a durable line-accumulator limitation. This
+  Candidate is an unchanged close continuation of ABI-239: it preserves the
+  provider-owned -1/0/+1 temporal ABI+SZA input, temporal-eligible center frame
+  selection, source-balanced sampling, trusted random mirroring, BCE-Dice loss,
+  Line and Centerline auxiliary targets, AdamW optimizer, constant scheduler,
+  batch size 2, and architecture. Candidate code does not implement data loading,
+  temporal lookup, cache probing, missing-frame repair, sampling, augmentation,
+  losses, metrics, Artifact Filters, thresholding, postprocessing, coordinates,
+  Dataset Source identity, resource placement, or lifecycle behavior. Results
+  remain capped representative feasibility evidence unless a later trusted
+  diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

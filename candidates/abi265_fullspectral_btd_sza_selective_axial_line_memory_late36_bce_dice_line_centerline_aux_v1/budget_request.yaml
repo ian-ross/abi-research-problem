@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260912_055445_9221de
+justification: >-
+  ABI-264 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  a sharp late improvement rather than a plateau: filtered Dice rose from 0.376867
+  at epoch 11 to a run-best 0.407091 at epoch 12, with run-best raw Dice 0.421174,
+  filtered connectivity 0.410422, MIT filtered Dice 0.398792, and Google filtered
+  Dice 0.428117. Predictions remained non-collapsed and source-informative, and
+  the filtered predicted-positive fraction stayed bounded at 0.003765. ABI-264
+  improved the recent overlap-SegFormer and compact-MaxViT broad scouts and
+  validated selective axial line-memory as a recall/connectivity-favorable
+  architecture-internal mechanism, but it remains below the mature ABI-202 and
+  ABI-249 precision/frontier context. The approved late-improving budget tests
+  whether this exact resource-safe selective axial line-memory mechanism can
+  convert the final-epoch jump into a more stable precision/recall/source-balanced
+  trajectory without changing Candidate-owned data loading, sampling
+  implementation, augmentation, losses, metrics, Artifact Filters, coordinates,
+  thresholding, postprocessing, scheduler policy, prediction retention, or
+  resource placement. Results remain capped representative feasibility evidence
+  unless a later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

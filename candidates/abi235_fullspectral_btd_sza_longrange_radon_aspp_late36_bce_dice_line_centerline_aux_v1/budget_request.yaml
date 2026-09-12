@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260910_185443_f88be8
+justification: >-
+  ABI-234 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  a late-improving trajectory rather than a convincing plateau: filtered Dice rose
+  from 0.352186 at epoch 8 to 0.366300 at epoch 10 and a run-best 0.381342 at
+  epoch 12, while Google filtered Dice, precision, and filtered connectivity also
+  reached run-best values at epoch 12. The selected checkpoint was source-informative
+  (MIT filtered Dice 0.363530 and Google filtered Dice 0.425620), noncollapsed
+  (filtered predicted-positive fraction 0.002648), and diagnostically distinct
+  from nearby scouts through high precision (0.451640) and strong connectivity
+  (0.386193), but it remained recall-limited, especially on MIT. The approved
+  late-improving budget tests whether this exact resource-safe differentiable
+  Radon/Hough-style long-line accumulation mechanism can convert final-epoch
+  improvement into better recall/source-balanced overlap while preserving its
+  compact-positive, high-precision, connected-line behavior. The Candidate keeps
+  data loading, sample selection, augmentation implementation, losses, metrics,
+  Artifact Filters, coordinates, thresholding, postprocessing, scheduler policy,
+  prediction retention, and resource placement under trusted provider/Harness
+  ownership. Results remain capped representative feasibility evidence unless a
+  later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

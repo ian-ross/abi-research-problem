@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_055200_52c75f
+justification: >-
+  ABI-242 completed the exploratory 12-epoch budget finitely without contract,
+  smoke, shape, numerical, resource, or lifecycle failure, using the same
+  provider-approved temporal ABI+SZA input, temporal-eligible center frame
+  selection, source-balanced sampling, trusted random mirroring, BCE-Dice loss,
+  Line/Centerline auxiliary outputs, AdamW optimizer, constant learning-rate
+  scheduler, and batch size 2 proposed here. Its best checkpoint occurred at
+  the final exploratory epoch 12, with best observed filtered Dice, raw Dice,
+  train loss, and validation loss at the budget ceiling; predictions were
+  non-collapsed and source-informative on both MIT and Google. The result was
+  below the mature temporal frontier and connectivity remained weak, so this is
+  not a promotion claim. This ABI-255 submission is an exact close continuation
+  that changes only the Harness-owned budget request; it does not change the
+  architecture, add candidate-owned data loading, alter losses or metrics,
+  change thresholding/postprocessing, or reinterpret capped evidence as
+  full-validation evidence. The purpose is to test whether ABI-242's final-epoch
+  recurrent temporal overlap signal matures under the approved late-improving
+  budget before stopping or redesigning this exact ConvGRU change-state branch.
+fallback_if_denied: run_exploratory_budget

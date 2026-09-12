@@ -31,17 +31,28 @@ Treat first attempts at materially different architecture families as scouts rat
 
 Representative capped Runs are feasibility evidence rather than full-data promotion evidence. Candidate code cannot alter trusted limits or reinterpret capped evidence as full-data evidence.
 
+Current comparator roles from the latest indexed campaign state:
+
+- **ABI-202** remains the aggregate whole-validation filtered-Dice reference.
+- **ABI-249** is the high-precision, compact-prediction C4/rotation-aware comparator.
+- **ABI-223** is the temporal-family diagnostic comparator on the temporal-eligible validation population.
+- **ABI-253** is the compact line-memory U-NetFormer comparator, not a frontier target.
+- **ABI-255** is the compact recurrent temporal comparator, with unresolved thin-line continuity weaknesses.
+- **ABI-265** is the selective axial line-memory comparator, useful for connectivity evidence but not a new frontier.
+- **ABI-269** is the compact spectral/Solar Geometry Input MoE late-budget comparator; it is not a promotion candidate.
+
+Do not spend Runs on unchanged late36 continuations of ABI-253, ABI-255, ABI-265, or ABI-269. Future work in those areas should be mechanism-changing, resource-aware, and explicitly tied to the observed failure mode.
+
 ## Underexplored architecture directions
 
-The recent ABI campaign has heavily explored single-frame full-spectral/BTD/SZA ASPP/detail/line/refiner variants around the ABI-202/ABI-184 frontier. Prefer a broader scout when repeated local support gates, auxiliary-head tweaks, or detail-refiner mutations are unlikely to add new evidence. Underexplored in-contract directions include:
+The campaign has now covered many broad scouts: provider-owned temporal models, C4/rotation-aware line context, Radon/line accumulation, modern compact attention backbones, spectral/SZA mixture-of-experts, and axial line-memory variants. Prefer a new Run only when it states a specific mechanism for improving fixed-threshold recall, MIT/source balance, negative-patch clutter, or connected thin-line continuity against the current comparators. High-value in-contract directions now include:
 
-- **Temporal / multi-timestep models**: provider-owned temporal input is now available as `input_mode: abi_16ch_plus_sza_temporal`. Use it to test whether neighboring ABI frames distinguish persistent/advecting contrails from static geography, scan artifacts, and transient cloud edges.
-- **True motion/change architectures**: Siamese or twin encoders, before/after residual streams, temporal-difference BTD features, depthwise temporal convolutions, compact ConvLSTM/GRU blocks, or temporal attention over provider-stacked frames.
-- **Group-equivariant or rotation-aware line networks**: learned steerable/group convolutions or richer orientation banks beyond manual horizontal/vertical/diagonal context.
-- **Differentiable Hough/Radon-style line accumulation**: architecture-internal line voting/accumulation to improve continuity, without candidate-owned morphology, thresholding, postprocessing, or Artifact Filtering.
-- **Modern lightweight segmentation backbones**: compact SegFormer/UNetFormer/Swin-like window attention, ConvNeXt-V2-style encoders, MaxViT-like local/global blocks, or other resource-bounded modern backbones.
-- **Mixture-of-experts by spectral/illumination regime**: SZA- or spectral-state-gated experts that do not use Dataset Source identity, longitude/latitude, scene identity, or route/location priors.
-- **Matched calibration/uncertainty architectures**: compact logits, dual-head agreement, uncertainty-like consensus, or recall-preserving calibration heads without candidate-owned thresholding or postprocessing.
+- **C4/orientation prior plus recall/connectivity support**: combine ABI-249's compact high-precision rotation-aware behavior with center-frame detail, cross-scale support, or evidence-raising heads that recover recall and connectivity without candidate-owned thresholding or postprocessing.
+- **Temporal attention with architecture-level evidence sharpening**: build from ABI-223-style provider-owned temporal attention, but raise true contrail logits at threshold 0.5 while preserving precision, source balance, and connectivity. Matched controls should continue to use trusted temporal-eligible selection.
+- **Line-continuity mechanisms with bounded cost**: differentiable line accumulation, selective axial/C4 line memory, or orientation consensus may continue only when the hypothesis targets connected-line failure modes and avoids repeating an already characterized exact branch.
+- **Recall-preserving calibration or dual-evidence heads**: compact logits, dual-head agreement, uncertainty-like consensus, or calibration-style architecture heads are useful if they raise true positives without Candidate-owned thresholds, losses, metrics, or postprocessing.
+- **Modern lightweight segmentation backbones**: compact SegFormer/UNetFormer/Swin/MaxViT-like families remain valid only when the proposal explains how it will improve on ABI-253/262 rather than merely adding attention capacity.
+- **Spectral/illumination mixture-of-experts with line continuity**: MoE work should explicitly recover connected-line evidence; generic spectral/SZA gating alone has not displaced ABI-202/249.
 
 Temporal Candidate manifests should request the trusted temporal mode and an allowlisted offset window, for example:
 

@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260910_155936_362435
+justification: >-
+  ABI-231 completed finitely and non-degenerately under the exploratory 12-epoch
+  representative cap, selected its final epoch as the best checkpoint, and showed
+  a late unsettled trajectory rather than plateau or collapse: filtered Dice rose
+  from 0.359727 at epoch 7 to 0.370341 at epoch 9, 0.371263 at epoch 10, and a
+  run-best 0.371985 at epoch 12 after a temporary epoch-11 recall/precision trade.
+  Both Dataset Sources remained informative at the selected checkpoint, with MIT
+  filtered Dice 0.355799 and Google filtered Dice 0.413787, and the model preserved
+  a distinctive high-connectivity, low-positive-fraction profile (filtered
+  connectivity 0.398515, filtered predicted-positive fraction 0.002738) that is
+  competitive with several recent temporal scouts despite being a first spectral
+  regime MoE attempt. The approved late-improving budget tests whether this exact
+  resource-safe spectral/SZA-regime MoE mechanism can convert final-epoch improvement
+  and high connectivity into better recall/MIT/source-balanced overlap while
+  preserving precision and compact positive-area behavior, without changing
+  Candidate-owned data loading, sample selection, augmentation implementation,
+  losses, metrics, Artifact Filters, coordinates, thresholding, postprocessing,
+  scheduler policy, prediction retention, or resource placement. Results remain
+  capped representative feasibility evidence unless a later trusted whole-validation
+  diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

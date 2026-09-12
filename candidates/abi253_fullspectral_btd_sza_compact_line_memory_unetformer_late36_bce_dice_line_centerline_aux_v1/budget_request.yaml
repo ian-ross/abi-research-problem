@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_161019_8c76cd
+justification: >-
+  ABI-252 completed the exploratory 12-epoch budget finitely without contract,
+  numerical, smoke, resource, or lifecycle failure, using the same provider-approved
+  ABI+SZA input, source-balanced sampling, trusted random mirroring, BCE-Dice loss,
+  Line/Centerline auxiliary outputs, AdamW optimizer, constant learning-rate
+  scheduler, and batch size 4 proposed here. Its best checkpoint occurred near the
+  end of the exploratory run at epoch 10, epoch 11 was effectively tied on aggregate
+  filtered Dice, and epoch 12 shifted to the run's highest recall while remaining
+  non-collapsed and source-informative. The compact line-memory U-NetFormer branch
+  improved over ABI-251's partial timeout signal and remained close to ABI-244 while
+  showing a different higher-precision, higher-connectivity operating point. This
+  ABI-253 submission is an exact close continuation that changes only the
+  Harness-owned budget request; it does not add compute, alter the architecture,
+  change data policy, redefine losses or metrics, or move thresholding or
+  postprocessing into Candidate code. The purpose is to test whether ABI-252's
+  epoch-10/11 near-peak and epoch-12 recall shift mature into a stable
+  ABI-244-beating Result under the approved late-improving budget. Any Result
+  remains capped representative feasibility evidence unless a later trusted
+  diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

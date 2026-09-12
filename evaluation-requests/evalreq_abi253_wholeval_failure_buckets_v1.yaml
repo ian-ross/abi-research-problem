@@ -1,0 +1,30 @@
+request_id: evalreq_abi253_wholeval_failure_buckets_v1
+target_run_id: run_20260911_171333_f0b603
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-253's
+  late36 compact line-memory U-NetFormer capped-best result (0.4083
+  val/filtered_dice at epoch 23) transfer beyond the trusted representative
+  validation cap, and do Harness-owned failure buckets show whether its compact
+  precision-favoring line-memory and low-resolution shifted-window attention
+  produce robust MIT and Google behavior without excessive Artifact Filter
+  dependence?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold behavior, connectivity, predicted-positive area, negative-patch
+  clutter, positive-patch miss buckets, and raw-vs-filtered gaps to decide
+  whether ABI-253 should become a whole-validation-tested U-NetFormer comparator
+  alongside ABI-202, ABI-223, ABI-244, and ABI-249; whether the compact
+  line-memory U-NetFormer branch merits any mechanism-changing continuation; or
+  whether the next research step should broaden to another in-contract family
+  such as temporal change modeling, recall-preserving calibration, or a
+  different lightweight modern backbone. Treat the result as diagnostic evidence
+  only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

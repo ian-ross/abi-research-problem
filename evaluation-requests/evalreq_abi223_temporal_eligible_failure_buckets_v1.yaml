@@ -1,0 +1,30 @@
+request_id: evalreq_abi223_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260908_154531_8c7e2b
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-223's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 temporal
+  attention fusion U-Net's selected epoch-36 checkpoint retain its strong
+  capped signal (0.4198 val/filtered_dice, 0.4838 filtered precision,
+  0.3707 filtered recall, 0.4124 connectivity) under Harness-owned failure
+  buckets and threshold behavior, and does it show a robust temporal-context
+  advantage over the ABI-218 matched temporal-eligible single-frame control
+  without excessive Artifact Filter dependence?
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss buckets, and raw-vs-filtered gaps to decide whether ABI-223 should remain
+  the temporal-family diagnostic comparator to ABI-202/ABI-249, whether future
+  temporal work should prioritize recall/connectivity-preserving architecture
+  changes over five-frame/window-attention variants, and whether the temporal
+  family warrants a later promotion-oriented whole-validation comparison when
+  trusted evaluation semantics can fairly handle temporal eligibility. Treat the
+  result as diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

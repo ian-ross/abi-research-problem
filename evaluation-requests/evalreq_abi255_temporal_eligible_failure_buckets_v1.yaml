@@ -1,0 +1,30 @@
+request_id: evalreq_abi255_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260911_210922_27f346
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-255's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 compact
+  recurrent change-state U-Net's selected epoch-36 checkpoint retain its strong
+  capped temporal-family signal (0.4173 val/filtered_dice, 0.4683 filtered
+  precision, 0.3764 filtered recall, 0.2811 connectivity) under Harness-owned
+  failure buckets and threshold behavior, and do the diagnostics explain whether
+  its high-precision temporal evidence is limited mainly by fragmented thin-line
+  continuity rather than source imbalance or Artifact Filter dependence?
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss buckets, and raw-vs-filtered gaps to decide whether ABI-255 should remain
+  the compact recurrent temporal comparator alongside ABI-223/238/240; whether
+  future temporal work should add line-aware recurrent state, centerline-preserving
+  temporal decoding, or recall-preserving evidence calibration; or whether the
+  recurrent change-state branch should stop after its successful late-budget
+  answer. Treat the result as diagnostic evidence only; promotion remains
+  operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

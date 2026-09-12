@@ -1,0 +1,7 @@
+# ABI-242 temporal recurrent change-state U-Net
+
+ABI-242 is a bounded exploratory Candidate for GOES ABI Contrail Segmentation. It consumes the trusted `abi_16ch_plus_sza_temporal` input with frame offsets `[-1, 0, 1]` and `frame_selection_policy: temporal_eligible_center`.
+
+The model broadens the temporal branch after ABI-241 by replacing independent high-resolution change skips with a compact bidirectional ConvGRU state over provider-supplied previous/center/next frame features. Per-frame normalized ABI, thermal BTD, and Solar Geometry Input features are projected with shared weights; forward and backward convolutional recurrent cells summarize temporal persistence/change around the center frame. A learned center-state gate fuses the recurrent state, center-frame embedding, and explicit signed/absolute temporal-change features before a compact ASPP U-Net decoder.
+
+The hypothesis is that recurrent temporal state can preserve continuity-relevant persistence or advection evidence without the connectivity weakness of low-resolution line accumulation or the fragmentation seen in high-resolution change-skip injection. Outputs are `mask_logits` plus trusted `line_logits` and `centerline_logits` auxiliary heads. Candidate code does not implement data loading, temporal lookup, cache reads, missing-frame repair, target derivation, losses, metrics, Artifact Filters, thresholding, postprocessing, augmentation, sampling, training loops, coordinate inputs, Dataset Source identity, downloads, or resource scheduling.

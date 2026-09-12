@@ -1,0 +1,7 @@
+# ABI-226 temporal five-frame attention/difference U-Net cache-ready repair
+
+ABI-226 is a narrow Repair Candidate for ABI-224, preserving the five-frame temporal-attention/difference hypothesis after the first ABI-224 attempt failed before training with zero available MIT samples under `combined_source_balanced`. The intervening trusted temporal-eligibility profile now reports nonzero selected counts for both MIT and Google train/validation splits under the allowlisted `[-2, -1, 0, 1, 2]` temporal window, so the original source-balanced five-frame scout can be retried without candidate-owned data or cache logic.
+
+The architecture is intentionally the ABI-224 five-frame temporal attention/difference U-Net. It consumes only the provider-owned `abi_16ch_plus_sza_temporal` tensor with `frame_selection_policy: temporal_eligible_center`, reshapes five 17-channel ABI+SZA frames, builds bounded ABI+SZA+BTD features per frame, applies shared per-frame projection, learns per-pixel temporal-attention weights, fuses center, near/far signed change, and absolute change evidence, then decodes with a compact U-Net/ASPP head. It returns `mask_logits` plus trusted `line_logits` and `centerline_logits` auxiliary outputs.
+
+Contract boundaries: no candidate-owned data loading, temporal lookup, missing-frame fallback, cache access, target derivation, losses, metrics, Artifact Filters, thresholding, postprocessing, augmentation, sampling, training loop, coordinate inputs, Dataset Source identity, downloads, or resource scheduling.

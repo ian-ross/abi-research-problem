@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260912_113911_7a5f94
+justification: >-
+  ABI-268 completed finitely and resource-safely under the exploratory 12-epoch
+  representative cap after ABI-267's full MoE design timed out. The compact MoE
+  selected its final epoch as the best checkpoint, with filtered Dice improving
+  from 0.386736 at epoch 11 to a run-best 0.398540 at epoch 12, while MIT
+  filtered Dice improved to 0.386144, Google filtered Dice to 0.429981,
+  precision to 0.446572, and connectivity to 0.360615 with a bounded filtered
+  predicted-positive fraction of 0.002920. The trajectory was finite,
+  non-collapsed, source-informative, and still improving at the exploratory
+  ceiling, and the resource profile was modest for this campaign: about 1.76M
+  parameters, 6.44 GB peak reserved memory, and 1,864.6 s total wall time. The
+  approved late-improving budget tests whether this exact compact spectral/SZA
+  gating mechanism can recover additional recall and connected-line evidence
+  without changing Candidate-owned data loading, sampling implementation,
+  augmentation, losses, metrics, Artifact Filters, coordinates, thresholding,
+  postprocessing, scheduler policy, prediction retention, or resource placement.
+  Results remain capped representative feasibility evidence unless a later
+  trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget
