@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260915_015552_1ac51f
+  - run_20260914_124245_de843c
+  - run_20260914_205014_1794f8
+justification: >
+  ABI-311 completed as a finite, resource-safe, source-informative late-budget
+  five-frame temporal C4 persistence/contrast continuation and selected its best
+  checkpoint at epoch 27, well beyond the 12-epoch exploratory ceiling. Its
+  temporal-eligible failure-bucket review showed the best balanced capped
+  temporal C4 aggregate score so far and lower negative-patch clutter than the
+  ABI-309 recall-heavy variant, but it did not broadly repair typical
+  positive-patch Dice/connectivity or the MIT undercoverage tail. ABI-312 is a
+  close mechanism-changing continuation of ABI-311: it keeps the allowlisted
+  five-frame provider-owned temporal input, compact base width, BCE-Dice loss,
+  trusted Line/Centerline auxiliaries, and source-balanced policy, then adds only
+  architecture-internal selective consensus stabilization and a small gated
+  positive recall residual. A late-improving budget is needed because the direct
+  parent and recent temporal C4 comparators selected useful late checkpoints and
+  the hypothesis is specifically about stabilizing the epoch-27 operating point
+  rather than an exploratory 12-epoch scout.
+fallback_if_denied: run_exploratory_budget

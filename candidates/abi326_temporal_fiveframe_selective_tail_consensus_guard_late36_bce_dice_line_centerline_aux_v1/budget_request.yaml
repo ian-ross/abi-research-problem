@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_212722_d66d93
+  - run_20260916_184108_954ec7
+  - run_20260915_015552_1ac51f
+justification: >
+  ABI-325, ABI-324, and ABI-311 are finite, resource-profiled five-frame temporal
+  C4 family parents whose selected checkpoints occurred at late-improving
+  epochs rather than at the 12-epoch exploratory ceiling. ABI-325 selected epoch
+  27 and its temporal-eligible failure-bucket evaluation showed real positive-
+  patch low-recall tail repair relative to ABI-324, but the unrestricted feature
+  reinjection widened the fixed-threshold footprint, increased negative-patch
+  clutter, reduced precision, regressed Google Dice, and hurt aggregate
+  connectivity. ABI-324 also selected epoch 27 and remains the balanced compact
+  temporal C4 comparator, while ABI-311 supplies the earlier five-frame
+  persistence/contrast parent. ABI-326 is a close but mechanism-changing
+  continuation: it keeps the profiled ABI-324/325 architecture and resource
+  profile, but replaces the broad ABI-325 reinjector with a selective consensus
+  guard that requires center-detail, temporal line-state, and fused memory
+  agreement above neutral feature alignment before applying a smaller bounded
+  residual. A 12-epoch exploratory cap would likely truncate the controlled
+  comparison and obscure whether the guard preserves ABI-325 tail repair while
+  restoring ABI-324 compactness.
+fallback_if_denied: run_exploratory_budget

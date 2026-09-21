@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+  - run_20260914_205014_1794f8
+  - run_20260914_232554_0320e8
+justification: >
+  ABI-306, ABI-309, and ABI-310 were finite, resource-safe, source-informative
+  late-budget Runs in the same temporal C4 line-state family and all selected
+  useful late checkpoints beyond the 12-epoch exploratory ceiling. ABI-306
+  remains the compact high-precision temporal C4 comparator, ABI-309 showed real
+  fixed-threshold recall recovery with excessive false-positive footprint, and
+  ABI-310 showed that direct agreement-gated line support interpolates but does
+  not solve the trade-off. ABI-311 is a close mechanism-changing continuation:
+  it keeps the compact ABI-306 head and profiled base width but changes the
+  provider-owned temporal window to the allowlisted five-frame [-2,-1,0,1,2]
+  context with architecture-internal persistence/contrast fusion before the C4
+  line-state encoder. Prior five-frame scouts ABI-291 and ABI-304 were
+  resource-safe at batch size 2, and ABI-304 selected its best checkpoint at the
+  final exploratory epoch, so a late-improving run is needed to test whether
+  wider temporal evidence can preserve ABI-306 compactness while raising true
+  connected contrail logits at the fixed threshold.
+fallback_if_denied: run_exploratory_budget

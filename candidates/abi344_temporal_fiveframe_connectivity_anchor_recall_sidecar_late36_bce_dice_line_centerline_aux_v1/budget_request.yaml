@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260917_201833_57b081
+  - run_20260918_031022_a8f552
+justification: >
+  ABI-324, ABI-337, and ABI-341 were finite, resource-safe, source-informative
+  five-frame temporal C4 line-state Runs whose useful behavior emerged after the
+  exploratory 12-epoch ceiling. ABI-324 selected epoch 27 and established the
+  current balanced temporal C4/detail-consensus comparator. ABI-337 also selected
+  epoch 27 and showed that recall/MIT shifts can occur without changing the
+  profiled architecture, but at a connectivity and clutter cost. ABI-341 selected
+  epoch 27 and reduced positive-tail misses, but its recall router broadened
+  negative-patch clutter and damaged connectivity. ABI-344 is a close,
+  mechanism-changing continuation of the profiled ABI-324 family: it keeps the
+  same provider-owned five-frame input, stem, decoder, loss, sampling, and
+  resource profile while changing only the final evidence construction into a
+  compact connectivity anchor plus bounded agreement-gated recall sidecar. The
+  parent trajectories and diagnostics indicate that an exploratory 12-epoch cap
+  would likely truncate the intended compact/high-connectivity versus recall
+  trade-off comparison.
+fallback_if_denied: run_exploratory_budget

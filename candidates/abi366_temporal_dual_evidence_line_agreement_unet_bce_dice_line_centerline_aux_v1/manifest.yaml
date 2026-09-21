@@ -1,0 +1,27 @@
+name: abi366_temporal_dual_evidence_line_agreement_unet_bce_dice_line_centerline_aux_v1
+description: Exploratory temporal dual-evidence U-Net with separate center-detail and temporal-change encoders, cross-scale agreement gates, and bounded line-aware logit fusion.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza_temporal
+output_form: mask_logits
+auxiliary_targets:
+  - name: line
+    output: line_logits
+    loss: weighted_bce
+    weight: 0.01
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: temporal_eligible_center
+  temporal_frame_offsets: [-1, 0, 1]
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 2
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

@@ -1,0 +1,21 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_111909_dd7ef7
+justification: >-
+  ABI-249 is the direct C4/orientation-prior parent for ABI-342 and completed
+  finitely with non-collapsed, source-informative predictions, compact predicted
+  positives, high precision, and best checkpoint selection at epoch 31 of the
+  approved late-improving budget. That trajectory is evidence that C4
+  steerable-line context benefits from more than the exploratory 12-epoch ceiling.
+  ABI-342 is a close mechanism-changing continuation rather than an unrelated
+  new family: it preserves the provider-approved ABI+SZA input, derived
+  approved-channel BTD front end, source-balanced sampling, trusted random
+  mirroring, BCE-Dice loss, trusted Line and Centerline auxiliary outputs,
+  optimizer, scheduler, and batch size. It changes only the architecture-internal
+  mask head by adding a bounded C4/Line-evidence-gated signed recall residual
+  intended to recover fixed-threshold recall without broad negative-patch
+  clutter. The result remains capped representative feasibility evidence unless
+  a later trusted diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

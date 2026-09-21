@@ -1,0 +1,17 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+  - run_20260914_151259_e64cba
+justification: >
+  ABI-306 and ABI-307 were finite, resource-safe, non-collapsed, source-informative
+  temporal C4 late-budget Runs that both selected their best checkpoint at epoch 36.
+  ABI-306 established a compact high-precision comparator, while ABI-307 showed that
+  center-frame detail support can raise aggregate recall/connectivity but is not
+  selective enough: failure buckets showed worse positive-patch miss tails and broader
+  positive-patch predictions. ABI-308 is a close mechanism-changing continuation with
+  the same profiled temporal C4 backbone and batch size, adding a more selective
+  agreement-gated center-detail bridge intended to preserve ABI-306 compactness while
+  keeping ABI-307's connected-recall support.
+fallback_if_denied: run_exploratory_budget

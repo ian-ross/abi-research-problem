@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260915_015552_1ac51f
+  - run_20260915_043533_14234b
+  - run_20260915_072045_06149f
+justification: >
+  ABI-311 is a finite, resource-safe, source-informative five-frame temporal C4
+  parent whose best checkpoint was selected at epoch 27 under the same trusted
+  temporal-eligible five-frame input, BCE-Dice loss, Line/Centerline auxiliaries,
+  batch size 2, and A100 execution envelope. Its temporal-eligible diagnostics
+  showed the best balanced aggregate result in the local temporal C4 family and
+  lower negative-patch clutter than broad recall variants, but persistent
+  MIT/positive-patch undercoverage and weak typical connected-line continuity.
+  ABI-312 and ABI-313 were close late-budget logit/head-calibration attempts
+  from ABI-311 that also selected late checkpoints but did not repair continuity
+  or source balance. ABI-316 is a mechanism-changing continuation that keeps the
+  profiled ABI-311 stem, encoder, decoder, and final dual-evidence head while
+  moving line-continuity support into decoder representations through gated
+  multi-scale bridges from the early temporal C4 line state. A 36-epoch
+  late-improving run is needed to evaluate the same late-forming five-frame
+  operating point without truncating the comparison at the 12-epoch exploratory
+  ceiling.
+fallback_if_denied: run_exploratory_budget

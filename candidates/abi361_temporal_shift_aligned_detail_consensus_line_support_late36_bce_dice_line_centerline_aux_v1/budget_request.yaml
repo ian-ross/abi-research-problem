@@ -1,0 +1,18 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260919_175950_ac7b89
+  - run_20260919_210615_da5139
+justification: >
+  This is a close mechanism-changing continuation of the temporal-attention
+  pre-decoder line-support family. ABI-350 selected its best checkpoint at
+  epoch 33; ABI-359 selected at epoch 27 with high-connectivity late states;
+  ABI-360 selected at epoch 22 but showed late precision/recall/connectivity
+  oscillation through epoch 36. The proposed shift-aligned consensus mechanism
+  targets that late-emerging temporal alignment/continuity trade-off while
+  preserving the same provider-owned temporal inputs, loss, sampling, auxiliary
+  targets, and batch size. If the Harness denies this request, the exploratory
+  12-epoch fallback remains valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

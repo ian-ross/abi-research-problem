@@ -1,0 +1,21 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260917_201833_57b081
+  - run_20260917_230319_ed1362
+justification: >
+  ABI-324, ABI-337, and ABI-338 are finite non-collapsed five-frame temporal
+  C4/detail-consensus close parents whose best checkpoints occurred late
+  (epochs 27, 27, and 36) and whose trajectories remained oscillatory rather
+  than clearly plateaued under the exploratory ceiling. ABI-341 is a
+  mechanism-changing close continuation: it keeps the profiled five-frame
+  temporal C4 resource envelope but replaces the prior single soft-band
+  reinjection branch with a compact-state-protected recall router. The new head
+  separates a small signed compact continuity anchor from a bounded positive
+  recall lift gated by continuous Line/Centerline, detail, and line-state
+  agreement, targeting the observed decoupling between connected compact states
+  and broader high-recall clutter states. If denied, the exploratory 12-epoch
+  result remains valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

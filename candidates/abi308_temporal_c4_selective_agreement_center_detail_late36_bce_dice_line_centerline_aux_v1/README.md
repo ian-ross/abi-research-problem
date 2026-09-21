@@ -1,0 +1,7 @@
+# ABI-308 temporal C4 selective agreement center-detail late36
+
+ABI-308 is a mechanism-changing family-development continuation of the temporal C4 line-state U-Net branch. It keeps the provider-owned three-frame temporal input (`abi_16ch_plus_sza_temporal`, offsets `[-1, 0, 1]`), trusted `temporal_eligible_center` frame selection, combined source-balanced sampling, random mirroring, BCE-Dice primary loss, AdamW with constant learning rate, batch size 2, and trusted Line/Centerline auxiliary targets.
+
+The change from ABI-307 is a more selective center-detail bridge. ABI-307's diagnostics showed that broad center-detail residuals raised aggregate recall/connectivity but worsened positive-patch tails and precision. ABI-308 gates center-detail residuals by decoder/detail/temporal-line-state agreement and by an orientation-detail consensus gate, with a lower bounded residual amplitude. The intended effect is to preserve ABI-306's compact high-precision behavior while retaining useful ABI-307-style connected-recall support.
+
+This Candidate defines only model architecture over Harness-supplied tensors and approved manifest choices. It does not implement data loading, temporal lookup, frame repair, sample selection, losses, metrics, Artifact Filters, thresholds, postprocessing, target derivation, augmentation transforms, coordinate features, downloads, resource scheduling, training loops, or prediction retention.

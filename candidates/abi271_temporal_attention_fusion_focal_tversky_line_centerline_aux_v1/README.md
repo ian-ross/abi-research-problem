@@ -1,0 +1,5 @@
+# ABI-271 temporal-attention fusion focal-Tversky loss-policy continuation
+
+ABI-271 is a controlled family-development continuation of the ABI-223 temporal-attention fusion U-Net. It keeps the proven resource-safe provider-owned `abi_16ch_plus_sza_temporal` `[-1, 0, 1]` input path, temporal-eligible center selection, source-balanced sampling, random mirroring, Line and Centerline auxiliary outputs, and compact temporal-attention architecture, but changes the trusted primary loss from BCE-Dice to `focal_tversky`.
+
+The purpose is to test whether an allowlisted recall-oriented loss can raise under-confident true contrail evidence at the fixed Harness threshold while preserving ABI-223-style precision, Dataset Source balance, and connected thin-line behavior. The Candidate remains architecture/source-only: it does not own data loading, sampling implementation, temporal lookup, losses, metrics, Artifact Filters, thresholds, postprocessing, target derivation, coordinates, Dataset Source identity, downloads, resource scheduling, or lifecycle behavior.

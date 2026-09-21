@@ -1,0 +1,48 @@
+request_id: evalreq_abi350_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260919_013306_9ca44e
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-350's
+  three-frame [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, did the late36
+  continuation of ABI-349's pre-decoder line-support temporal-attention U-Net
+  create a genuinely better connected/compact temporal comparator, or did its
+  new top capped filtered Dice mostly come from a high-precision Google-skewed
+  checkpoint with remaining MIT undercoverage and unstable line continuity?
+  ABI-350 selected epoch 33 with 0.4311 val/filtered_dice, MIT 0.4095, Google
+  0.4905, precision 0.4943, recall 0.3822, connectivity 0.3583, 422,831
+  filtered predicted-positive pixels, and filtered predicted-positive fraction
+  0.003997. Compare positive-patch complete misses and under-coverage buckets,
+  fragmentation and connected-line continuity buckets, negative-patch clutter,
+  source-stratified medians and tails, raw-vs-filtered gaps, and threshold
+  behavior around the trusted fixed 0.5 threshold against ABI-349 exploratory
+  parent, ABI-223 temporal-attention connectivity comparator, ABI-238
+  directional temporal-attention comparator, ABI-324 balanced five-frame
+  temporal C4/detail-consensus comparator, ABI-337 no-mirroring control, and
+  ABI-348 compact high-precision five-frame temporal C4 comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide
+  whether ABI-350 should become the new capped temporal-eligible aggregate
+  comparator and whether pre-decoder line-support temporal attention deserves
+  further bounded development. If diagnostics show fewer complete positive
+  misses, improved low-recall positive tails, reduced negative-patch clutter,
+  stable threshold behavior, and source-balanced connected-line recovery at
+  ABI-324/337-like or better compactness, prioritize a mechanism-changing
+  follow-up that preserves the pre-decoder line-support anchor while addressing
+  the residual ABI-223/324 connectivity gap. If the apparent gain is mainly
+  Google-source Dice, high-precision compactness, Artifact Filter dependence,
+  threshold fragility, fragmented positives, or persistent MIT undercoverage,
+  treat ABI-350 as useful but not promotable capped evidence, keep ABI-324/223
+  as continuity comparators, and broaden away from unchanged late36 repeats of
+  this exact architecture. Treat the result as temporal-eligible diagnostic
+  evidence only; it is not whole-validation promotion evidence and it must not
+  authorize Candidate-owned data loading, temporal lookup, sample selection,
+  losses, metrics, Artifact Filters, thresholding, postprocessing, coordinates,
+  augmentation implementation, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

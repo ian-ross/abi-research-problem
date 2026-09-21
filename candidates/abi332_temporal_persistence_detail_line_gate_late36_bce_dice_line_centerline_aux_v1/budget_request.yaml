@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260917_105650_6a68cc
+  - run_20260915_183315_3f1d30
+justification: >
+  ABI-331 completed safely as a compact three-frame temporal persistence/detail
+  line-gate scout with 2.69M parameters, batch size 2, peak CUDA allocation below
+  4.4GB, and total exploratory wall time about 2,884 seconds. It improved over
+  ABI-321 on aggregate filtered Dice, both MIT and Google filtered Dice,
+  precision, recall, connectivity, and predicted-positive compactness, while
+  directly addressing the ABI-329/330 strip-token resource failure with a much
+  cheaper mechanism. ABI-331 selected its best checkpoint at epoch 12, the final
+  exploratory epoch, with a finite, source-informative, non-collapsed trajectory
+  and late improvement after noisy precision/recall oscillation. The requested
+  late-improving budget tests whether the same resource-safe mechanism is
+  genuinely under-trained rather than intrinsically below the stronger temporal
+  C4 comparators. ABI-321 is included as the weaker lightweight temporal-detail
+  parent that ABI-331 superseded. No Candidate-owned training loop, sampling,
+  validation cadence, threshold, loss, metric, postprocessing, data loading,
+  temporal lookup, or resource scheduling is requested.
+fallback_if_denied: run_exploratory_budget

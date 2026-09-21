@@ -1,0 +1,47 @@
+request_id: evalreq_abi346_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260918_152331_c80150
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-346's
+  three-frame [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, did the
+  connected-recall ladder recover true positive-tail contrail evidence from the
+  compact ABI-306 temporal C4 line-state branch, or did its additional 63,792
+  filtered predicted-positive pixels over ABI-306 mostly become negative-patch
+  clutter, fragmented line pieces, source-specific noise, or threshold-fragile
+  footprint growth? ABI-346 selected epoch 23 with 0.4278 val/filtered_dice,
+  MIT 0.4080, Google 0.4805, precision 0.4611, recall 0.3991, connectivity
+  0.2993, and 473,249 filtered predicted-positive pixels. Compare positive-patch
+  complete misses and under-coverage buckets, fragmentation and connected-line
+  continuity buckets, negative-patch clutter, source-stratified medians and
+  tails, raw-vs-filtered gaps, and threshold behavior around the trusted fixed
+  0.5 threshold against ABI-306 compact high-precision temporal C4, ABI-285
+  recall-heavy temporal C4, ABI-223 temporal-attention connectivity comparator,
+  ABI-238 directional temporal-attention comparator, and ABI-324 balanced
+  five-frame temporal C4/detail-consensus comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-346 should become a useful three-frame temporal C4 recall/aggregate
+  trade-off comparator and whether the connected-recall ladder contains a
+  mechanism worth refining, or whether ABI-324/306 should remain the preferred
+  temporal C4 comparators and this exact ladder branch should stop. If
+  diagnostics show fewer complete positive misses, better low-recall positive
+  tails, and source-balanced true-contrail recovery without ABI-285-like broad
+  clutter, Artifact Filter dependence, or fragmented low-connectivity lines,
+  future work may keep a compact anchor plus bounded recall-ladder idea while
+  adding explicit connected-line support. If gains are mainly larger footprint,
+  negative-patch clutter, source imbalance, threshold instability, or fragmented
+  line continuity, treat ABI-346 as mixed/negative evidence for this head and
+  broaden away from unchanged late36 temporal C4 residual-recall continuations.
+  Treat the result as temporal-eligible diagnostic evidence only; it is not
+  whole-validation promotion evidence and it must not authorize Candidate-owned
+  data loading, temporal lookup, sample selection, losses, metrics, Artifact
+  Filters, thresholding, postprocessing, coordinates, augmentation
+  implementation, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

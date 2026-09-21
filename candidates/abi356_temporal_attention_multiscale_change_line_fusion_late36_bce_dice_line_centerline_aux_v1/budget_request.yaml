@@ -1,0 +1,16 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_090506_bad1ff
+justification: >
+  ABI-355 was a finite, resource-safe, source-informative temporal-attention
+  multi-scale change-line fusion exploratory run. It improved over ABI-349,
+  ABI-351, and ABI-354 placement variants, selected its best checkpoint near
+  the exploratory ceiling at epoch 11, and showed non-collapsed late oscillation
+  between recall-heavy and precision/connectivity-heavy states. A 36-epoch
+  late-improving continuation is a narrow test of whether this specific decoder
+  skip-fusion mechanism can stabilize the epoch-8-to-11 gains into a compact,
+  connected, fixed-threshold temporal solution before the branch is judged
+  against ABI-350, ABI-324, ABI-223, and ABI-348 temporal comparators.
+fallback_if_denied: run_exploratory_budget

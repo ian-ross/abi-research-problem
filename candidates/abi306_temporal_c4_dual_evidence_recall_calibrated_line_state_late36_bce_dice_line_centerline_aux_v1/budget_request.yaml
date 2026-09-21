@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260913_100333_a250df
+  - run_20260913_091156_167372
+  - run_20260908_154531_8c7e2b
+justification: >-
+  ABI-306 is a close, mechanism-changing continuation of the ABI-285 temporal C4
+  orientation line-state branch. ABI-285 completed safely under the approved
+  late-improving budget, selected its best checkpoint at epoch 32, and improved
+  ABI-284's exploratory filtered Dice from 0.3901 to 0.4222 while recovering
+  recall and source balance. Its documented weakness was connected-line
+  continuity: the epoch-32 recall/source-balance checkpoint had much lower
+  connectivity than ABI-223/238 and even lower connectivity than several compact
+  ABI-285 intermediate states. ABI-306 keeps the same provider-owned temporal
+  input mode, offsets [-1, 0, 1], trusted temporal-eligible selection, sampling,
+  random mirroring, BCE-Dice loss, Line/Centerline auxiliaries, optimizer,
+  scheduler, and resource-profiled backbone, but changes the final head to add a
+  bounded dual-evidence recall-calibration residual gated by internal base-mask,
+  line, and centerline agreement. The longer budget is needed to test this close
+  continuation at the maturity level where ABI-285 became informative, without
+  Candidate-owned thresholds, postprocessing, losses, metrics, Artifact Filters,
+  data loading, temporal lookup, sample selection, coordinates, downloads,
+  resource scheduling, or lifecycle behavior.
+fallback_if_denied: run_exploratory_budget

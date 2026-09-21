@@ -1,0 +1,27 @@
+name: abi365_temporal_fiveframe_predecoder_line_support_center_detail_late36_bce_dice_line_centerline_aux_v1
+description: Five-frame temporal-attention U-Net that combines center-anchored near/far temporal change evidence with pre-decoder orientation line support, targeting connected true-contrail logits before final mask heads.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza_temporal
+output_form: mask_logits
+auxiliary_targets:
+  - name: line
+    output: line_logits
+    loss: weighted_bce
+    weight: 0.01
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  frame_selection_policy: temporal_eligible_center
+  temporal_frame_offsets: [-2, -1, 0, 1, 2]
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 2
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

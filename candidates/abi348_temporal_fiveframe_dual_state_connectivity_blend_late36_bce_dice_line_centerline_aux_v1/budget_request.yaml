@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260917_201833_57b081
+  - run_20260918_105020_e806bb
+justification: >
+  ABI-324, ABI-337, and ABI-344 were finite, resource-safe, source-informative
+  five-frame temporal C4/detail-consensus Runs whose useful operating points
+  selected at epochs 27, 27, and 29 respectively. ABI-324 remains the balanced
+  temporal C4/detail-consensus comparator, while ABI-337 showed a small
+  MIT/recall shift with lower connectivity and ABI-344 showed that positive-tail
+  recall can be recovered only at a broad-footprint connectivity cost. ABI-348
+  is a close but mechanism-changing continuation that keeps the profiled
+  five-frame stem/decoder and replaces only the final evidence construction with
+  a dual-state connectivity-preserving blend: a compact connected anchor and a
+  recall candidate are mixed by learned line/detail/source-agnostic agreement
+  rather than by an additive recall sidecar. The parent trajectories show that
+  the informative compact/recall trade-off in this family emerges after the
+  exploratory 12-epoch ceiling, so a 36-epoch late-improving budget is required
+  for a fair bounded comparison.
+fallback_if_denied: run_exploratory_budget

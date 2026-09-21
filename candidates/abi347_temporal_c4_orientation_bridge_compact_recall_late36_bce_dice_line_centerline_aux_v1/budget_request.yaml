@@ -1,0 +1,30 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260918_152331_c80150
+  - run_20260914_124245_de843c
+  - run_20260916_184108_954ec7
+justification: >-
+  ABI-347 is a close, mechanism-changing continuation of ABI-346 and ABI-306.
+  ABI-346 completed safely under the late-improving budget and improved ABI-306
+  on fixed-threshold recall and aggregate/source filtered Dice, but its
+  temporal-eligible diagnostic showed that the connected-recall ladder did not
+  improve connected-line continuity. ABI-306 remains the compact high-precision
+  three-frame temporal C4 parent, while ABI-324 demonstrates that temporal C4
+  detail-consensus can preserve stronger connectivity in a related profiled
+  family. ABI-347 keeps the provider-owned three-frame temporal input, trusted
+  temporal-eligible frame selection, source-balanced sampling, random mirroring,
+  BCE-Dice loss, Line/Centerline auxiliaries, optimizer, scheduler, and compact
+  ABI-306/346 line-state U-Net backbone, but replaces the final recall ladder
+  with an orientation-bridge compact-recall head. The new head computes a
+  learned multi-orientation line bridge inside the architecture and permits only
+  bounded uncertainty-band logit lift where mask, Line, Centerline, and bridge
+  agreement coexist; weak line/bridge evidence applies a compactness veto. This
+  directly targets the ABI-346 diagnostic failure mode rather than changing
+  thresholds, postprocessing, losses, metrics, Artifact Filters, data loading,
+  temporal lookup, sample selection, coordinates, downloads, resource scheduling,
+  or lifecycle behavior. The late-improving budget is requested because the
+  parent and comparable temporal C4 branches selected informative checkpoints
+  well after epoch 12.
+fallback_if_denied: run_exploratory_budget

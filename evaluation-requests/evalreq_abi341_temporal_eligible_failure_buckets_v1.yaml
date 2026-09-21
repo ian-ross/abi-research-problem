@@ -1,0 +1,46 @@
+request_id: evalreq_abi341_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260918_031022_a8f552
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-341's
+  five-frame [-2, -1, 0, +1, +2] `abi_16ch_plus_sza_temporal` input, did the
+  compact continuity recall-router head produce useful true-contrail recall, or
+  did it mostly broaden the filtered footprint into clutter and fragmented
+  positives? ABI-341 selected epoch 27 with 0.4171 val/filtered_dice, MIT
+  0.3979, Google 0.4657, precision 0.4189, recall 0.4153, connectivity 0.2792,
+  and 542,094 filtered predicted-positive pixels. Compared with ABI-324
+  balanced five-frame detail-consensus parent (0.4294 filtered Dice, 0.3950
+  recall, 0.3979 connectivity, 459,172 filtered predicted-positive pixels),
+  ABI-337 no-mirroring control, ABI-338 soft-band reinjector, ABI-328
+  soft-shift alignment variant, ABI-325 positive-tail recall diagnostic, and
+  ABI-223 temporal-attention connectivity comparator, review positive-patch
+  miss and under-coverage buckets, fragmentation and connected-line continuity
+  buckets, negative-patch clutter, source-stratified medians and tails,
+  raw-vs-filtered gaps, and threshold behavior around 0.5.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide
+  whether ABI-341's higher selected-checkpoint recall is actionable evidence for
+  a future temporal C4/detail-consensus continuation, or whether this exact
+  compact-continuity recall-router branch should stop. If diagnostics show fewer
+  complete misses or materially better positive-patch under-coverage without a
+  corresponding increase in negative-patch clutter, fragmentation, source
+  imbalance, Artifact Filter dependence, or threshold fragility, future work may
+  keep the recall-router idea but add architecture-level connectivity/precision
+  constraints. If the gain is mainly broad footprint noise, fragmented positives,
+  negative-patch clutter, MIT/Google imbalance, or checkpoint/threshold
+  instability, keep ABI-324 as the balanced five-frame temporal C4 comparator,
+  treat ABI-341 as negative evidence for this router head, and broaden away from
+  unchanged late36 compact-continuity recall-router variants. Treat the result as
+  temporal-eligible diagnostic evidence only; it is not whole-validation
+  promotion evidence and it must not authorize Candidate-owned data loading,
+  temporal lookup, sample selection, losses, metrics, Artifact Filters,
+  thresholding, postprocessing, coordinates, augmentation implementation, or
+  resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

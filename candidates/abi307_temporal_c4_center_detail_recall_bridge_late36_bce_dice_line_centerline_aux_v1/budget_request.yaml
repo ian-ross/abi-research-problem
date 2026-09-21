@@ -1,0 +1,14 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+justification: >
+  ABI-306 was finite, resource-safe, non-collapsed, source-informative, and selected
+  its best checkpoint at epoch 36 under the approved late-improving budget. Its
+  temporal-eligible failure-bucket evaluation identified a specific remaining
+  under-recall tail after the dual-evidence precision repair. ABI-307 is a close
+  mechanism-changing continuation that keeps the resource-profiled temporal C4
+  line-state backbone and adds only a compact center-frame detail recall bridge
+  to raise connected true-positive evidence at the fixed Harness threshold.
+fallback_if_denied: run_exploratory_budget

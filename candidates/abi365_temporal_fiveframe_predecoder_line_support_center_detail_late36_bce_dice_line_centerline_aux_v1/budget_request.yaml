@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260918_215534_a35ab9
+  - run_20260916_184108_954ec7
+  - run_20260908_154531_8c7e2b
+justification: >
+  ABI-365 is a mechanism-changing but close temporal-family continuation, not an
+  unchanged repeat. ABI-350 validated pre-decoder line support on provider-owned
+  [-1,0,1] temporal inputs and selected its best checkpoint at epoch 33 after a
+  weak exploratory-boundary checkpoint; ABI-348 and ABI-324 show that the
+  five-frame temporal-eligible resource/input class is profiled and late-budget
+  dependent; ABI-223 remains the temporal-attention connectivity comparator.
+  This candidate preserves Harness-owned temporal provisioning, source-balanced
+  sampling, trusted random mirroring, BCE-Dice loss, Line and Centerline
+  auxiliaries, AdamW constant LR, and batch size 2, while moving the mechanism
+  before final logits: center-anchored five-frame attention uses near/far temporal
+  change evidence, then orientation line support is injected into encoder skips
+  before decoder fusion. The intended test is whether five-frame persistence can
+  improve connected true-contrail evidence and MIT/source-balanced recall without
+  another final-head residual, threshold change, postprocessing, custom loss, or
+  data-policy workaround. If the late-improving request is denied, the
+  exploratory fallback remains valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

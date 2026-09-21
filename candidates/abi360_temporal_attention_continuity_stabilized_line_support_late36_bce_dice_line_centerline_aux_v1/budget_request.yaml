@@ -1,0 +1,26 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260919_175950_ac7b89
+  - run_20260919_151507_2ec383
+justification: >
+  ABI-350 was a finite, resource-safe temporal-attention pre-decoder line-support
+  continuation whose best checkpoint arrived late at epoch 33 with the strongest
+  recent capped temporal-eligible filtered Dice (0.4311), compact predictions,
+  high precision, source-informative MIT/Google metrics, and useful connectivity.
+  ABI-359 was a finite, resource-safe mechanism-changing C4/continuity alignment
+  continuation whose best checkpoint at epoch 27 did not beat ABI-350/358 on Dice
+  but materially improved connected-line evidence over ABI-358 and ABI-356 while
+  keeping non-collapsed source-balanced predictions. ABI-358 also showed late
+  precision/recall/connectivity trade-offs through epochs 30-36. ABI-360 is a
+  close mechanism-changing continuation that starts from ABI-350's temporal
+  attention/pre-decoder line-support operating point and adds a bounded learned
+  continuity-stabilized evidence head before logits, specifically to test whether
+  ABI-359's useful continuity signal can be stabilized without broad low-precision
+  final-epoch footprints. Because the parent evidence is late-dependent and the
+  target trade-off appears after exploratory epoch 12, a 36-epoch late-improving
+  budget is requested; if denied, the exploratory result remains valid bounded
+  evidence.
+fallback_if_denied: run_exploratory_budget

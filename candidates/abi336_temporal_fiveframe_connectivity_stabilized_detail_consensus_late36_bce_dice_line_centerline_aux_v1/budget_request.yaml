@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260916_212722_d66d93
+  - run_20260917_055012_ba7890
+justification: >
+  ABI-324, ABI-325, and ABI-328 were finite, resource-safe, source-informative
+  five-frame temporal C4 Runs under the same trusted temporal-eligible input and
+  batch-size policy. Their selected checkpoints occurred well beyond the 12-epoch
+  exploratory ceiling or required late-epoch evidence to expose the relevant
+  recall/connectivity trade-off: ABI-324 selected epoch 27 with the best balanced
+  detail-consensus temporal C4 operating point, ABI-325 diagnosed real positive-
+  tail recall gains but excessive clutter, and ABI-328 selected epoch 36 while
+  showing that simple soft local alignment recovered recall without solving
+  connectivity. ABI-336 is a close mechanism-changing continuation of ABI-324,
+  keeping the profiled five-frame stem/encoder/decoder while changing only the
+  final evidence head to require learned directional continuity support for
+  recall residuals and to veto isolated decoder-positive clutter. The parent
+  trajectories indicate that an exploratory 12-epoch cap would likely truncate
+  the intended comparison between high-connectivity compact states and
+  higher-recall selected states.
+fallback_if_denied: run_exploratory_budget

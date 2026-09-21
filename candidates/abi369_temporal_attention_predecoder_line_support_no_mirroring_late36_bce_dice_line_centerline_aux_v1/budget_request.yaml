@@ -1,0 +1,17 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260917_201833_57b081
+justification: >-
+  ABI-350, the direct temporal-attention pre-decoder line-support parent, was finite,
+  resource-safe, and selected its best checkpoint at epoch 33 under the approved
+  late-improving budget. ABI-337 showed that disabling trusted mirroring can make a
+  small MIT/recall shift in temporal line-state models, but also that the effect is
+  late-budget-dependent and must be judged over the full approved late trajectory.
+  ABI-369 is a one-factor in-contract data-policy continuation of ABI-350 that changes
+  only the trusted augmentation policy from random_mirroring to none, testing whether
+  physical-orientation preservation helps the current strongest temporal line-support
+  branch combine compact precision, recall, source balance, and connected-line evidence.
+fallback_if_denied: run_exploratory_budget

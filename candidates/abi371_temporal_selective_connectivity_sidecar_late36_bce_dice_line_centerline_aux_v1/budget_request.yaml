@@ -1,0 +1,19 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260920_155638_988238
+  - run_20260920_180416_4cefdd
+justification: >
+  ABI-371 is a close, mechanism-changing continuation of the finite temporal-attention
+  pre-decoder line-support family. The ABI-350 parent selected its best checkpoint at
+  epoch 33 with compact non-collapsed predictions, strong precision, source-informative
+  MIT and Google metrics, and resource-safe A100 execution. ABI-369 selected its best
+  checkpoint at epoch 36, and ABI-370 selected at epoch 27 while showing that the same
+  scaffold can learn higher connectivity under trusted loss changes. These completed
+  parents indicate the 12-epoch exploratory ceiling truncates the family trajectory.
+  A 36-epoch late-improving run is needed to evaluate whether the new bounded selective
+  connectivity sidecar can recover connected-line evidence without ABI-370's footprint
+  expansion and precision loss.
+fallback_if_denied: run_exploratory_budget

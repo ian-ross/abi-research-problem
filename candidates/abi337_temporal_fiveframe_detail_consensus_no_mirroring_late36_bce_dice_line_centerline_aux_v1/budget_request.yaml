@@ -1,0 +1,16 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260915_015552_1ac51f
+justification: >
+  ABI-337 is a close, controlled data-policy continuation of ABI-324: it keeps
+  the same provider-owned five-frame temporal input, architecture, trusted
+  BCE-Dice loss, auxiliary targets, optimizer, and batch size while changing only
+  the allowlisted augmentation_policy from random_mirroring to none. The parent
+  ABI-324 selected its best checkpoint at epoch 27 under the late-improving
+  budget, and its ABI-311 predecessor also required late-budget evidence. A
+  12-epoch exploratory run would not provide a fair controlled comparison for
+  this exact temporal C4/detail-consensus family.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260908_154531_8c7e2b
+  - run_20260915_183315_3f1d30
+justification: >-
+  ABI-323 is a close continuation of the resource-safe ABI-223-style
+  three-frame temporal-attention U-Net family rather than a materially new
+  loader, loss, training, or scheduling policy. ABI-223's approved late36 Run
+  remained finite, source-informative, non-collapsed, and selected epoch 36 as
+  best by val/filtered_dice, indicating that this temporal-attention family can
+  use the longer trusted budget. ABI-321 showed that a shallow center-detail
+  sharpening scout was not enough under 12 epochs, but it remained finite and
+  resource-light. ABI-323 keeps the ABI-223 temporal stem/encoder/decoder and
+  adds only a small bounded line/centerline/detail logit-consensus floor inside
+  the architecture to test whether true thin-contrail evidence can be raised at
+  threshold 0.5 without candidate-owned thresholds, losses, metrics, Artifact
+  Filters, temporal lookup, sample selection, coordinates, postprocessing,
+  custom training loops, scheduler policy, prediction retention, or resource
+  placement. Results remain capped temporal-eligible feasibility evidence unless
+  a later trusted diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

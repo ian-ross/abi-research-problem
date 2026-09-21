@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_210922_27f346
+justification: >-
+  ABI-255 completed the approved late-improving budget finitely without contract,
+  smoke, shape, numerical, resource, or lifecycle failure using the same trusted
+  provider-owned temporal ABI+SZA input mode, offsets [-1,0,1], temporal-eligible
+  center selection, source-balanced sampling, random mirroring, BCE-Dice loss,
+  Line/Centerline auxiliary outputs, AdamW optimizer, constant learning-rate
+  scheduler, and batch size 2 proposed here. Its best checkpoint was selected at
+  the final epoch 36 with non-collapsed, source-informative predictions, but the
+  follow-up note identified thin-line continuity/connectivity as an unresolved
+  weakness. ABI-368 is a close family-development continuation that keeps the
+  recurrent temporal stem and U-Net resource class while adding a bounded
+  architecture-internal C4 orientation-shared connectivity decoder before the
+  mask and auxiliary logits. The request tests whether the recurrent branch can
+  combine its late-maturing temporal overlap signal with explicit line-continuity
+  evidence under the already-approved late-improving budget. It does not change
+  candidate-owned data loading, temporal lookup, losses, metrics, thresholds,
+  postprocessing, sampling, Artifact Filters, coordinates, resource scheduling,
+  or lifecycle behavior, and capped evidence will remain feasibility evidence.
+fallback_if_denied: run_exploratory_budget

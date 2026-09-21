@@ -1,0 +1,48 @@
+request_id: evalreq_abi359_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260919_175950_ac7b89
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-359's
+  three-frame [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, did the early
+  C4/orientation continuity bridge recover genuinely useful connected-line
+  evidence, or did it mostly trade ABI-358's compact precision for unstable
+  threshold behavior and a different false-positive/false-negative mix?
+  ABI-359 selected epoch 27 with 0.4268 val/filtered_dice, MIT 0.4064,
+  Google 0.4812, precision 0.4749, recall 0.3875, connectivity 0.3763,
+  446,099 filtered predicted-positive pixels, and filtered predicted-positive
+  fraction 0.004217. Compare positive-patch complete misses and low-recall
+  buckets, fragmentation and connected-line continuity buckets, negative-patch
+  clutter, source-stratified medians and tails, raw-vs-filtered gaps, and
+  threshold behavior around the trusted fixed 0.5 threshold against ABI-358
+  recall-preserving C4 sidecar, ABI-356 multi-scale temporal change-line recall
+  parent, ABI-350 pre-decoder line-support temporal comparator, ABI-348 compact
+  five-frame temporal C4 comparator, ABI-324 balanced five-frame temporal
+  C4/detail-consensus comparator, and ABI-223 temporal-attention connectivity
+  comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-359's early C4 alignment should guide one further mechanism-changing
+  temporal continuation, or whether its apparent connectivity gain is not useful
+  enough to justify more Runs in this branch. If diagnostics show fewer
+  fragmented positives, materially better connected-line continuity on true
+  contrails, acceptable negative-patch clutter, source-balanced MIT/Google tails,
+  and stable behavior near the trusted 0.5 threshold, prioritize a follow-up
+  that stabilizes ABI-359's epoch-27/33 continuity signal with an architecture-
+  internal dual-evidence/calibration head while preserving ABI-358-like compact
+  precision. If the gain is mainly Artifact Filter dependence, threshold
+  fragility, source-specific tail failures, compact low-recall positives, or
+  clutter on negative patches, treat the early-C4 bridge as mixed non-frontier
+  evidence and broaden away from unchanged C4 alignment/sidecar late36 repeats.
+  Treat the result as temporal-eligible diagnostic evidence only; it is not
+  whole-validation promotion evidence and it must not authorize Candidate-owned
+  data loading, temporal lookup, sample selection, losses, metrics, Artifact
+  Filters, thresholding, postprocessing, coordinates, augmentation
+  implementation, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

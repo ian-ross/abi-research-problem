@@ -1,0 +1,30 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+  - run_20260913_100333_a250df
+  - run_20260908_154531_8c7e2b
+justification: >-
+  ABI-346 is a close, mechanism-changing continuation of ABI-306. ABI-306
+  completed safely under the approved late-improving budget, selected its best
+  checkpoint at epoch 36, became the compact high-precision temporal C4
+  comparator, and its temporal-eligible failure-bucket diagnostic showed useful
+  low-threshold recall reserve: the best diagnostic threshold improved filtered
+  Dice from 0.4225 at the trusted 0.5 threshold to 0.4362 at threshold 0.10.
+  That diagnostic is not authority for Candidate-owned thresholding; it is a
+  reason to test an architecture-level head that raises connected true-contrail
+  evidence to the fixed threshold. ABI-346 keeps ABI-306's provider-owned
+  three-frame temporal input, trusted temporal-eligible frame selection, source
+  balanced sampling, random mirroring, BCE-Dice loss, Line/Centerline
+  auxiliaries, optimizer, scheduler, and resource-profiled C4 line-state U-Net
+  backbone, but replaces the final head with a bounded connected-recall ladder:
+  a compact base mask anchor plus a non-negative uncertainty-band recall support
+  gated by mask/Line/Centerline/continuity agreement and a small low-line-evidence
+  clutter veto. The late-improving budget is needed because the parent selected
+  at the final epoch and comparable temporal C4 branches have only become
+  informative after epoch 12. Candidate code still avoids thresholds,
+  postprocessing, custom losses, metrics, Artifact Filters, data loading,
+  temporal lookup, sample selection, coordinates, downloads, resource scheduling,
+  and lifecycle behavior.
+fallback_if_denied: run_exploratory_budget

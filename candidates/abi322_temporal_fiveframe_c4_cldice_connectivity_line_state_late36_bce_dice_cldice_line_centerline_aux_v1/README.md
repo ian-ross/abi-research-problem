@@ -1,0 +1,7 @@
+# ABI-322 temporal five-frame C4 clDice-connectivity line-state late36
+
+ABI-322 is a trusted-loss-policy continuation of ABI-311's five-frame temporal C4 persistence/contrast line-state U-Net for GOES ABI Contrail Segmentation. It keeps the same provider-owned `abi_16ch_plus_sza_temporal` input, `temporal_eligible_center` selection, offsets `[-2, -1, 0, 1, 2]`, architecture, combined source-balanced sampling, random mirroring, AdamW, constant learning rate, batch size 2, and trusted Line/Centerline auxiliary targets.
+
+The intended mechanism change is to replace the primary `bce_dice` loss with trusted allowlisted `bce_dice_cldice`, so training directly rewards thin-line topology while preserving Harness-owned thresholding, metrics, Artifact Filters, target derivation, sampling, augmentation, temporal provisioning, and resource policy. ABI-311's diagnostics showed balanced aggregate/clutter behavior but remaining MIT/positive-patch undercoverage and non-uniform typical-patch continuity. ABI-322 tests whether the approved topology-aware loss can stabilize the same five-frame line-state architecture without adding another late residual gate or Candidate-owned postprocessing.
+
+Candidate code is architecture-only and does not implement data loading, temporal lookup, target derivation, losses, metrics, Artifact Filters, thresholding, postprocessing, augmentation transforms, sampling policy, coordinates, Dataset Source identity, downloads, resource scheduling, prediction retention, or lifecycle control.

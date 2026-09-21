@@ -1,0 +1,19 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260917_201833_57b081
+  - run_20260917_055012_ba7890
+justification: >
+  ABI-324, ABI-337, and ABI-328 are finite non-collapsed five-frame temporal
+  C4/detail-consensus close parents whose best checkpoints occurred late
+  (epochs 27, 27, and 36) and whose trajectories remained oscillatory rather
+  than clearly plateaued under the exploratory ceiling. ABI-338 is a
+  mechanism-changing close continuation: it keeps the profiled temporal C4
+  resource envelope but replaces the prior single positive residual with a
+  soft-band continuity reinjection path specifically targeting the observed
+  split between compact high-connectivity states and broader higher-recall
+  states. If denied, the exploratory 12-epoch result remains valid bounded
+  evidence.
+fallback_if_denied: run_exploratory_budget

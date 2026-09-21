@@ -1,0 +1,44 @@
+request_id: evalreq_abi353_wholeval_failure_buckets_v1
+target_run_id: run_20260919_053527_64085b
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-353's
+  late36 single-frame C4 cross-scale detail-agreement result transfer beyond
+  the trusted representative validation cap, and should it become a stronger
+  C4/orientation comparator than ABI-249, ABI-342, or ABI-343? ABI-353 selected
+  epoch 34 with 0.4174 val/filtered_dice, MIT 0.4017, Google 0.4565,
+  precision 0.4425, recall 0.3951, connectivity 0.3483, 434,203 filtered
+  predicted-positive pixels, and filtered predicted-positive fraction 0.003235.
+  Compare positive-patch complete misses and under-coverage buckets,
+  fragmentation and connected-line continuity buckets, negative-patch clutter,
+  source-stratified medians and tails, raw-vs-filtered gaps, and threshold
+  behavior around the trusted fixed 0.5 threshold against the ABI-352
+  exploratory parent, ABI-249 high-precision C4 comparator, ABI-342 C4 recall
+  bridge, ABI-343 precision-veto recall diagnostic, and ABI-202 aggregate
+  whole-validation reference.
+expected_decision_impact: >-
+  Use the Harness-owned whole-validation failure-bucket review to decide whether
+  ABI-353's late-improving cross-scale detail-agreement branch is merely capped
+  representative improvement or a robust single-frame C4 comparator worth
+  further bounded development. If whole-validation diagnostics preserve
+  ABI-353's capped-source balance, recover ABI-249-like compactness with better
+  recall, avoid ABI-342-style broad negative-patch clutter, and show connected
+  thin-line continuity that is competitive with ABI-249/202, then prioritize a
+  mechanism-changing C4 continuation or focused comparator note. If the apparent
+  gain comes from cap-specific source balance, unstable threshold behavior,
+  Artifact Filter dependence, fragmented positives, broad negative-patch tails,
+  or weaker MIT/Google transfer, treat the late36 question for this exact
+  branch as answered and broaden away from unchanged cross-scale detail-agreement
+  repeats. Treat the result as diagnostic evidence only; promotion remains
+  operator-reviewed and the evaluation must not authorize Candidate-owned data
+  loading, sample selection, losses, metrics, Artifact Filters, thresholding,
+  postprocessing, coordinates, augmentation implementation, or resource
+  scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

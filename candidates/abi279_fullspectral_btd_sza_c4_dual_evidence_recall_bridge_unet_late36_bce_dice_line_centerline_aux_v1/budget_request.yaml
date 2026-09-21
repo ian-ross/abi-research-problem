@@ -1,0 +1,19 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_111909_dd7ef7
+justification: >-
+  ABI-249 is the current high-precision C4/rotation-aware whole-validation
+  comparator and selected its best late-budget checkpoint at epoch 31, with
+  finite non-collapsed source-informative predictions. ABI-279 is a close,
+  mechanism-changing continuation of that profiled resource family: it preserves
+  the provider-approved ABI+SZA input, approved-channel BTD front end,
+  source-balanced sampling, trusted random mirroring, BCE-Dice loss, trusted
+  Line and Centerline auxiliary outputs, optimizer, scheduler, and batch size,
+  but replaces only the final head with a bounded dual-evidence recall bridge.
+  The purpose is to test whether C4 high-precision orientation evidence can gain
+  fixed-threshold recall and continuity without losing ABI-249's compact
+  prediction behavior. The Result remains capped representative feasibility
+  evidence unless a later trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,16 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+justification: >
+  ABI-350 is a finite, resource-safe, source-informative late-budget temporal-attention
+  pre-decoder line-support comparator. Its best checkpoint was selected late at epoch 33,
+  and subsequent ABI-369 evidence showed that simple augmentation-policy changes can trade
+  recall against connectivity without solving the branch's fixed-threshold continuity/recall
+  tension. This Candidate keeps ABI-350 architecture unchanged but switches only to the
+  trusted allowlisted bce_dice_cldice primary loss to test whether Harness-owned topology-aware
+  supervision can preserve the compact connected-line states while recovering more true-positive
+  recall. Because the parent branch was late-maturing and exploratory 12-epoch evidence would
+  truncate the exact comparison, the approved 36-epoch late-improving budget is requested.
+fallback_if_denied: run_exploratory_budget

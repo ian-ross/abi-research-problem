@@ -1,0 +1,25 @@
+name: abi363_fullspectral_btd_sza_source_robust_detail_support_late36_bce_dice_line_centerline_aux_v1
+description: Full-spectral ABI+SZA U-Net with source-agnostic multi-scale signed-detail tail support and a dual-evidence calibration head, targeting MIT/source-balanced fixed-threshold recall and connected thin-line continuity without widening negative-patch clutter.
+research_problem: goes_abi_contrail_segmentation
+input_mode: abi_16ch_plus_sza
+output_form: mask_logits
+auxiliary_targets:
+  - name: line
+    output: line_logits
+    loss: weighted_bce
+    weight: 0.01
+  - name: centerline
+    output: centerline_logits
+    loss: weighted_bce
+    weight: 0.02
+data:
+  sampling_policy: combined_source_balanced
+  augmentation_policy: random_mirroring
+training:
+  loss: bce_dice
+  optimizer: adamw
+  learning_rate: 0.0003
+  batch_size: 4
+  max_epochs: 12
+  scheduler:
+    policy: constant_lr

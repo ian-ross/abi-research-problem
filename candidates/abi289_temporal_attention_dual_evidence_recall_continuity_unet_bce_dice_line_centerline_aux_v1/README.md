@@ -1,0 +1,9 @@
+# ABI-289 temporal attention dual-evidence recall/continuity U-Net
+
+ABI-289 is a mechanism-changing temporal-family continuation after ABI-288 and the recent temporal C4 continuity branches. It returns to the resource-profiled ABI-238 temporal-attention directional-context U-Net backbone, but changes the late evidence geometry rather than the trusted loss: center-frame detail/recall evidence and directional continuity evidence stay in separate full-resolution paths until the final logits.
+
+The model consumes only provider-owned `abi_16ch_plus_sza_temporal` inputs with offsets `[-1, 0, 1]` and trusted `temporal_eligible_center` selection. It keeps ABI/SZA/BTD per-frame feature building, temporal attention/change fusion, a compact encoder-decoder, ASPP context, and high-resolution directional context. The new mechanism is a dual-evidence head: a center-detail recall path predicts the primary mask logits, a directional continuity path predicts line support, and a small bounded non-negative agreement lift can raise weak connected contrail evidence at the fixed 0.5 threshold without threshold selection, morphology, or postprocessing.
+
+Hypothesis: separating recall and continuity until late logits can preserve ABI-238/223-style precision and source balance better than clDice loss-only pressure (ABI-288) or feature-level C4 continuity sidecars (ABI-286/287), while still giving thin connected lines a learned evidence boost.
+
+This is an exploratory/default-budget Candidate, not a promotion claim. Candidate code remains architecture-only and does not implement thresholds, morphology, postprocessing, Artifact Filters, metrics, losses, data loading, temporal lookup, frame repair/padding, sample selection, target derivation, coordinates, Dataset Source identity, downloads, resource scheduling, prediction retention, or lifecycle behavior.

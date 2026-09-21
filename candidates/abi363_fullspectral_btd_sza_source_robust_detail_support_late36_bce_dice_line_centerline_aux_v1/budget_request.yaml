@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260904_043143_ee0005
+  - run_20260919_053527_64085b
+  - run_20260918_055403_f17232
+  - run_20260920_020446_9c2fa1
+justification: >
+  This is a close, mechanism-changing continuation of the profiled single-frame
+  full-spectral ABI+SZA/Brightness-Temperature-Difference U-Net family. ABI-202
+  remains the aggregate reference with a late best checkpoint at epoch 34;
+  ABI-353's C4/detail agreement also selected epoch 34; ABI-342 selected epoch
+  36 while exposing useful recall but excessive footprint; and ABI-362 selected
+  epoch 34 while showing that a decoupled C4 anchor/sidecar did not preserve the
+  desired trade-off. ABI-363 keeps the same provider-owned input mode,
+  source-balanced sampling, trusted random mirroring, BCE-Dice loss, Line and
+  Centerline auxiliaries, AdamW constant LR, and batch size 4, but broadens the
+  mechanism away from local C4-head tuning into a source-agnostic multi-scale
+  signed-detail tail-support path plus a bounded architecture-internal
+  dual-evidence calibration head. The late budget is needed because the relevant
+  parent branches form their best fixed-threshold precision/recall/connectivity
+  states after epoch 12. If denied, the exploratory 12-epoch fallback remains
+  valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

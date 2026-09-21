@@ -1,0 +1,46 @@
+request_id: evalreq_abi356_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260919_095725_843317
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-356's
+  three-frame [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, did the late36
+  continuation of ABI-355's multi-scale temporal change-line fusion create a
+  useful recall-biased temporal comparator, or did the final-epoch gain mostly
+  widen predictions without recovering connected thin-line continuity? ABI-356
+  selected epoch 36 with 0.4261 val/filtered_dice, MIT 0.4114, Google 0.4657,
+  precision 0.4214, recall 0.4308, connectivity 0.2821, 558,903 filtered
+  predicted-positive pixels, and filtered predicted-positive fraction 0.005284.
+  Compare positive-patch complete misses and low-recall buckets, fragmentation
+  and connected-line continuity buckets, negative-patch clutter, source-stratified
+  medians and tails, raw-vs-filtered gaps, and threshold behavior around the
+  trusted fixed 0.5 threshold against the ABI-355 exploratory parent, ABI-350
+  pre-decoder line-support temporal comparator, ABI-324 balanced five-frame
+  temporal C4/detail-consensus comparator, ABI-348 compact five-frame temporal
+  C4 comparator, ABI-223 temporal-attention connectivity comparator, and ABI-346
+  recall/positive-tail temporal diagnostic.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-356 should become a bounded recall-positive temporal comparator and whether
+  multi-scale temporal change-line fusion deserves one mechanism-changing
+  follow-up. If diagnostics show fewer complete positive misses, materially
+  improved low-recall positive tails, source-balanced MIT/Google gains, and
+  acceptable negative-patch clutter despite the broader prediction footprint,
+  prioritize a follow-up that preserves ABI-356's recall support while adding a
+  compact C4/line-continuity anchor to recover ABI-350/324/223 connectivity. If
+  the apparent gain is mainly broad low-precision positives, threshold fragility,
+  Artifact Filter dependence, fragmented positives, persistent MIT undercoverage,
+  or excessive negative-patch clutter, treat the late36 question for this exact
+  multi-scale fusion branch as answered and broaden away from unchanged
+  temporal-attention placement repeats. Treat the result as temporal-eligible
+  diagnostic evidence only; it is not whole-validation promotion evidence and it
+  must not authorize Candidate-owned data loading, temporal lookup, sample
+  selection, losses, metrics, Artifact Filters, thresholding, postprocessing,
+  coordinates, augmentation implementation, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

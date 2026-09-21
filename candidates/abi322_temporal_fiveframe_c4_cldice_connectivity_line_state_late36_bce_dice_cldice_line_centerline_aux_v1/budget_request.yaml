@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260915_015552_1ac51f
+  - run_20260915_110252_3a6dca
+  - run_20260915_072045_06149f
+justification: >
+  ABI-322 is a close trusted-loss-policy continuation of ABI-311's five-frame
+  temporal C4 persistence/contrast line-state architecture. ABI-311 was finite,
+  resource-safe, source-informative, and selected its best checkpoint at epoch
+  27 under the approved late-improving budget, while its diagnostics showed a
+  real but incomplete connected-line/positive-patch improvement. ABI-316 and
+  ABI-313 further confirmed that the same profiled temporal C4 neighborhood is
+  late-budget-dependent but that additional residual/head mechanisms did not
+  stabilize connectivity. This Candidate keeps ABI-311 architecture and
+  resources fixed and changes only the trusted primary loss from bce_dice to the
+  allowlisted bce_dice_cldice, directly targeting thin-line topology through
+  Harness-owned loss code. A comparable late-improving budget is needed before
+  deciding whether topology-aware optimization can improve ABI-311's MIT and
+  positive-patch continuity weakness without Candidate-owned thresholds,
+  postprocessing, losses, metrics, Artifact Filters, temporal lookup, data
+  loading, sampling, coordinates, or resource control.
+fallback_if_denied: run_exploratory_budget

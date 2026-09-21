@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260913_091156_167372
+  - run_20260912_180856_79ba22
+  - run_20260908_154531_8c7e2b
+justification: >-
+  ABI-284 was a finite, resource-safe exploratory temporal C4 orientation line-state
+  continuation whose best checkpoint occurred at the final exploratory epoch 12.
+  It produced non-collapsed, source-informative predictions and improved the recent
+  temporal C4/detail exploratory branches (ABI-275/281/282) on filtered Dice,
+  precision, and compactness, while showing oscillatory high-connectivity states
+  that had not stabilized by the 12-epoch ceiling. The selected ABI-284 checkpoint
+  remained below ABI-274 and ABI-223 on temporal-eligible filtered Dice, recall, and
+  connectivity, so this is not a promotion claim. The requested late-improving budget
+  is a close-continuation test of the same resource-profiled architecture, data mode,
+  trusted sampling, BCE-Dice loss, Line/Centerline auxiliary targets, random mirroring,
+  optimizer, scheduler, and batch size. Its purpose is to determine whether longer
+  training can recover more ABI-274 recall and ABI-223 continuity while preserving
+  ABI-284 compact high-precision early-orientation behavior, without Candidate-owned
+  thresholds, postprocessing, losses, metrics, Artifact Filters, data loading,
+  temporal lookup, sample selection, coordinates, or resource scheduling.
+fallback_if_denied: run_exploratory_budget

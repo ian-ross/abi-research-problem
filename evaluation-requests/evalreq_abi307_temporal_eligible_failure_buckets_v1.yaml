@@ -1,0 +1,34 @@
+request_id: evalreq_abi307_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260914_151259_e64cba
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-307's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 temporal C4
+  center-detail recall-bridge U-Net's mixed Result (0.4205 val/filtered_dice,
+  MIT 0.4049, Google 0.4607, precision 0.4702, recall 0.3803,
+  connectivity 0.3253) represent a real repair of ABI-306's MIT positive-patch
+  under-recall and fragmentation tail, or are the added positives mainly lower
+  precision, broader footprint, Google regression, and negative-patch clutter?
+  Compare against ABI-306, ABI-285, ABI-223, and ABI-238 using Harness-owned
+  failure buckets, threshold behavior, source-stratified metrics,
+  raw-vs-filtered gaps, and bounded diagnostic artifacts.
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss and under-coverage buckets, raw-vs-filtered gaps, and bounded diagnostic
+  samples to decide whether the center-detail recall bridge should be kept as a
+  mechanism for selective connected-recall support, revised to preserve ABI-306's
+  compact precision while raising recall, or stopped because its gains are mostly
+  broad clutter and Google regression. Treat the result as temporal-eligible
+  diagnostic evidence only; it is not whole-validation promotion evidence and it
+  must not authorize Candidate-owned thresholding, postprocessing, losses,
+  metrics, Artifact Filters, data loading, temporal lookup, sample selection,
+  coordinates, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,19 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_095725_843317
+  - run_20260919_013306_9ca44e
+justification: >
+  ABI-356 was a finite, resource-safe, source-informative late36 continuation
+  whose best checkpoint occurred at the final epoch and showed material recall
+  recovery over ABI-355, but with weak precision/connectivity and broad positive
+  footprint. ABI-350 showed that a compact temporal pre-decoder line-support
+  anchor can reach a strong high-precision temporal-eligible state only under
+  late training, selecting epoch 33. ABI-357 is a close, mechanism-changing
+  continuation that preserves ABI-356's multi-scale temporal change/detail
+  fusion while adding a compact C4 rotation-shared orientation-continuity anchor
+  to constrain the broad recall support. The narrow late-budget question is
+  whether the C4 anchor can stabilize connected thin-line evidence at the fixed
+  threshold without sacrificing the recovered recall.
+fallback_if_denied: run_exploratory_budget

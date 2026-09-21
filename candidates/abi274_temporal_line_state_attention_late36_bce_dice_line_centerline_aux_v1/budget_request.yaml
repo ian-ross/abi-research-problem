@@ -1,0 +1,29 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260912_171825_ff0d00
+justification: >-
+  ABI-273 completed finitely and non-degenerately under the exploratory 12-epoch
+  temporal-eligible representative cap, using the same provider-owned -1/0/+1
+  temporal ABI+Solar Geometry Input tensors, temporal_eligible_center frame
+  selection, source-balanced sampling, trusted random mirroring, BCE-Dice loss,
+  Line and Centerline auxiliary targets, AdamW optimizer, constant scheduler, and
+  batch size 2 requested here. Its best checkpoint occurred at the final epoch 12
+  after improving over epochs 10 and 11 in aggregate filtered Dice, MIT filtered
+  Dice, Google filtered Dice, recall, and connectivity while keeping a bounded
+  filtered predicted-positive fraction of 0.004002. The run was source-informative
+  and resource-safe with 4,243,288 parameters, about 5.36 GB peak reserved CUDA
+  memory, and total wall time below the exploratory timeout. ABI-273 improved over
+  the recent ABI-272 final-head dual-evidence temporal branch and recent ABI-259/
+  ABI-261 temporal line-support variants on capped filtered Dice without broad
+  positive expansion, but it remained below ABI-223/238 and still had weak
+  connected-line continuity. The approved late-improving budget tests whether this
+  exact early line-state injection mechanism is truncated by the 12-epoch ceiling
+  and can mature toward ABI-223/238 while recovering recall/connectivity, without
+  changing Candidate-owned data loading, temporal lookup, sample selection,
+  augmentation implementation, losses, metrics, Artifact Filters, coordinates,
+  thresholding, postprocessing, scheduler policy, prediction retention, resource
+  placement, or lifecycle behavior. Results remain capped temporal-eligible
+  feasibility evidence unless a later trusted diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

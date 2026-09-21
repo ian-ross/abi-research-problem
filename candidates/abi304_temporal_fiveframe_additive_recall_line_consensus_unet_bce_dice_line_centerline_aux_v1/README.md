@@ -1,0 +1,11 @@
+# ABI-304 temporal five-frame additive recall line-consensus U-Net
+
+ABI-304 is a bounded temporal family-development Candidate for GOES ABI Contrail Segmentation. It follows the negative ABI-300 temporal evidence-sharpening head and ABI-291 five-frame persistence scout with a mechanism-changing five-frame design: use the provider-owned `[-2, -1, 0, 1, 2]` temporal window for learned additive recall support, but avoid hard temporal persistence, hard orientation agreement, subtractive threshold gates, or Candidate-owned postprocessing.
+
+The model consumes only provider-owned `abi_16ch_plus_sza_temporal` tensors with trusted `temporal_eligible_center` selection. For each frame it builds normalized ABI, approved-channel BTD, and Solar Geometry features. A shared per-frame encoder creates frame embeddings; per-pixel temporal attention fuses all five offsets around a center-frame residual, while separate short-window and long-window temporal-difference features expose candidate-visible change/persistence evidence. A compact U-Net/ASPP decoder then uses high-resolution directional line context and an additive line/detail/scale consensus head. The final head can add small bounded recall support from line, center-detail, and multiscale agreement streams in uncertain regions; it does not choose thresholds, perform morphology, filter artifacts, select samples, or own losses/metrics.
+
+The intended effect is to test whether five-frame context can raise true contrail evidence at the fixed Harness threshold without repeating ABI-291's conservative persistence under-recall or ABI-300's conservative evidence-sharpening failure. The comparison targets are the temporal-eligible comparators ABI-223/238/285 and the immediate ABI-296/299/300 temporal branches.
+
+Candidate code does not own temporal lookup, S3/NetCDF access, cache reads, missing-frame repair, data loading, target derivation, sample selection, augmentation transforms, losses, metrics, Artifact Filters, thresholds, postprocessing, longitude/latitude, Dataset Source identity, downloads, resource scheduling, prediction retention, or lifecycle behavior.
+
+The Candidate uses trusted `combined_source_balanced` sampling, trusted `random_mirroring`, BCE-Dice primary loss, AdamW with constant learning rate, batch size 2, 12 exploratory epochs, and trusted Line plus Centerline auxiliary targets.

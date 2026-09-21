@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260915_015552_1ac51f
+  - run_20260914_124245_de843c
+justification: >
+  ABI-324 completed as a finite, resource-safe, source-informative five-frame
+  temporal C4 continuation and selected epoch 27 under the approved late-
+  improving budget, improving ABI-311 aggregate/source Dice, precision,
+  compactness, and connectivity. Its temporal-eligible failure-bucket
+  evaluation showed the mechanism was real but left unresolved positive-patch
+  undercoverage, complete misses, and a MIT positive-tail gap. ABI-311 and
+  ABI-306 remain relevant parent comparators for the same profiled temporal C4
+  family; their selected operating points also depended on late-improving
+  epochs. ABI-325 is a close but mechanism-changing continuation of ABI-324:
+  instead of another output-only residual head, it inserts a full-resolution
+  positive-tail evidence reinjector before the detail-consensus head so that
+  center-frame detail and temporal C4 line-state support can reshape decoder
+  features only where learned agreement and background guards support the
+  pixel. The prior late-selected trajectories indicate that a 12-epoch cap
+  would likely truncate this controlled family comparison.
+fallback_if_denied: run_exploratory_budget

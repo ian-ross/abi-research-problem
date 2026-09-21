@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260915_015552_1ac51f
+  - run_20260917_002229_d43b7a
+justification: >
+  ABI-324, ABI-311, and ABI-326 were finite, resource-safe, source-informative
+  five-frame temporal C4 line-state Runs whose useful operating points appeared
+  only under the approved late-improving budget. ABI-324 selected epoch 27 and
+  remains the best balanced temporal C4 comparator after temporal-eligible
+  diagnostics, with lower negative-patch clutter than broader recall variants
+  but persistent MIT/positive-patch undercoverage. ABI-326 selected epoch 36 and
+  showed that late tail-support variants remain trainable but that final-head or
+  full-resolution reinjection/guard mechanisms are not enough to retain both
+  recall repair and connected compactness. ABI-327 is a close, mechanism-changing
+  continuation of that profiled five-frame family: it keeps provider-owned
+  temporal inputs and the compact C4 U-Net resource class, but moves the repair
+  earlier into a change-salience-guided line-state stem instead of spending
+  another Run on the ABI-325/326 tail reinjection branch. The parent trajectories
+  make a 12-epoch cap likely to truncate the comparison; if denied, the
+  exploratory budget remains valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

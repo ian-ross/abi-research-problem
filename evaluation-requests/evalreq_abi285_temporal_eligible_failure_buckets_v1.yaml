@@ -1,0 +1,33 @@
+request_id: evalreq_abi285_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260913_100333_a250df
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-285's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 temporal C4
+  orientation line-state U-Net's selected epoch-32 checkpoint retain its new
+  capped temporal-family aggregate signal (0.4222 val/filtered_dice, 0.3989
+  filtered recall, MIT 0.4008, Google 0.4774) under Harness-owned failure
+  buckets and threshold behavior, and do the diagnostics explain whether its
+  weak connected-line continuity (0.2434) is driven mainly by fragmented thin
+  lines, broader negative-patch clutter from the recall-heavy operating point,
+  source-specific undercoverage, or Artifact Filter dependence relative to
+  ABI-223, ABI-274, ABI-238, and ABI-255?
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss and under-coverage buckets, and raw-vs-filtered gaps to decide whether
+  ABI-285 should become the capped temporal-eligible aggregate filtered-Dice
+  comparator alongside ABI-223's connectivity-forward temporal-attention
+  comparator, whether future temporal work should preserve ABI-285's recall and
+  source-balance gains while adding explicit architecture-level connected-line
+  support, or whether this exact temporal C4 orientation line-state branch
+  should stop after its successful late-budget answer. Treat the result as
+  diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

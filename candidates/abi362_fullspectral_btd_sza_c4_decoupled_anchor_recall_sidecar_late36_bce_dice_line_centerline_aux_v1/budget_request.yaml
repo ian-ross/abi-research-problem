@@ -1,0 +1,24 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_053527_64085b
+  - run_20260918_055403_f17232
+  - run_20260918_081800_9f0872
+  - run_20260911_111909_dd7ef7
+justification: >
+  This is a close, mechanism-changing continuation of the profiled single-frame
+  C4/orientation-prior branch. ABI-352 selected its exploratory best checkpoint
+  at epoch 12 and ABI-353 improved materially only under the late budget, with
+  the best checkpoint at epoch 34. ABI-342 selected epoch 36 and showed useful
+  recall but excessive footprint; ABI-343 selected epoch 32 and showed compact
+  high-connectivity late states but insufficient recall. ABI-362 keeps the same
+  provider-owned ABI+SZA input, BCE-Dice loss, trusted random mirroring,
+  source-balanced sampling, Line and Centerline auxiliaries, and batch size 4,
+  but separates the compact C4 anchor from a gated architecture-internal recall
+  sidecar to target the observed late-forming precision/recall/connectivity
+  trade-off without Candidate-owned thresholds, postprocessing, sampling,
+  losses, metrics, Artifact Filters, or resource scheduling. If the Harness
+  denies this request, the exploratory 12-epoch fallback remains valid bounded
+  evidence.
+fallback_if_denied: run_exploratory_budget

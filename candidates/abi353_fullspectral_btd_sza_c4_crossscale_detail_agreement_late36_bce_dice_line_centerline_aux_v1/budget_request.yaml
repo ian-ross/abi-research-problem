@@ -1,0 +1,16 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_044205_9523b3
+justification: >
+  ABI-352 was a finite, resource-safe, source-informative exploratory C4
+  cross-scale detail-agreement scout. Its best checkpoint was selected at the
+  final exploratory epoch 12 with non-collapsed predictions, viable MIT and
+  Google source metrics, and a late-improving filtered-Dice trajectory. Earlier
+  epochs showed compact/high-connectivity states, while epoch 12 recovered recall
+  and aggregate Dice; the 12-epoch ceiling likely truncated a fair test of
+  whether this pre-head agreement mechanism can align recall, compactness, and
+  continuity. A 36-epoch late-improving continuation is needed before judging the
+  exact branch against mature ABI-249/342/343 C4 comparators.
+fallback_if_denied: run_exploratory_budget

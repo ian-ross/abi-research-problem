@@ -1,0 +1,17 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_004607_f785f8
+justification: >
+  ABI-349 was a finite, resource-safe, source-informative exploratory temporal-attention
+  pre-decoder line-support scout. Its best checkpoint was selected at the final
+  exploratory epoch 12, with non-collapsed compact predictions, viable MIT and Google
+  source metrics, and better same-budget filtered Dice, recall, precision, and
+  connectivity than ABI-223, ABI-238, and ABI-345 at their epoch-12 checkpoints. The
+  branch remains below mature late-budget temporal comparators, but its final-epoch
+  improvement and compact footprint indicate that the 12-epoch ceiling likely truncated
+  useful learning. A 36-epoch late-improving continuation is needed to fairly test
+  whether pre-decoder orientation-aware line support can close recall and connectivity
+  gaps to ABI-223/238 while preserving compactness.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,17 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+  - run_20260914_175746_f48be2
+justification: >
+  ABI-306 and ABI-308 were finite, resource-safe, non-collapsed, source-informative
+  temporal C4 late-budget Runs in the same profiled family and batch-size class.
+  ABI-306 remains the compact high-precision temporal C4 comparator, while ABI-308
+  showed that a selective center-detail agreement bridge can reach substantially higher
+  connectivity but over-suppresses aggregate/source-balanced fixed-threshold evidence.
+  ABI-309 is a close mechanism-changing continuation that removes the center-detail
+  bypass and instead feeds the already computed temporal C4 line state into the final
+  learned logit calibration head, aiming to preserve ABI-306 compactness while raising
+  connected true-positive evidence at threshold 0.5.
+fallback_if_denied: run_exploratory_budget

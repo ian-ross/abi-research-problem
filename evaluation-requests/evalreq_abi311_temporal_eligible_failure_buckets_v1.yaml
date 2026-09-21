@@ -1,0 +1,40 @@
+request_id: evalreq_abi311_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260915_015552_1ac51f
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-311's
+  five-frame [-2, -1, 0, +1, +2] `abi_16ch_plus_sza_temporal` input, do the
+  late36 temporal C4 persistence/contrast line-state U-Net's apparent capped
+  gains over ABI-306, ABI-309, and ABI-310 represent real connected true-contrail
+  recovery, or are they mostly source/threshold noise, negative-patch clutter,
+  or a broad false-positive tail? ABI-311 selected epoch 27 with 0.4250
+  val/filtered_dice, MIT 0.4038, Google 0.4826, precision 0.4597, recall
+  0.3952, connectivity 0.3667, and 470,049 filtered predicted-positive pixels;
+  compare its positive-patch miss/under-coverage buckets, negative-patch clutter,
+  threshold behavior, raw-vs-filtered gaps, source-stratified medians, and bounded
+  diagnostic artifacts against ABI-306 compact high-precision temporal C4,
+  ABI-309 recall-heavy temporal C4 line-support, ABI-310 agreement-gated support,
+  ABI-223 temporal-attention fusion, and ABI-238 temporal directional context.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-311 should become the local balanced temporal C4 comparator for
+  persistence/contrast evidence and whether a future mechanism-changing
+  continuation should try to stabilize the epoch-27 operating point. If the
+  diagnostics show improved connected-line continuity and fewer positive-patch
+  fragmentation/under-recall failures without a material negative-patch clutter
+  increase, the next Candidate may focus on selective stabilization/calibration
+  of ABI-311-style persistence/contrast evidence. If the gains are driven by
+  threshold noise, source imbalance, heavy-tail false positives, or artifacts,
+  broaden away from temporal C4 head/stem variants. Treat the result as
+  temporal-eligible diagnostic evidence only; it is not whole-validation
+  promotion evidence and it must not authorize Candidate-owned thresholding,
+  postprocessing, losses, metrics, Artifact Filters, data loading, temporal
+  lookup, sample selection, coordinates, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,20 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_151507_2ec383
+  - run_20260919_095725_843317
+justification: >
+  ABI-356 was finite, resource-safe, source-informative, and selected its best
+  checkpoint at the final late epoch with strong fixed-threshold recall but a
+  broad prediction footprint and weak connectivity. ABI-358 was a finite,
+  resource-safe, close C4-sidecar continuation with best checkpoint at epoch 30
+  and a materially different final-epoch recall/connectivity trade-off; it
+  improved the ABI-356/357 trade-off but did not raise connected-line evidence.
+  ABI-359 is a close mechanism-changing continuation that moves C4/orientation
+  continuity earlier into the center-detail and temporal-change alignment path
+  before encoder downsampling, rather than using it as a late sidecar or veto.
+  The late budget is requested because the parent mechanisms were late-dependent
+  and oscillatory, and an exploratory-only run could miss the relevant
+  precision/recall/connectivity trade-off.
+fallback_if_denied: run_exploratory_budget

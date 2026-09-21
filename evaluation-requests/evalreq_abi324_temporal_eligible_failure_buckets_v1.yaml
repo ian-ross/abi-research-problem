@@ -1,0 +1,44 @@
+request_id: evalreq_abi324_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260916_184108_954ec7
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-324's
+  five-frame [-2, -1, 0, +1, +2] `abi_16ch_plus_sza_temporal` input, does the
+  late36 temporal detail-consensus stabilized C4 line-state U-Net's selected
+  epoch-27 improvement over ABI-311 represent real connected true-contrail
+  recovery and cleaner fixed-threshold evidence, or is it mostly checkpoint
+  noise, source-specific behavior, negative-patch clutter, positive-patch
+  fragmentation, or Artifact Filter dependence? ABI-324 selected epoch 27 with
+  0.4294 val/filtered_dice, MIT 0.4082, Google 0.4872, precision 0.4704,
+  recall 0.3950, connectivity 0.3979, and 459,172 filtered predicted-positive
+  pixels. Compare its positive-patch miss/under-coverage buckets,
+  fragmentation/continuity buckets, negative-patch clutter, threshold behavior,
+  raw-vs-filtered gaps, source-stratified diagnostics, and bounded diagnostic
+  artifacts against ABI-311 direct five-frame C4 parent, ABI-306 compact
+  high-precision temporal C4, ABI-309 recall-heavy temporal C4, ABI-322 clDice
+  trusted-loss control, and ABI-223 temporal-attention connectivity comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-324 should replace ABI-311 as the local balanced temporal C4 comparator
+  and whether a future mechanism-changing Candidate should stabilize ABI-324's
+  detail-consensus operating point, target ABI-223-like connectivity, or broaden
+  away from this temporal C4 head/stem branch. If diagnostics show fewer
+  positive-patch fragmentation/under-coverage failures and no material
+  negative-patch clutter increase, future work may focus on stabilizing the
+  epoch-27/epoch-30 trade-off without Candidate-owned thresholds or
+  postprocessing. If gains are mainly threshold noise, source imbalance, broad
+  false-positive tail, or Artifact Filter dependence, stop unchanged ABI-324
+  continuations and broaden to a materially different temporal alignment/change
+  or single-frame C4/detail-support mechanism. Treat the result as
+  temporal-eligible diagnostic evidence only; it is not whole-validation
+  promotion evidence and it must not authorize Candidate-owned data loading,
+  temporal lookup, sample selection, losses, metrics, Artifact Filters,
+  thresholding, postprocessing, coordinates, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_013306_9ca44e
+  - run_20260919_095725_843317
+  - run_20260919_175950_ac7b89
+justification: >-
+  ABI-367 is a close, mechanism-changing continuation of the profiled ABI-350
+  temporal-attention pre-decoder line-support resource class. ABI-350 selected
+  its best checkpoint at epoch 33 under the approved late-improving budget and
+  materially improved its ABI-349 exploratory parent, showing that this temporal
+  line-support scaffold is truncated by the 12-epoch exploratory ceiling. ABI-356
+  and ABI-359 further showed late-budget temporal recall and C4/continuity
+  signals, but with unstable precision/recall/connectivity trade-offs. ABI-367
+  keeps the same trusted input/loss/sampling/augmentation policy and comparable
+  compact decoder shape while adding only a bounded source-agnostic center-frame
+  detail tail reinjection path gated by architecture-internal line evidence. The
+  late budget is requested to test whether this close continuation can combine
+  ABI-350 compact aggregate strength with improved MIT-positive-tail recall and
+  connected-line support rather than judging the mechanism before the parent
+  scaffold typically stabilizes.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_111909_dd7ef7
+  - run_20260913_000141_3344db
+justification: >-
+  ABI-249 is the high-precision C4/rotation-aware whole-validation comparator
+  and selected its best late-budget checkpoint at epoch 31 with finite,
+  source-informative predictions. ABI-279, a close C4 recall-bridge continuation,
+  needed the approved late budget to characterize the recall/connectivity tradeoff
+  and selected a mid-late finite checkpoint at epoch 22, with epoch 36 still close
+  to the selected operating point. ABI-280 is a mechanism-changing but resource-
+  similar continuation of that profiled C4 lineage: it preserves the approved
+  ABI+SZA input, approved-channel BTD front end, source-balanced sampling,
+  trusted random mirroring, BCE-Dice loss, trusted Line and Centerline auxiliary
+  outputs, optimizer, scheduler, and batch size, while making the ABI-279 bridge
+  more selective through a learned consensus gate and bounded low-consensus
+  clutter veto. The purpose is to test whether C4 recall/connectivity support can
+  retain ABI-249-like compact precision and reduce ABI-279 negative-patch clutter.
+  The Result remains capped representative feasibility evidence unless a later
+  trusted whole-validation diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,31 @@
+request_id: evalreq_abi274_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260912_180856_79ba22
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-274's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 temporal
+  line-state attention U-Net's selected epoch-36 checkpoint retain its strong
+  capped temporal signal (0.4194 val/filtered_dice, 0.4541 filtered precision,
+  0.3895 filtered recall, 0.2829 connectivity) under Harness-owned failure
+  buckets and threshold behavior, and do the diagnostics explain whether its
+  recall/source lift versus ABI-223/238 is limited mainly by fragmented thin-line
+  continuity, negative-patch clutter, source imbalance, or Artifact Filter
+  dependence?
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss buckets, and raw-vs-filtered gaps to decide whether ABI-274 should join
+  ABI-223 and ABI-255 as a temporal-family diagnostic comparator, whether future
+  temporal work should preserve ABI-274's early line-state recall mechanism while
+  adding stronger connectivity support, whether a C4/orientation-prior recall
+  bridge is a better next frontier, or whether this exact early-line-state branch
+  should stop after its successful late-budget answer. Treat the result as
+  diagnostic evidence only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,21 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260904_043143_ee0005
+justification: >-
+  ABI-202 is the current aggregate whole-validation reference for this exact
+  cross-scale directional-consensus ASPP architecture under trusted BCE-Dice. Its
+  approved late-improving run selected epoch 34 of 36 as best and remained finite,
+  non-collapsed, source-informative, and resource-safe. This Candidate changes
+  only the trusted primary loss selection to BCE-Dice-clDice while preserving the
+  architecture, input mode, sampling, augmentation, optimizer, batch size,
+  scheduler, auxiliary targets, and resource profile. The longer budget is needed
+  because the parent architecture's useful operating point emerged well after the
+  exploratory ceiling; the question is whether provider-owned clDice connectivity
+  pressure can improve connected thin-line continuity and recall/source balance
+  without Candidate-owned thresholds, postprocessing, custom losses, metrics,
+  Artifact Filters, data loading, sample selection, coordinates, downloads, or
+  resource scheduling. If denied, the exploratory result remains valid bounded
+  evidence.
+fallback_if_denied: run_exploratory_budget

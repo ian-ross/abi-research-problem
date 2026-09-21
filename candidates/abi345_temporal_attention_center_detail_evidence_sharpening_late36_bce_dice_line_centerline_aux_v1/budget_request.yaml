@@ -1,0 +1,25 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260908_154531_8c7e2b
+justification: >-
+  ABI-223 completed finitely and non-degenerately under the approved late-improving
+  budget, selected its final epoch 36 as the best checkpoint, and remains the
+  temporal-attention connectivity comparator on the temporal-eligible validation
+  population. Its fixed-threshold operating point is compact and precise, with
+  filtered Dice 0.419776, precision 0.483764, recall 0.370738, and connectivity
+  0.412427, but recall lags the later ABI-324/325 five-frame temporal C4 branch.
+  ABI-345 is a close temporal-attention continuation that keeps the same trusted
+  provider-owned three-frame input, sampling, augmentation, loss, auxiliary
+  targets, batch size, optimizer, scheduler, and resource profile while changing
+  only the architecture-internal logit head. The bounded center-detail evidence
+  sharpening head tests whether temporal attention can raise uncertain true
+  contrail logits at the fixed 0.5 threshold without moving thresholding,
+  postprocessing, losses, metrics, Artifact Filters, temporal lookup, sample
+  selection, or resource scheduling into Candidate code. Because the parent
+  temporal-attention comparator was still improving at the end of a 36-epoch run,
+  the same late-improving budget is needed to evaluate this close-continuation
+  mechanism fairly. Results remain capped temporal-eligible feasibility evidence
+  unless a separate trusted diagnostic is requested.
+fallback_if_denied: run_exploratory_budget

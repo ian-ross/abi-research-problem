@@ -1,0 +1,46 @@
+request_id: evalreq_abi337_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260917_201833_57b081
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-337's
+  five-frame [-2, -1, 0, +1, +2] `abi_16ch_plus_sza_temporal` input, did
+  disabling trusted random mirroring for the ABI-324 detail-consensus temporal C4
+  architecture produce a real MIT-positive undercoverage or orientation-stability
+  improvement, or did it mostly trade Google/source balance and connected-line
+  continuity for capped checkpoint noise? ABI-337 selected epoch 27 with 0.4289
+  val/filtered_dice, MIT 0.4118, Google 0.4763, precision 0.4665, recall
+  0.3969, connectivity 0.3653, and 465,248 filtered predicted-positive pixels.
+  Compare its positive-patch miss and under-coverage buckets, fragmentation and
+  connected-line continuity buckets, negative-patch clutter, source-stratified
+  medians/tails, raw-vs-filtered gaps, threshold behavior around 0.5, and bounded
+  diagnostic artifacts against ABI-324 mirrored detail-consensus parent, ABI-311
+  five-frame C4 parent, ABI-325 positive-tail recall diagnostic, ABI-328
+  soft-shift alignment variant, ABI-306 compact high-precision temporal C4
+  comparator, ABI-309 recall-heavy temporal C4 diagnostic, and ABI-223
+  temporal-attention connectivity comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide whether
+  ABI-337's no-mirroring data-policy control should influence future temporal C4
+  family development. If diagnostics show fewer MIT positive-patch complete
+  misses, lower under-coverage, or improved orientation-sensitive continuity
+  without a material increase in negative-patch clutter, Artifact Filter
+  dependence, threshold fragility, or source-specific Google regression, future
+  Candidates may preserve physical orientation cues while adding a
+  mechanism-changing connectivity/recall support head. If ABI-337's small MIT
+  gain is mainly broad footprint noise, source trade-off, connectivity
+  fragmentation, or threshold selection variance, keep ABI-324 as the balanced
+  temporal C4 comparator, treat random mirroring as useful regularization for
+  this branch, and stop unchanged no-mirroring continuations. Treat the result as
+  temporal-eligible diagnostic evidence only; it is not whole-validation
+  promotion evidence and it must not authorize Candidate-owned data loading,
+  temporal lookup, sample selection, losses, metrics, Artifact Filters,
+  thresholding, postprocessing, coordinates, augmentation implementation, or
+  resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

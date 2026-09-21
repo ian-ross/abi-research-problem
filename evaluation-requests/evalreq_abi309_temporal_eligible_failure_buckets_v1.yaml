@@ -1,0 +1,37 @@
+request_id: evalreq_abi309_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260914_205014_1794f8
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-309's
+  [-1, 0, +1] `abi_16ch_plus_sza_temporal` input, does the late36 temporal C4
+  late line-support recall-head U-Net's recall-heavy selected checkpoint
+  (0.4235 val/filtered_dice, MIT 0.4024, Google 0.4785, precision 0.4018,
+  recall 0.4478, connectivity 0.3161, 609,361 filtered predicted-positive
+  pixels) represent useful positive-patch true-contrail recovery over ABI-306,
+  or are the added ~200k filtered predicted-positive pixels mainly negative-patch
+  clutter, lower precision, source-specific overprediction, and fragmented
+  positive-patch behavior? Compare against ABI-306, ABI-307, ABI-308, ABI-285,
+  ABI-223, and ABI-238 using Harness-owned failure buckets, threshold behavior,
+  source-stratified metrics, raw-vs-filtered gaps, and bounded diagnostic
+  artifacts.
+expected_decision_impact: >-
+  Use Dataset Source-stratified aggregate metrics, threshold sweep behavior,
+  connectivity, predicted-positive area, negative-patch clutter, positive-patch
+  miss and under-coverage buckets, raw-vs-filtered gaps, and bounded diagnostic
+  samples to decide whether ABI-309 should become the temporal C4 recall-support
+  comparator, whether a future mechanism should preserve ABI-306's compact
+  precision while selectively adding ABI-309-style recall, or whether the late
+  line-support head should stop because its gain is mostly broad false-positive
+  footprint. Treat the result as temporal-eligible diagnostic evidence only; it
+  is not whole-validation promotion evidence and it must not authorize
+  Candidate-owned thresholding, postprocessing, losses, metrics, Artifact
+  Filters, data loading, temporal lookup, sample selection, coordinates, or
+  resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

@@ -1,0 +1,20 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260916_184108_954ec7
+  - run_20260917_031010_2dd7e6
+  - run_20260917_002229_d43b7a
+justification: >
+  ABI-324, ABI-326, and ABI-327 were finite, resource-profiled five-frame
+  temporal C4 line-state Runs under the approved late-improving budget. ABI-324
+  remains the best balanced local temporal C4 comparator with best epoch 27;
+  ABI-326 selected epoch 36 while testing a selective-tail guard; ABI-327
+  selected epoch 22 and showed that early change-salience gating can become a
+  high-precision under-recall point. ABI-328 is a close but mechanism-changing
+  continuation in the same profiled temporal resource class: it replaces
+  reinjection/salience gates with lightweight local soft-shift temporal
+  alignment before C4 line-state fusion. The parent trajectories make a
+  12-epoch cap likely to truncate the intended comparison; if denied, the
+  exploratory budget remains valid bounded evidence.
+fallback_if_denied: run_exploratory_budget

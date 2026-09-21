@@ -1,0 +1,30 @@
+request_id: evalreq_abi279_wholeval_failure_buckets_v1
+target_run_id: run_20260913_000141_3344db
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  Across the full 3,088-sample Working Validation Split, does ABI-279's
+  late36 C4 dual-evidence recall-bridge U-Net selected epoch-22 checkpoint
+  retain its capped C4-family signal (0.4145 val/filtered_dice, 0.4426
+  filtered precision, 0.3898 filtered recall, 0.4392 connectivity), and do
+  Harness-owned failure buckets explain whether its recall/connectivity lift
+  versus ABI-249 is limited mainly by precision loss, negative-patch clutter,
+  MIT/source balance, fragmented thin-line continuity, or Artifact Filter
+  dependence?
+expected_decision_impact: >-
+  Use whole-validation aggregate metrics, Dataset Source-stratified metrics,
+  threshold sweep behavior, connectivity, predicted-positive area,
+  negative-patch false-positive buckets, positive-patch miss and under-coverage
+  buckets, and raw-vs-filtered gaps to decide whether ABI-279 should join
+  ABI-249 as a C4/orientation-prior comparator, whether a future C4 recall
+  bridge should focus on calibration/source balance or different cross-scale
+  continuity support, or whether this exact dual-evidence bridge branch should
+  stop after its late-budget answer. Treat the result as diagnostic evidence
+  only; promotion remains operator-reviewed.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

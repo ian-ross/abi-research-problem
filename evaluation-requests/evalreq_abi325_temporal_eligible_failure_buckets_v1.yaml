@@ -1,0 +1,44 @@
+request_id: evalreq_abi325_temporal_eligible_failure_buckets_v1
+target_run_id: run_20260916_212722_d66d93
+evaluation_mode: failure_bucket_review
+diagnostic_question: >-
+  On the provider-owned temporal-eligible validation population for ABI-325's
+  five-frame [-2, -1, 0, +1, +2] `abi_16ch_plus_sza_temporal` input, did the
+  positive-tail evidence reinjector actually reduce positive-patch zero-TP or
+  low-recall tails relative to ABI-324, ABI-311, ABI-306, ABI-309, and ABI-223,
+  or did it mostly broaden the fixed-threshold footprint and shift errors across
+  Dataset Sources? ABI-325 selected epoch 27 with 0.4277 val/filtered_dice, MIT
+  0.4129, Google 0.4665, precision 0.4257, recall 0.4298, connectivity 0.3275,
+  and 552,142 filtered predicted-positive pixels. Compare its positive-patch
+  miss and under-coverage buckets, negative-patch clutter, connected-line
+  fragmentation, source-stratified medians/tails, raw-vs-filtered gaps,
+  threshold behavior around 0.5, and bounded diagnostic artifacts against the
+  ABI-324 balanced temporal C4 comparator, ABI-311 five-frame C4 parent,
+  ABI-306 compact high-precision temporal C4 comparator, ABI-309 recall-heavy
+  broad-footprint temporal C4 diagnostic, and ABI-223 temporal-attention
+  connectivity comparator.
+expected_decision_impact: >-
+  Use the Harness-owned temporal-eligible failure-bucket review to decide
+  whether ABI-325's recall and MIT filtered-Dice gains represent useful
+  positive-tail repair evidence or only an overly broad, lower-connectivity
+  operating point. If diagnostics show fewer positive-patch complete misses and
+  low-recall tails without a material increase in negative-patch clutter,
+  source-specific false positives, Artifact Filter dependence, or connectivity
+  fragmentation, a future mechanism-changing Candidate may try to recover this
+  positive-tail signal while restoring ABI-324-like precision and line
+  continuity. If gains are mainly broad false positives, Google-source
+  regression, threshold noise, or filter-dependent cleanup, stop unchanged
+  positive-tail reinjector continuations and broaden to a materially different
+  temporal alignment/change or attention mechanism. Treat the result as
+  temporal-eligible diagnostic evidence only; it is not whole-validation
+  promotion evidence and it must not authorize Candidate-owned data loading,
+  temporal lookup, sample selection, losses, metrics, Artifact Filters,
+  thresholding, postprocessing, coordinates, or resource scheduling.
+parameters:
+  primary_threshold: 0.5
+  batch_size: 4
+  artifact_count: 12
+  failure_bucket_count: 6
+artifact_budget:
+  max_artifacts: 12
+  max_runtime_seconds: 3600

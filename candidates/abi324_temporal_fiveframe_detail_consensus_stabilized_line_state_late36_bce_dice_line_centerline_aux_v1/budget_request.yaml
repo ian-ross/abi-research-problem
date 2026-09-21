@@ -1,0 +1,23 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260915_015552_1ac51f
+  - run_20260914_124245_de843c
+  - run_20260914_205014_1794f8
+justification: >
+  ABI-311, ABI-306, and ABI-309 were finite, resource-safe, source-informative
+  temporal C4 line-state Runs that required the late-improving budget to expose
+  their selected operating points. ABI-311 selected epoch 27 and its temporal-
+  eligible diagnostics showed the desired balanced five-frame persistence/
+  contrast behavior: lower negative-patch clutter than ABI-309 and better
+  aggregate/connectivity than ABI-306, but remaining MIT and positive-patch
+  undercoverage. ABI-306 remains the compact high-precision temporal C4
+  comparator, while ABI-309 showed that line-state support can recover true
+  positives at the cost of false-positive footprint. ABI-324 is a close,
+  mechanism-changing continuation of ABI-311 that keeps the profiled five-frame
+  stem and decoder but changes only the final evidence construction to add a
+  bounded center-detail/temporal-consensus residual where decoder, line, and
+  centerline evidence agree. The prior trajectory and diagnostics indicate that
+  an exploratory 12-epoch cap would likely truncate this family comparison.
+fallback_if_denied: run_exploratory_budget

@@ -1,0 +1,17 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260914_124245_de843c
+  - run_20260914_205014_1794f8
+justification: >
+  ABI-306 and ABI-309 were finite, resource-safe, non-collapsed, source-informative
+  temporal C4 late-budget Runs in the same profiled family and batch-size class.
+  ABI-306 remains the compact high-precision temporal C4 comparator, while ABI-309
+  showed that late line-state support can recover real fixed-threshold recall but at
+  a large predicted-footprint and negative-patch false-positive cost. ABI-310 is a
+  close mechanism-changing continuation that keeps ABI-309's line-state exposure but
+  adds learned agreement gating and unsupported-evidence suppression in the final
+  architecture head, aiming to preserve ABI-306 compactness while retaining ABI-309's
+  useful positive-patch recall recovery.
+fallback_if_denied: run_exploratory_budget

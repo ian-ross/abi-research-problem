@@ -1,0 +1,20 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260919_095725_843317
+  - run_20260919_123025_7cd861
+justification: >
+  ABI-356 was finite, resource-safe, source-informative, and selected its best
+  checkpoint at the final late epoch with the strongest recall in its comparison
+  set, but its broad footprint had weak precision and connected-line continuity.
+  ABI-357 was the intended compact C4 continuity-anchor continuation and also
+  selected the final late epoch, improving precision and connectivity versus
+  ABI-356 but over-constraining recall and losing aggregate Dice. ABI-358 is a
+  close mechanism-changing continuation that decouples the C4 orientation
+  continuity path from the recall path: temporal-change/high-resolution support
+  remains additive for the mask logits while the C4 module acts as a residual
+  sidecar and auxiliary Line-head source. The late budget is needed because both
+  parent mechanisms were late-dependent and oscillatory, with best checkpoints
+  appearing only in the late phase.
+fallback_if_denied: run_exploratory_budget

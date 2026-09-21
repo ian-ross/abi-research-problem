@@ -1,0 +1,22 @@
+schema_version: candidate_budget_request.v1
+budget_class: late_improving
+requested_max_epochs: 36
+parent_run_ids:
+  - run_20260911_111909_dd7ef7
+  - run_20260918_055403_f17232
+justification: >-
+  ABI-343 is a close, mechanism-changing continuation of the ABI-249/ABI-342
+  C4 orientation-prior branch rather than an unrelated new family. ABI-249
+  completed finitely with compact high-precision C4 predictions and selected
+  its best checkpoint late at epoch 31; ABI-342 completed finitely with a
+  source-informative recall-repair trajectory and selected its best checkpoint
+  at epoch 36. Those parent Runs show that this branch forms late under the
+  approved policy and that the exact ABI-342 bridge recovered recall but was
+  too broad. ABI-343 preserves provider-owned ABI+SZA input, trusted
+  source-balanced sampling, trusted random mirroring, BCE-Dice loss, Line and
+  Centerline auxiliary targets, optimizer, scheduler, and batch size, while
+  changing the architecture-internal mask head to constrain the recall residual
+  with anchor uncertainty, C4 line/detail agreement, and a low-line-evidence
+  clutter veto. The result remains capped representative feasibility evidence
+  unless a later trusted diagnostic is requested.
+fallback_if_denied: run_exploratory_budget
